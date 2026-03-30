@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Geist:wght@100..900&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --font-sans: var(--app-font-sans);
+  --font-serif: var(--app-font-serif);
+  --font-mono: var(--app-font-mono);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: 40 33% 96%; /* Ivory */
+  --foreground: 160 20% 15%; /* Deep Forest */
+  
+  --card: 40 40% 98%;
+  --card-foreground: 160 20% 15%;
+  --card-border: 40 15% 85%;
+
+  --popover: 40 40% 98%;
+  --popover-foreground: 160 20% 15%;
+  --popover-border: 40 15% 85%;
+
+  --primary: 160 25% 25%;
+  --primary-foreground: 40 33% 96%;
+
+  --secondary: 20 60% 50%; /* Terracotta */
+  --secondary-foreground: 40 33% 96%;
+
+  --muted: 40 15% 85%;
+  --muted-foreground: 160 10% 40%;
+
+  --accent: 35 70% 55%; /* Gold / Ochre */
+  --accent-foreground: 160 20% 15%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 40 15% 85%;
+  --input: 40 15% 85%;
+  --ring: 160 25% 25%;
+
+  --radius: 0.75rem;
+
+  --app-font-sans: "Geist", sans-serif;
+  --app-font-serif: "Fraunces", serif;
+  --app-font-mono: monospace;
+}
+
+.dark {
+  --background: 160 25% 10%;
+  --foreground: 40 33% 90%;
+
+  --card: 160 25% 12%;
+  --card-foreground: 40 33% 90%;
+  --card-border: 160 20% 20%;
+
+  --popover: 160 25% 12%;
+  --popover-foreground: 40 33% 90%;
+  --popover-border: 160 20% 20%;
+
+  --primary: 35 70% 55%; /* Gold/Ochre */
+  --primary-foreground: 160 25% 10%;
+
+  --secondary: 20 60% 50%; /* Terracotta */
+  --secondary-foreground: 40 33% 96%;
+
+  --muted: 160 20% 20%;
+  --muted-foreground: 160 10% 65%;
+
+  --accent: 35 70% 55%;
+  --accent-foreground: 160 25% 10%;
+
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 160 20% 20%;
+  --input: 160 20% 20%;
+  --ring: 35 70% 55%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
