@@ -1,70 +1,389 @@
-import React from "react";
+import { useListPosts, useGetStats } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
-import { WorldMap } from "@/components/world-map";
-import { TravelTimeline } from "@/components/travel-timeline";
-import { useGetStats } from "@workspace/api-client-react";
+import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { format } from "date-fns";
+import { MapPin, Calendar, BookOpen, Instagram, Twitter, Mail, Globe, Send, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+
+// Static Instagram-style preview posts (design demo)
+const instaGrid = [
+  {
+    id: 1,
+    img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80",
+    caption: "Tokyo neon dreams 🗼",
+    location: "Tokyo, Japan",
+  },
+  {
+    id: 2,
+    img: "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=600&q=80",
+    caption: "Nothing prepares you for Milford Sound",
+    location: "New Zealand",
+  },
+  {
+    id: 3,
+    img: "https://images.unsplash.com/photo-1598300188904-6e3b1dc9e3b6?w=600&q=80",
+    caption: "Every alley in Chefchaouen is a painting",
+    location: "Morocco",
+  },
+  {
+    id: 4,
+    img: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&q=80",
+    caption: "The Colosseum at golden hour hit different",
+    location: "Rome, Italy",
+  },
+  {
+    id: 5,
+    img: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80",
+    caption: "Kyoto before dawn — temples and silence",
+    location: "Kyoto, Japan",
+  },
+  {
+    id: 6,
+    img: "https://images.unsplash.com/photo-1557409518-691ebcd96038?w=600&q=80",
+    caption: "One more Japanese morning",
+    location: "Japan",
+  },
+];
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 24 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.5, delay },
+});
 
 export default function Home() {
+  const { data: allPosts = [] } = useListPosts({ query: { queryKey: ["posts"] } });
   const { data: stats } = useGetStats({ query: { queryKey: ["stats"] } });
+  const [contactSent, setContactSent] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
+
+  // 3 most recent published posts
+  const recentPosts = [...allPosts]
+    .filter(p => p.publishedAt)
+    .sort((a, b) => new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime())
+    .slice(0, 3);
+
+  function handleContact(e: React.FormEvent) {
+    e.preventDefault();
+    setContactSent(true);
+  }
 
   return (
     <Layout>
-      <div className="space-y-20">
-        <section className="space-y-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+      <div className="space-y-32">
+
+        {/* ── Hero ── */}
+        <section className="text-center space-y-8 pt-8 max-w-4xl mx-auto">
+          <motion.h1
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-3xl mx-auto space-y-6"
+            className="text-6xl md:text-8xl font-serif font-bold text-foreground tracking-tight leading-[1.05]"
           >
-            <h1 className="text-5xl md:text-7xl font-serif font-bold text-foreground tracking-tight leading-tight">
-              Mapping the World, <br/>
-              <span className="text-secondary italic font-light">One Story at a Time</span>
-            </h1>
-            <p className="text-muted-foreground text-lg md:text-xl font-sans leading-relaxed max-w-2xl mx-auto">
-              A collection of dispatches from dusty roads, night trains, and unfamiliar shores. 
-              Here is everywhere I've been.
-            </p>
+            Mapping the World,{" "}
+            <span className="text-secondary italic font-light block">One Story at a Time</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-xl text-muted-foreground font-serif italic max-w-2xl mx-auto leading-relaxed"
+          >
+            A collection of dispatches from dusty roads, night trains, and unfamiliar shores.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.35 }}
+            className="flex flex-wrap justify-center gap-4"
+          >
+            <Link
+              href="/posts"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-primary/90 transition-colors shadow-sm"
+              data-testid="link-read-journal"
+            >
+              Read Journal <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/atlas"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-card border border-border text-foreground rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-muted transition-colors"
+              data-testid="link-view-atlas"
+            >
+              View Atlas <Globe className="w-4 h-4" />
+            </Link>
           </motion.div>
 
           {stats && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-wrap justify-center gap-12 py-8 border-y border-border/50 bg-card/30 rounded-2xl"
+              transition={{ delay: 0.45 }}
+              className="flex flex-wrap justify-center gap-12 pt-4 border-t border-border/40 mt-8"
             >
-              <div className="text-center">
-                <span className="block text-4xl font-serif font-bold text-primary mb-1">{stats.totalCountries}</span>
-                <span className="text-xs uppercase font-mono tracking-widest text-muted-foreground">Countries</span>
-              </div>
-              <div className="text-center hidden md:block">
-                <span className="block text-4xl font-serif font-bold text-primary mb-1">{stats.continents}</span>
-                <span className="text-xs uppercase font-mono tracking-widest text-muted-foreground">Continents</span>
-              </div>
-              <div className="text-center">
-                <span className="block text-4xl font-serif font-bold text-primary mb-1">{stats.totalPosts}</span>
-                <span className="text-xs uppercase font-mono tracking-widest text-muted-foreground">Dispatches</span>
-              </div>
+              {[
+                { value: stats.totalCountries, label: "Countries" },
+                { value: stats.continents, label: "Continents" },
+                { value: stats.totalCities, label: "Cities" },
+                { value: stats.totalPosts, label: "Dispatches" },
+              ].map(({ value, label }) => (
+                <div key={label} className="text-center">
+                  <span className="block text-4xl font-serif font-bold text-primary">{value}</span>
+                  <span className="text-xs uppercase font-mono tracking-widest text-muted-foreground">{label}</span>
+                </div>
+              ))}
             </motion.div>
           )}
+        </section>
 
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
-          >
-            <WorldMap />
+        {/* ── Recent Dispatches ── */}
+        <section className="space-y-10">
+          <motion.div {...fadeUp()} className="flex items-end justify-between">
+            <div>
+              <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-2">Latest writing</p>
+              <h2 className="text-4xl font-serif font-bold text-foreground">Recent Dispatches</h2>
+            </div>
+            <Link
+              href="/posts"
+              className="text-sm font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors flex items-center gap-1"
+            >
+              All posts <ArrowRight className="w-4 h-4" />
+            </Link>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {recentPosts.map((post, i) => (
+              <motion.article
+                key={post.id}
+                {...fadeUp(i * 0.1)}
+                className="group bg-card rounded-2xl border border-border/50 overflow-hidden shadow-sm hover:shadow-md hover:border-border transition-all duration-300 flex flex-col"
+                data-testid={`card-post-${post.id}`}
+              >
+                <div className="aspect-[4/3] bg-muted overflow-hidden relative">
+                  {post.coverImageUrl ? (
+                    <img
+                      src={post.coverImageUrl}
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-primary/5">
+                      <BookOpen className="w-10 h-10 text-primary/20" />
+                    </div>
+                  )}
+                  {post.location && (
+                    <div className="absolute top-3 left-3 bg-background/90 backdrop-blur text-foreground text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                      <MapPin className="w-3 h-3 text-secondary" /> {post.location}
+                    </div>
+                  )}
+                </div>
+                <div className="p-5 flex flex-col flex-1 space-y-3">
+                  {post.publishedAt && (
+                    <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="w-3 h-3" />
+                      {format(new Date(post.publishedAt), "MMM d, yyyy")}
+                    </span>
+                  )}
+                  <h3 className="font-serif font-bold text-xl text-foreground group-hover:text-secondary transition-colors leading-snug">
+                    <Link href={`/posts/${post.slug}`} data-testid={`link-post-title-${post.id}`}>{post.title}</Link>
+                  </h3>
+                  <p className="text-sm text-muted-foreground line-clamp-2 flex-1">{post.excerpt}</p>
+                  <Link
+                    href={`/posts/${post.slug}`}
+                    className="text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors inline-flex items-center gap-1 mt-auto"
+                  >
+                    Read dispatch <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Instagram Feed ── */}
+        <section className="space-y-8">
+          <motion.div {...fadeUp()} className="flex items-end justify-between">
+            <div>
+              <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-2">On the road</p>
+              <h2 className="text-4xl font-serif font-bold text-foreground">From Instagram</h2>
+            </div>
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+              data-testid="link-instagram"
+            >
+              <Instagram className="w-4 h-4" /> Follow
+            </a>
+          </motion.div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {instaGrid.map((item, i) => (
+              <motion.a
+                key={item.id}
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                {...fadeUp(i * 0.07)}
+                className="group relative aspect-square overflow-hidden rounded-2xl bg-muted block"
+                data-testid={`card-instagram-${item.id}`}
+              >
+                <img
+                  src={item.img}
+                  alt={item.caption}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                  <p className="text-white text-sm font-serif leading-snug">{item.caption}</p>
+                  <p className="text-white/70 text-xs font-mono uppercase tracking-wide mt-1">
+                    <MapPin className="w-3 h-3 inline mr-1" />{item.location}
+                  </p>
+                </div>
+              </motion.a>
+            ))}
+          </div>
+        </section>
+
+        {/* ── About ── */}
+        <section id="about" className="grid md:grid-cols-2 gap-12 items-center">
+          <motion.div {...fadeUp()}>
+            <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-muted shadow-xl">
+              <img
+                src="https://images.unsplash.com/photo-1503220317375-aaad61436b1b?w=800&q=80"
+                alt="Traveler portrait"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </motion.div>
+
+          <motion.div {...fadeUp(0.15)} className="space-y-6">
+            <div>
+              <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-3">The wanderer</p>
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground leading-tight">About This Blog</h2>
+            </div>
+            <div className="space-y-4 text-muted-foreground font-serif leading-relaxed text-lg">
+              <p>
+                I'm a traveler, writer, and perpetual over-packer who believes the best conversations happen on overnight trains and in hole-in-the-wall restaurants nobody's heard of yet.
+              </p>
+              <p>
+                This blog is my attempt to slow down and actually remember the places I've been — the light, the smell, the people, the awkward language mistakes. It's a personal record more than anything else.
+              </p>
+              <p>
+                Currently based wherever the next flight is going.
+              </p>
+            </div>
+            <div className="flex items-center gap-4 pt-2">
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
+                data-testid="link-social-instagram"
+                aria-label="Instagram"
+              >
+                <Instagram className="w-4 h-4" />
+              </a>
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
+                data-testid="link-social-twitter"
+                aria-label="Twitter / X"
+              >
+                <Twitter className="w-4 h-4" />
+              </a>
+              <a
+                href="mailto:hello@wanderlust.blog"
+                className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
+                data-testid="link-social-email"
+                aria-label="Email"
+              >
+                <Mail className="w-4 h-4" />
+              </a>
+            </div>
           </motion.div>
         </section>
 
-        <section className="max-w-3xl mx-auto space-y-12">
-          <div className="text-center space-y-4">
-            <h2 className="text-4xl font-serif font-bold text-foreground">The Journey Unfolds</h2>
-            <p className="text-lg text-muted-foreground font-serif italic">A chronological record of stamps in the passport.</p>
-          </div>
-          <TravelTimeline />
+        {/* ── Contact ── */}
+        <section id="contact" className="max-w-2xl mx-auto space-y-8">
+          <motion.div {...fadeUp()} className="text-center space-y-3">
+            <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground">Get in touch</p>
+            <h2 className="text-4xl font-serif font-bold text-foreground">Say Hello</h2>
+            <p className="text-muted-foreground font-serif italic text-lg">
+              Travel tips, collaboration ideas, or just to share a story from the road.
+            </p>
+          </motion.div>
+
+          <motion.div {...fadeUp(0.1)}>
+            {contactSent ? (
+              <div className="text-center py-16 space-y-4 bg-card rounded-3xl border border-border">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                  <Send className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-2xl font-serif font-bold text-foreground">Message received!</h3>
+                <p className="text-muted-foreground font-serif italic">
+                  Thanks for reaching out. I'll reply from wherever I am in the world.
+                </p>
+                <button
+                  onClick={() => { setContactSent(false); setContactForm({ name: "", email: "", message: "" }); }}
+                  className="text-sm text-primary hover:text-secondary transition-colors font-medium"
+                  data-testid="button-send-another"
+                >
+                  Send another message
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleContact} className="space-y-4 bg-card rounded-3xl border border-border p-8">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground" htmlFor="contact-name">Name</label>
+                    <Input
+                      id="contact-name"
+                      placeholder="Your name"
+                      value={contactForm.name}
+                      onChange={e => setContactForm(f => ({ ...f, name: e.target.value }))}
+                      required
+                      data-testid="input-contact-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground" htmlFor="contact-email">Email</label>
+                    <Input
+                      id="contact-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={contactForm.email}
+                      onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))}
+                      required
+                      data-testid="input-contact-email"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground" htmlFor="contact-message">Message</label>
+                  <Textarea
+                    id="contact-message"
+                    placeholder="Tell me where you've been, where you're going, or what you're dreaming about..."
+                    rows={5}
+                    value={contactForm.message}
+                    onChange={e => setContactForm(f => ({ ...f, message: e.target.value }))}
+                    required
+                    data-testid="input-contact-message"
+                  />
+                </div>
+                <Button type="submit" className="w-full" data-testid="button-submit-contact">
+                  Send Message <Send className="w-4 h-4 ml-2" />
+                </Button>
+              </form>
+            )}
+          </motion.div>
         </section>
+
       </div>
     </Layout>
   );
