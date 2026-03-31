@@ -22,14 +22,44 @@ export default function PostsPage() {
     query: { queryKey: ["countries"] },
   });
   const [filterCountry, setFilterCountry] = useState<string>("all");
+  const [filterTransport, setFilterTransport] = useState<string>("all");
+  const [filterYear, setFilterYear] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+
+  const transportOptions = useMemo(() => {
+    const modes = new Set<string>();
+    for (const c of countries) {
+      for (const field of [c.transportationTo, c.transportationOnSite]) {
+        if (field) field.split(",").forEach(t => modes.add(t.trim()));
+      }
+    }
+    return Array.from(modes).sort();
+  }, [countries]);
+
+  const yearOptions = useMemo(() => {
+    const years = new Set<string>();
+    for (const p of posts) {
+      if (p.publishedAt) years.add(new Date(p.publishedAt).getFullYear().toString());
+    }
+    return Array.from(years).sort((a, b) => Number(b) - Number(a));
+  }, [posts]);
 
   const filtered = useMemo(() => {
     let list = [...posts];
     if (filterCountry !== "all") {
-      list = list.filter(
-        (p) => p.countryId != null && String(p.countryId) === filterCountry,
-      );
+      list = list.filter(p => p.countryId != null && String(p.countryId) === filterCountry);
+    }
+    if (filterTransport !== "all") {
+      list = list.filter(p => {
+        const country = countries.find(c => c.id === p.countryId);
+        if (!country) return false;
+        const modes = [country.transportationTo, country.transportationOnSite]
+          .filter(Boolean).join(",").split(",").map(t => t.trim());
+        return modes.includes(filterTransport);
+      });
+    }
+    if (filterYear !== "all") {
+      list = list.filter(p => p.publishedAt && new Date(p.publishedAt).getFullYear().toString() === filterYear);
     }
     list.sort((a, b) => {
       const da = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
@@ -37,7 +67,7 @@ export default function PostsPage() {
       return sortOrder === "newest" ? db - da : da - db;
     });
     return list;
-  }, [posts, filterCountry, sortOrder]);
+  }, [posts, countries, filterCountry, filterTransport, filterYear, sortOrder]);
 
   function getFlagEmoji(code: string) {
     if (!code || code.length !== 2) return "";
@@ -78,6 +108,34 @@ export default function PostsPage() {
             </SelectContent>
           </Select>
 
+          {transportOptions.length > 0 && (
+            <Select value={filterTransport} onValueChange={setFilterTransport}>
+              <SelectTrigger className="w-44" data-testid="select-filter-transport">
+                <SelectValue placeholder="All Transport" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Transport</SelectItem>
+                {transportOptions.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {yearOptions.length > 0 && (
+            <Select value={filterYear} onValueChange={setFilterYear}>
+              <SelectTrigger className="w-32" data-testid="select-filter-year">
+                <SelectValue placeholder="All Years" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                {yearOptions.map((y) => (
+                  <SelectItem key={y} value={y}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <Button
             variant="outline"
             size="sm"
@@ -91,11 +149,11 @@ export default function PostsPage() {
             {sortOrder === "newest" ? "Newest First" : "Oldest First"}
           </Button>
 
-          {filterCountry !== "all" && (
+          {(filterCountry !== "all" || filterTransport !== "all" || filterYear !== "all") && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setFilterCountry("all")}
+              onClick={() => { setFilterCountry("all"); setFilterTransport("all"); setFilterYear("all"); }}
               className="text-muted-foreground"
               data-testid="button-clear-filters"
             >

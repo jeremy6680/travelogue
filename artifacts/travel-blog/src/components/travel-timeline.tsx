@@ -24,19 +24,49 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const { data: countries = [], isLoading } = useListCountries({ query: { queryKey: ["countries"] } });
   const { data: posts = [] } = useListPosts({ query: { queryKey: ["posts"] } });
   const [filterCountry, setFilterCountry] = useState<string>("all");
+  const [filterTransport, setFilterTransport] = useState<string>("all");
+  const [filterYear, setFilterYear] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+
+  const transportOptions = useMemo(() => {
+    const modes = new Set<string>();
+    for (const c of countries) {
+      for (const field of [c.transportationTo, c.transportationOnSite]) {
+        if (field) field.split(",").forEach(t => modes.add(t.trim()));
+      }
+    }
+    return Array.from(modes).sort();
+  }, [countries]);
+
+  const yearOptions = useMemo(() => {
+    const years = new Set<string>();
+    for (const c of countries) {
+      if (c.visitedAt) years.add(new Date(c.visitedAt).getFullYear().toString());
+    }
+    return Array.from(years).sort((a, b) => Number(b) - Number(a));
+  }, [countries]);
 
   const filteredSorted = useMemo(() => {
     let list = [...countries];
     if (filterCountry !== "all") {
       list = list.filter(c => String(c.id) === filterCountry);
     }
+    if (filterTransport !== "all") {
+      list = list.filter(c => {
+        const modes = [c.transportationTo, c.transportationOnSite]
+          .filter(Boolean).join(",").split(",").map(t => t.trim());
+        return modes.includes(filterTransport);
+      });
+    }
+    if (filterYear !== "all") {
+      list = list.filter(c => c.visitedAt && new Date(c.visitedAt).getFullYear().toString() === filterYear);
+    }
     list.sort((a, b) => {
       const diff = new Date(a.visitedAt).getTime() - new Date(b.visitedAt).getTime();
       return sortOrder === "newest" ? -diff : diff;
     });
     return list;
-  }, [countries, filterCountry, sortOrder]);
+  }, [countries, filterCountry, filterTransport, filterYear, sortOrder]);
 
   if (isLoading) {
     return <div className="py-20 text-center text-muted-foreground animate-pulse font-serif italic">Unfolding the map...</div>;
@@ -60,6 +90,34 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
             </SelectContent>
           </Select>
 
+          {transportOptions.length > 0 && (
+            <Select value={filterTransport} onValueChange={setFilterTransport}>
+              <SelectTrigger className="w-44" data-testid="select-filter-transport">
+                <SelectValue placeholder="All Transport" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Transport</SelectItem>
+                {transportOptions.map(t => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {yearOptions.length > 0 && (
+            <Select value={filterYear} onValueChange={setFilterYear}>
+              <SelectTrigger className="w-32" data-testid="select-filter-year">
+                <SelectValue placeholder="All Years" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                {yearOptions.map(y => (
+                  <SelectItem key={y} value={y}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <Button
             variant="outline"
             size="sm"
@@ -71,11 +129,11 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
             {sortOrder === "newest" ? "Newest First" : "Oldest First"}
           </Button>
 
-          {(filterCountry !== "all") && (
+          {(filterCountry !== "all" || filterTransport !== "all" || filterYear !== "all") && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setFilterCountry("all")}
+              onClick={() => { setFilterCountry("all"); setFilterTransport("all"); setFilterYear("all"); }}
               className="text-muted-foreground"
               data-testid="button-clear-filters"
             >
