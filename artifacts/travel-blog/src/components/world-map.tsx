@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from "react-simple-maps";
 import { useListMapPins, useListCountries } from "@workspace/api-client-react";
 import { Link } from "wouter";
-import { MapPin, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { MapPin, ZoomIn, ZoomOut, RotateCcw, X } from "lucide-react";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -12,6 +12,8 @@ export function WorldMap() {
   const [activePin, setActivePin] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState<[number, number]>([10, 20]);
+  const [popoverPos, setPopoverPos] = useState<{ x: number; y: number } | null>(null);
+  const outerRef = useRef<HTMLDivElement>(null);
 
   const visitedCountryCodes = useMemo(() => {
     return new Set(countries.map(c => c.countryCode.toUpperCase()));
@@ -19,12 +21,29 @@ export function WorldMap() {
 
   const activeData = pins.find(p => p.id === activePin);
 
+  const handlePinClick = (e: React.MouseEvent, pinId: number) => {
+    e.stopPropagation();
+    const newPinId = pinId === activePin ? null : pinId;
+    setActivePin(newPinId);
+    if (newPinId !== null && outerRef.current) {
+      const rect = outerRef.current.getBoundingClientRect();
+      setPopoverPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    } else {
+      setPopoverPos(null);
+    }
+  };
+
+  const handleMapClick = () => {
+    setActivePin(null);
+    setPopoverPos(null);
+  };
+
   return (
-    <div className="w-full relative">
+    <div ref={outerRef} className="w-full relative">
       {/* Map container */}
       <div
         className="w-full relative overflow-hidden rounded-3xl border border-border/40 shadow-xl"
-        style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d1f3c 40%, #0f2840 100%)", minHeight: "520px" }}
+        style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d1f3c 40%, #0f2840 100%)", minHeight: "380px" }}
       >
         {/* Subtle grid overlay */}
         <div
@@ -77,8 +96,8 @@ export function WorldMap() {
 
         <ComposableMap
           projectionConfig={{ scale: 155, center }}
-          style={{ width: "100%", height: "100%", minHeight: "520px" }}
-          onClick={() => setActivePin(null)}
+          style={{ width: "100%", height: "100%", minHeight: "380px" }}
+          onClick={handleMapClick}
         >
           <ZoomableGroup zoom={zoom} onMoveEnd={({ coordinates }) => setCenter(coordinates as [number, number])}>
             <Geographies geography={geoUrl}>
@@ -116,7 +135,7 @@ export function WorldMap() {
               <Marker key={pin.id} coordinates={[pin.longitude, pin.latitude]}>
                 <g
                   className="cursor-pointer"
-                  onClick={(e) => { e.stopPropagation(); setActivePin(pin.id === activePin ? null : pin.id); }}
+                  onClick={(e) => handlePinClick(e, pin.id)}
                 >
                   {/* Pulse ring */}
                   <circle
@@ -152,31 +171,47 @@ export function WorldMap() {
         </div>
       </div>
 
-      {/* Active pin popover — rendered outside map to avoid clipping */}
-      {activeData && (
-        <div className="mt-3 bg-card border border-border rounded-2xl shadow-lg p-5 flex gap-4 items-start animate-in fade-in slide-in-from-top-2 duration-200">
-          {activeData.coverImageUrl && (
-            <div className="w-24 h-20 rounded-xl overflow-hidden bg-muted shrink-0 shadow-sm">
-              <img src={activeData.coverImageUrl} alt={activeData.title} className="w-full h-full object-cover" />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <h4 className="font-serif font-bold text-lg leading-tight text-foreground">{activeData.title}</h4>
+      {/* Active pin popover — absolutely positioned over the map near the clicked pin */}
+      {activeData && popoverPos && (() => {
+        const containerWidth = outerRef.current?.clientWidth ?? 800;
+        const popoverWidth = 260;
+        const left = popoverPos.x + 14 + popoverWidth > containerWidth
+          ? popoverPos.x - 14 - popoverWidth
+          : popoverPos.x + 14;
+        const top = Math.max(popoverPos.y - 80, 8);
+        return (
+          <div
+            className="absolute z-20 bg-card/95 backdrop-blur-sm border border-border rounded-2xl shadow-xl p-4 animate-in fade-in duration-200"
+            style={{ left, top, width: popoverWidth }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-2 right-2 w-5 h-5 rounded-full bg-muted/60 text-muted-foreground hover:bg-muted flex items-center justify-center"
+              onClick={() => { setActivePin(null); setPopoverPos(null); }}
+            >
+              <X className="w-3 h-3" />
+            </button>
+            {activeData.coverImageUrl && (
+              <div className="w-full h-28 rounded-xl overflow-hidden bg-muted mb-3 shadow-sm">
+                <img src={activeData.coverImageUrl} alt={activeData.title} className="w-full h-full object-cover" />
+              </div>
+            )}
+            <h4 className="font-serif font-bold text-base leading-tight text-foreground pr-4">{activeData.title}</h4>
             {activeData.location && (
               <p className="text-xs text-muted-foreground flex items-center gap-1 font-mono uppercase tracking-wider mt-1">
                 <MapPin className="w-3 h-3" /> {activeData.location}
               </p>
             )}
             <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{activeData.excerpt}</p>
+            <Link
+              href={`/posts/${activeData.slug}`}
+              className="inline-block mt-3 text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors"
+            >
+              Read &rarr;
+            </Link>
           </div>
-          <Link
-            href={`/posts/${activeData.slug}`}
-            className="shrink-0 text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors"
-          >
-            Read &rarr;
-          </Link>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
