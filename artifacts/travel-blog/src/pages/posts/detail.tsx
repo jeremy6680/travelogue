@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import Markdown from "react-markdown";
 import { Layout } from "@/components/layout";
 import { useListPosts, useListCountries } from "@workspace/api-client-react";
 import { useParams, Link } from "wouter";
@@ -77,10 +78,10 @@ export default function PostDetail() {
         )}
 
         {/* Content */}
-        <div className="prose prose-lg md:prose-xl dark:prose-invert prose-p:font-sans prose-p:leading-relaxed prose-headings:font-serif prose-a:text-secondary hover:prose-a:text-secondary/80 max-w-none prose-img:rounded-2xl prose-img:shadow-sm">
-          {post.content.split("\n").map((paragraph, idx) =>
-            paragraph.trim() ? <p key={idx}>{paragraph}</p> : <br key={idx} />
-          )}
+        <div
+          className="prose prose-lg md:prose-xl dark:prose-invert prose-p:font-sans prose-p:leading-relaxed prose-headings:font-serif prose-a:text-secondary hover:prose-a:text-secondary/80 max-w-none prose-img:rounded-2xl prose-img:shadow-sm"
+        >
+          <Markdown>{post.content}</Markdown>
         </div>
 
         {/* Photo Gallery */}
