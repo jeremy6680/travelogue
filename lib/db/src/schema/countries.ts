@@ -13,6 +13,8 @@ export const countriesTable = pgTable("countries", {
   visitedAt: text("visited_at").notNull(),
   latitude: real("latitude").notNull(),
   longitude: real("longitude").notNull(),
+  transportationTo: text("transportation_to"),
+  transportationOnSite: text("transportation_on_site"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

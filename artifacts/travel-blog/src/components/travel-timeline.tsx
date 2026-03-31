@@ -3,7 +3,7 @@ import { useListCountries, useListPosts } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { MapPin, Users, Heart, Navigation, ArrowUpDown } from "lucide-react";
+import { MapPin, Users, Heart, Navigation, ArrowUpDown, PlaneTakeoff, Car } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
@@ -151,6 +151,24 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                       <div>
                         <strong className="block text-foreground mb-0.5 font-serif">Met Along the Way</strong>
                         <span className="text-muted-foreground leading-relaxed">{country.friendsFamilyMet}</span>
+                      </div>
+                    </div>
+                  )}
+                  {country.transportationTo && (
+                    <div className="flex items-start gap-2.5">
+                      <PlaneTakeoff className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+                      <div>
+                        <strong className="block text-foreground mb-0.5 font-serif">Getting There</strong>
+                        <span className="text-muted-foreground leading-relaxed">{country.transportationTo}</span>
+                      </div>
+                    </div>
+                  )}
+                  {country.transportationOnSite && (
+                    <div className="flex items-start gap-2.5">
+                      <Car className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+                      <div>
+                        <strong className="block text-foreground mb-0.5 font-serif">Getting Around</strong>
+                        <span className="text-muted-foreground leading-relaxed">{country.transportationOnSite}</span>
                       </div>
                     </div>
                   )}

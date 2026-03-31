@@ -91,6 +91,10 @@ export interface Country {
   visitedAt: string;
   latitude: number;
   longitude: number;
+  /** @nullable */
+  transportationTo: string | null;
+  /** @nullable */
+  transportationOnSite: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -105,6 +109,8 @@ export interface CreateCountryBody {
   visitedAt: string;
   latitude: number;
   longitude: number;
+  transportationTo?: string | null;
+  transportationOnSite?: string | null;
 }
 
 export interface UpdateCountryBody {
@@ -117,6 +123,8 @@ export interface UpdateCountryBody {
   visitedAt?: string;
   latitude?: number;
   longitude?: number;
+  transportationTo?: string | null;
+  transportationOnSite?: string | null;
 }
 
 export interface MapPin {

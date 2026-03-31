@@ -17,6 +17,8 @@ export interface Country {
   visitedAt: string;
   latitude: number;
   longitude: number;
+  transportationTo: string | null;
+  transportationOnSite: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -392,6 +392,10 @@ components:
           type: number
         longitude:
           type: number
+        transportationTo:
+          type: ["string", "null"]
+        transportationOnSite:
+          type: ["string", "null"]
         createdAt:
           type: string
         updatedAt:
@@ -407,6 +411,8 @@ components:
         - visitedAt
         - latitude
         - longitude
+        - transportationTo
+        - transportationOnSite
         - createdAt
         - updatedAt
 
@@ -431,6 +437,10 @@ components:
           type: number
         longitude:
           type: number
+        transportationTo:
+          type: ["string", "null"]
+        transportationOnSite:
+          type: ["string", "null"]
       required:
         - name
         - countryCode
@@ -463,6 +473,10 @@ components:
           type: number
         longitude:
           type: number
+        transportationTo:
+          type: ["string", "null"]
+        transportationOnSite:
+          type: ["string", "null"]
 
     MapPin:
       type: object

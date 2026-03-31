@@ -171,6 +171,8 @@ export const ListCountriesResponseItem = zod.object({
   visitedAt: zod.string(),
   latitude: zod.number(),
   longitude: zod.number(),
+  transportationTo: zod.string().nullable(),
+  transportationOnSite: zod.string().nullable(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -189,6 +191,8 @@ export const CreateCountryBody = zod.object({
   visitedAt: zod.string(),
   latitude: zod.number(),
   longitude: zod.number(),
+  transportationTo: zod.string().nullable().optional(),
+  transportationOnSite: zod.string().nullable().optional(),
 });
 
 /**
@@ -209,6 +213,8 @@ export const GetCountryResponse = zod.object({
   visitedAt: zod.string(),
   latitude: zod.number(),
   longitude: zod.number(),
+  transportationTo: zod.string().nullable(),
+  transportationOnSite: zod.string().nullable(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -230,6 +236,8 @@ export const UpdateCountryBody = zod.object({
   visitedAt: zod.string().optional(),
   latitude: zod.number().optional(),
   longitude: zod.number().optional(),
+  transportationTo: zod.string().nullable().optional(),
+  transportationOnSite: zod.string().nullable().optional(),
 });
 
 export const UpdateCountryResponse = zod.object({
@@ -243,6 +251,8 @@ export const UpdateCountryResponse = zod.object({
   visitedAt: zod.string(),
   latitude: zod.number(),
   longitude: zod.number(),
+  transportationTo: zod.string().nullable(),
+  transportationOnSite: zod.string().nullable(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
