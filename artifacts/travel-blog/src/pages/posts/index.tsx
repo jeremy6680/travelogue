@@ -5,19 +5,31 @@ import { Link } from "wouter";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { MapPin, Calendar, BookOpen, ArrowUpDown, Filter } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 export default function PostsPage() {
-  const { data: posts = [], isLoading } = useListPosts({ query: { queryKey: ["posts"] } });
-  const { data: countries = [] } = useListCountries({ query: { queryKey: ["countries"] } });
+  const { data: posts = [], isLoading } = useListPosts({
+    query: { queryKey: ["posts"] },
+  });
+  const { data: countries = [] } = useListCountries({
+    query: { queryKey: ["countries"] },
+  });
   const [filterCountry, setFilterCountry] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   const filtered = useMemo(() => {
     let list = [...posts];
     if (filterCountry !== "all") {
-      list = list.filter(p => p.countryId != null && String(p.countryId) === filterCountry);
+      list = list.filter(
+        (p) => p.countryId != null && String(p.countryId) === filterCountry,
+      );
     }
     list.sort((a, b) => {
       const da = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
@@ -29,15 +41,22 @@ export default function PostsPage() {
 
   function getFlagEmoji(code: string) {
     if (!code || code.length !== 2) return "";
-    return String.fromCodePoint(...code.toUpperCase().split("").map(c => 127397 + c.charCodeAt(0)));
+    return String.fromCodePoint(
+      ...code
+        .toUpperCase()
+        .split("")
+        .map((c) => 127397 + c.charCodeAt(0)),
+    );
   }
 
   return (
     <Layout>
       <div className="space-y-10 max-w-4xl mx-auto">
-        <header className="space-y-4 border-b pb-10 text-center">
-          <h1 className="text-5xl font-serif font-bold text-foreground">Travel Journal</h1>
-          <p className="text-xl text-muted-foreground font-serif italic max-w-2xl mx-auto">
+        <header className="text-center space-y-6 border-b pb-12">
+          <h1 className="text-5xl md:text-6xl font-serif font-bold text-foreground tracking-tight">
+            Travel Journal
+          </h1>
+          <p className="text-xl text-muted-foreground font-serif italic max-w-2xl mx-auto leading-relaxed">
             Stories, field notes, and reflections from the road.
           </p>
         </header>
@@ -51,7 +70,7 @@ export default function PostsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Countries</SelectItem>
-              {countries.map(c => (
+              {countries.map((c) => (
                 <SelectItem key={c.id} value={String(c.id)}>
                   {getFlagEmoji(c.countryCode)} {c.name}
                 </SelectItem>
@@ -62,7 +81,9 @@ export default function PostsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setSortOrder(s => s === "newest" ? "oldest" : "newest")}
+            onClick={() =>
+              setSortOrder((s) => (s === "newest" ? "oldest" : "newest"))
+            }
             className="flex items-center gap-2"
             data-testid="button-sort-order"
           >
@@ -116,7 +137,8 @@ export default function PostsPage() {
                   )}
                   {post.location && (
                     <div className="absolute top-3 left-3 bg-background/95 backdrop-blur text-foreground text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
-                      <MapPin className="w-3.5 h-3.5 text-secondary" /> {post.location}
+                      <MapPin className="w-3.5 h-3.5 text-secondary" />{" "}
+                      {post.location}
                     </div>
                   )}
                 </div>
@@ -129,21 +151,31 @@ export default function PostsPage() {
                         {format(new Date(post.publishedAt), "MMM d, yyyy")}
                       </span>
                     )}
-                    {post.countryId && (() => {
-                      const c = countries.find(x => x.id === post.countryId);
-                      return c ? (
-                        <span className="flex items-center gap-1">
-                          {getFlagEmoji(c.countryCode)} {c.name}
-                        </span>
-                      ) : null;
-                    })()}
+                    {post.countryId &&
+                      (() => {
+                        const c = countries.find(
+                          (x) => x.id === post.countryId,
+                        );
+                        return c ? (
+                          <span className="flex items-center gap-1">
+                            {getFlagEmoji(c.countryCode)} {c.name}
+                          </span>
+                        ) : null;
+                      })()}
                   </div>
 
                   <div>
                     <h2 className="text-3xl font-serif font-bold group-hover:text-secondary transition-colors text-foreground leading-tight">
-                      <Link href={`/posts/${post.slug}`} data-testid={`link-post-title-${post.id}`}>{post.title}</Link>
+                      <Link
+                        href={`/posts/${post.slug}`}
+                        data-testid={`link-post-title-${post.id}`}
+                      >
+                        {post.title}
+                      </Link>
                     </h2>
-                    <p className="text-muted-foreground mt-3 leading-relaxed text-base">{post.excerpt}</p>
+                    <p className="text-muted-foreground mt-3 leading-relaxed text-base">
+                      {post.excerpt}
+                    </p>
                   </div>
 
                   <Link
@@ -151,7 +183,10 @@ export default function PostsPage() {
                     className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-secondary transition-colors uppercase tracking-wider font-sans"
                     data-testid={`link-read-post-${post.id}`}
                   >
-                    Read dispatch <span aria-hidden="true" className="text-lg leading-none">&rarr;</span>
+                    Read dispatch{" "}
+                    <span aria-hidden="true" className="text-lg leading-none">
+                      &rarr;
+                    </span>
                   </Link>
                 </div>
               </motion.article>
