@@ -35,6 +35,7 @@ type PostRow = {
   content: string;
   excerpt: string;
   cover_image_url: string | null;
+  gallery: { url: string; caption: string }[] | null;
   latitude: number | null;
   longitude: number | null;
   location: string | null;
@@ -80,6 +81,7 @@ await db.insert(postsTable).values(
     content: p.content,
     excerpt: p.excerpt,
     coverImageUrl: p.cover_image_url ?? null,
+    gallery: p.gallery ?? null,
     latitude: p.latitude ?? null,
     longitude: p.longitude ?? null,
     location: p.location ?? null,

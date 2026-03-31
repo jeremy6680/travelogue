@@ -248,6 +248,17 @@ components:
       required:
         - status
 
+    GalleryImage:
+      type: object
+      properties:
+        url:
+          type: string
+        caption:
+          type: string
+      required:
+        - url
+        - caption
+
     Post:
       type: object
       properties:
@@ -263,6 +274,10 @@ components:
           type: string
         coverImageUrl:
           type: ["string", "null"]
+        gallery:
+          type: ["array", "null"]
+          items:
+            $ref: "#/components/schemas/GalleryImage"
         latitude:
           type: ["number", "null"]
         longitude:
@@ -284,6 +299,7 @@ components:
         - content
         - excerpt
         - coverImageUrl
+        - gallery
         - latitude
         - longitude
         - location
@@ -305,6 +321,10 @@ components:
           type: string
         coverImageUrl:
           type: ["string", "null"]
+        gallery:
+          type: ["array", "null"]
+          items:
+            $ref: "#/components/schemas/GalleryImage"
         latitude:
           type: ["number", "null"]
         longitude:
@@ -334,6 +354,10 @@ components:
           type: string
         coverImageUrl:
           type: ["string", "null"]
+        gallery:
+          type: ["array", "null"]
+          items:
+            $ref: "#/components/schemas/GalleryImage"
         latitude:
           type: ["number", "null"]
         longitude:

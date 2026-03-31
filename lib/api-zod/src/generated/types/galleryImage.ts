@@ -6,9 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface TravelStats {
-  totalCountries: number;
-  totalPosts: number;
-  totalCities: number;
-  continents: number;
+export interface GalleryImage {
+  url: string;
+  caption: string;
 }

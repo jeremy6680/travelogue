@@ -7,26 +7,6 @@ import { MapPin, Calendar, ArrowLeft, Globe2 } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import { motion } from "framer-motion";
 
-// Gallery images keyed by post slug (demo: shows what a gallery looks like)
-const GALLERY_IMAGES: Record<string, { url: string; caption: string }[]> = {
-  "lost-in-tokyo-wonder": [
-    { url: "https://images.unsplash.com/photo-1480796927426-f609979314bd?w=900&q=80", caption: "Shibuya Crossing at dusk" },
-    { url: "https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?w=900&q=80", caption: "Cherry blossoms, Shinjuku Gyoen" },
-    { url: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=900&q=80", caption: "Yanaka neighbourhood" },
-    { url: "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=900&q=80", caption: "Midnight ramen in Shimokitazawa" },
-  ],
-  "milford-sound-new-zealand": [
-    { url: "https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=900&q=80", caption: "Mirror Lakes on the drive in" },
-    { url: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=900&q=80", caption: "Waterfalls from every cliff" },
-    { url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=80", caption: "Dawn kayaking on the Sound" },
-  ],
-  "rome-48-hours-eternal-city": [
-    { url: "https://images.unsplash.com/photo-1529260830199-42c24126f198?w=900&q=80", caption: "The Pantheon — still standing" },
-    { url: "https://images.unsplash.com/photo-1544782558-acb61cfdb8c2?w=900&q=80", caption: "Trastevere back streets" },
-    { url: "https://images.unsplash.com/photo-1555992336-03a23c7b20ee?w=900&q=80", caption: "Carbonara that changed everything" },
-  ],
-};
-
 export default function PostDetail() {
   const { slug } = useParams();
   const { data: posts = [], isLoading } = useListPosts({ query: { queryKey: ["posts"] } });
@@ -34,7 +14,7 @@ export default function PostDetail() {
 
   const post = useMemo(() => posts.find(p => p.slug === slug), [posts, slug]);
   const country = useMemo(() => countries.find(c => c.id === post?.countryId), [countries, post]);
-  const gallery = slug ? (GALLERY_IMAGES[slug] ?? []) : [];
+  const gallery = post?.gallery ?? [];
 
   if (isLoading) {
     return (

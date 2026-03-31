@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, real, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, real, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -9,6 +9,7 @@ export const postsTable = pgTable("posts", {
   content: text("content").notNull(),
   excerpt: text("excerpt").notNull(),
   coverImageUrl: text("cover_image_url"),
+  gallery: jsonb("gallery").$type<{ url: string; caption: string }[]>(),
   latitude: real("latitude"),
   longitude: real("longitude"),
   location: text("location"),
