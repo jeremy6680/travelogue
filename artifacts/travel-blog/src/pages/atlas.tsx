@@ -23,11 +23,11 @@ export default function AtlasPage() {
         </motion.header>
 
         {stats && (
-          <motion.header
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
-            className="flex flex-wrap gap-8"
+            className="flex flex-wrap gap-8 justify-center"
           >
             {[
               { value: stats.totalCountries, label: "Countries" },
@@ -44,16 +44,16 @@ export default function AtlasPage() {
                 </span>
               </div>
             ))}
-          </motion.header>
+          </motion.div>
         )}
 
-        <motion.header
+        <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
         >
           <WorldMap />
-        </motion.header>
+        </motion.div>
       </div>
     </Layout>
   );
