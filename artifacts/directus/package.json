@@ -1,0 +1,13 @@
+{
+  "name": "@workspace/directus",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "directus start",
+    "start": "directus start",
+    "bootstrap": "directus bootstrap"
+  },
+  "dependencies": {
+    "directus": "^11.17.1"
+  }
+}
