@@ -131,6 +131,36 @@ export interface UpdateTripBody {
   transportationOnSite?: string | null;
 }
 
+export interface Photo {
+  id: number;
+  url: string;
+  /** @nullable */
+  caption: string | null;
+  /** @nullable */
+  link: string | null;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePhotoBody {
+  url: string;
+  /** @nullable */
+  caption?: string | null;
+  /** @nullable */
+  link?: string | null;
+  displayOrder?: number;
+}
+
+export interface UpdatePhotoBody {
+  url?: string;
+  /** @nullable */
+  caption?: string | null;
+  /** @nullable */
+  link?: string | null;
+  displayOrder?: number;
+}
+
 export interface MapPin {
   id: number;
   title: string;

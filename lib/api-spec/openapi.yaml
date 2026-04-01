@@ -13,6 +13,8 @@ tags:
     description: Blog post operations
   - name: trips
     description: Trip operations
+  - name: photos
+    description: Photo grid operations
 paths:
   /healthz:
     get:
@@ -200,6 +202,78 @@ paths:
       operationId: deleteTrip
       tags: [trips]
       summary: Delete a trip
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /photos:
+    get:
+      operationId: listPhotos
+      tags: [photos]
+      summary: List all photos
+      responses:
+        "200":
+          description: List of photos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Photo"
+    post:
+      operationId: createPhoto
+      tags: [photos]
+      summary: Add a photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePhotoBody"
+      responses:
+        "201":
+          description: Created photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+
+  /photos/{id}:
+    patch:
+      operationId: updatePhoto
+      tags: [photos]
+      summary: Update a photo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePhotoBody"
+      responses:
+        "200":
+          description: Updated photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+        "404":
+          description: Not found
+    delete:
+      operationId: deletePhoto
+      tags: [photos]
+      summary: Delete a photo
       parameters:
         - name: id
           in: path
@@ -477,6 +551,58 @@ components:
           type: ["string", "null"]
         transportationOnSite:
           type: ["string", "null"]
+
+    Photo:
+      type: object
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+        caption:
+          type: ["string", "null"]
+        link:
+          type: ["string", "null"]
+        displayOrder:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - url
+        - caption
+        - link
+        - displayOrder
+        - createdAt
+        - updatedAt
+
+    CreatePhotoBody:
+      type: object
+      properties:
+        url:
+          type: string
+        caption:
+          type: ["string", "null"]
+        link:
+          type: ["string", "null"]
+        displayOrder:
+          type: integer
+      required:
+        - url
+
+    UpdatePhotoBody:
+      type: object
+      properties:
+        url:
+          type: string
+        caption:
+          type: ["string", "null"]
+        link:
+          type: ["string", "null"]
+        displayOrder:
+          type: integer
 
     MapPin:
       type: object

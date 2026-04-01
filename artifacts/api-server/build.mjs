@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
-import { rm } from "node:fs/promises";
+import { rm, cp } from "node:fs/promises";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -13,6 +13,12 @@ const artifactDir = path.dirname(fileURLToPath(import.meta.url));
 async function buildAll() {
   const distDir = path.resolve(artifactDir, "dist");
   await rm(distDir, { recursive: true, force: true });
+
+  // Copy DB migrations so the server can run them at startup
+  const migrationsSource = path.resolve(artifactDir, "../../lib/db/migrations");
+  await cp(migrationsSource, path.join(distDir, "migrations"), { recursive: true, force: true }).catch(() => {
+    // No migrations yet — folder will be created on first generate
+  });
 
   await esbuild({
     entryPoints: [path.resolve(artifactDir, "src/index.ts")],

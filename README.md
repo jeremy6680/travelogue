@@ -57,13 +57,23 @@ ADMIN_PASSWORD=<strong password>
 
 The database connection in that file defaults to `localhost:5432/travelogue` (same Postgres instance as the API).
 
-### 3. Push the database schema
+### 3. Run database migrations
 
 ```sh
-pnpm --filter @workspace/db run push
+pnpm --filter @workspace/db migrate
 ```
 
-This creates the `countries` and `posts` tables via Drizzle's schema push (no migration files needed in development).
+This applies all pending SQL migrations from `lib/db/migrations/` to the database. The migration history is tracked in a `__drizzle_migrations` table — already-applied migrations are skipped automatically.
+
+When you update the schema, generate a new migration file first:
+
+```sh
+pnpm --filter @workspace/db generate
+# review the generated .sql file in lib/db/migrations/
+pnpm --filter @workspace/db migrate
+```
+
+> **Note:** In production the API server runs migrations automatically on startup.
 
 ### 4. Bootstrap Directus (first run only)
 
@@ -79,7 +89,7 @@ This initialises the Directus system tables in the database and creates the admi
 pnpm --filter @workspace/scripts seed
 ```
 
-Inserts the demo countries and posts from `scripts/data/`.
+Inserts the demo trips and posts from `scripts/data/`.
 
 ---
 
@@ -155,12 +165,16 @@ travelogue/
 │   ├── directus/           # Directus CMS — runs on port 8055, own .env
 │   └── travel-blog/        # React + Vite frontend — PORT defaults to 5173
 ├── lib/
-│   ├── db/                 # Drizzle schema + DB connection
-│   ├── api-spec/           # OpenAPI spec (source of truth)
+│   ├── db/
+│   │   ├── migrations/     # Versioned SQL migration files (committed to git)
+│   │   └── src/
+│   │       ├── schema/     # Drizzle table definitions (source of truth)
+│   │       └── migrate.ts  # Programmatic migration runner (called at server startup)
+│   ├── api-spec/           # OpenAPI spec (source of truth for API shape)
 │   ├── api-zod/            # Generated Zod validators (used by api-server)
 │   └── api-client-react/   # Generated React Query hooks (used by travel-blog)
 ├── scripts/
-│   ├── data/               # Seed data (countries.json, posts.json)
+│   ├── data/               # Seed data (trips.json, posts.json)
 │   └── src/seed.ts         # DB seed script
 └── .env                    # DATABASE_URL (gitignored)
 ```

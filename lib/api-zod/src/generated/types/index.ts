@@ -6,13 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./createPhotoBody";
 export * from "./createPostBody";
 export * from "./createTripBody";
 export * from "./galleryImage";
 export * from "./healthStatus";
 export * from "./mapPin";
+export * from "./photo";
 export * from "./post";
 export * from "./travelStats";
 export * from "./trip";
+export * from "./updatePhotoBody";
 export * from "./updatePostBody";
 export * from "./updateTripBody";

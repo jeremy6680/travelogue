@@ -1,52 +1,31 @@
-import { useListPosts, useGetStats } from "@workspace/api-client-react";
+import { useListPosts, useGetStats, useListPhotos } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { MapPin, Calendar, BookOpen, Instagram, Twitter, Mail, Globe, Send, ArrowRight } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  BookOpen,
+  Instagram,
+  Twitter,
+  Mail,
+  Globe,
+  Send,
+  ArrowRight,
+} from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-// Static Instagram-style preview posts (design demo)
-const instaGrid = [
-  {
-    id: 1,
-    img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80",
-    caption: "Tokyo neon dreams 🗼",
-    location: "Tokyo, Japan",
-  },
-  {
-    id: 2,
-    img: "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=600&q=80",
-    caption: "Nothing prepares you for Milford Sound",
-    location: "New Zealand",
-  },
-  {
-    id: 3,
-    img: "https://images.unsplash.com/photo-1598300188904-6e3b1dc9e3b6?w=600&q=80",
-    caption: "Every alley in Chefchaouen is a painting",
-    location: "Morocco",
-  },
-  {
-    id: 4,
-    img: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&q=80",
-    caption: "The Colosseum at golden hour hit different",
-    location: "Rome, Italy",
-  },
-  {
-    id: 5,
-    img: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80",
-    caption: "Kyoto before dawn — temples and silence",
-    location: "Kyoto, Japan",
-  },
-  {
-    id: 6,
-    img: "https://images.unsplash.com/photo-1557409518-691ebcd96038?w=600&q=80",
-    caption: "One more Japanese morning",
-    location: "Japan",
-  },
+const FALLBACK_PHOTOS = [
+  { id: "f1", url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80", caption: "Tokyo neon dreams", link: null },
+  { id: "f2", url: "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=600&q=80", caption: "Milford Sound", link: null },
+  { id: "f3", url: "https://images.unsplash.com/photo-1598300188904-6e3b1dc9e3b6?w=600&q=80", caption: "Chefchaouen", link: null },
+  { id: "f4", url: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&q=80", caption: "Rome at golden hour", link: null },
+  { id: "f5", url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80", caption: "Kyoto before dawn", link: null },
+  { id: "f6", url: "https://images.unsplash.com/photo-1557409518-691ebcd96038?w=600&q=80", caption: "Japanese morning", link: null },
 ];
 
 const fadeUp = (delay = 0) => ({
@@ -57,26 +36,46 @@ const fadeUp = (delay = 0) => ({
 });
 
 export default function Home() {
-  const { data: allPosts = [] } = useListPosts({ query: { queryKey: ["posts"] } });
+  const { data: allPosts = [] } = useListPosts({
+    query: { queryKey: ["posts"] },
+  });
   const { data: stats } = useGetStats({ query: { queryKey: ["stats"] } });
+  const { data: dbPhotos = [] } = useListPhotos({ query: { queryKey: ["photos"] } });
+  const gridPhotos = dbPhotos.length > 0 ? dbPhotos : FALLBACK_PHOTOS;
   const [contactSent, setContactSent] = useState(false);
-  const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
 
   // 3 most recent published posts
   const recentPosts = [...allPosts]
-    .filter(p => p.publishedAt)
-    .sort((a, b) => new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime())
+    .filter((p) => p.publishedAt)
+    .sort(
+      (a, b) =>
+        new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime(),
+    )
     .slice(0, 3);
 
   function handleContact(e: React.FormEvent) {
     e.preventDefault();
-    setContactSent(true);
+    const body = new URLSearchParams({
+      "form-name": "contact",
+      ...contactForm,
+    });
+    fetch("/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    })
+      .then(() => setContactSent(true))
+      .catch(() => setContactSent(true));
   }
 
   return (
     <Layout>
       <div className="space-y-32">
-
         {/* ── Hero ── */}
         <section className="text-center space-y-8 pt-8 max-w-4xl mx-auto">
           <motion.h1
@@ -85,7 +84,9 @@ export default function Home() {
             className="text-6xl md:text-8xl font-serif font-bold text-foreground tracking-tight leading-[1.05]"
           >
             Mapping the World,{" "}
-            <span className="text-secondary italic font-light block">One Story at a Time</span>
+            <span className="text-secondary italic font-light block">
+              One Story at a Time
+            </span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -93,7 +94,8 @@ export default function Home() {
             transition={{ delay: 0.2 }}
             className="text-xl text-muted-foreground font-serif italic max-w-2xl mx-auto leading-relaxed"
           >
-            A collection of dispatches from dusty roads, night trains, and unfamiliar shores.
+            A collection of dispatches from dusty roads, night trains, and
+            unfamiliar shores.
           </motion.p>
           <motion.div
             initial={{ opacity: 0 }}
@@ -131,8 +133,12 @@ export default function Home() {
                 { value: stats.totalPosts, label: "Dispatches" },
               ].map(({ value, label }) => (
                 <div key={label} className="text-center">
-                  <span className="block text-4xl font-serif font-bold text-primary">{value}</span>
-                  <span className="text-xs uppercase font-mono tracking-widest text-muted-foreground">{label}</span>
+                  <span className="block text-4xl font-serif font-bold text-primary">
+                    {value}
+                  </span>
+                  <span className="text-xs uppercase font-mono tracking-widest text-muted-foreground">
+                    {label}
+                  </span>
                 </div>
               ))}
             </motion.div>
@@ -143,8 +149,12 @@ export default function Home() {
         <section className="space-y-10">
           <motion.div {...fadeUp()} className="flex items-end justify-between">
             <div>
-              <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-2">Latest writing</p>
-              <h2 className="text-4xl font-serif font-bold text-foreground">Recent Dispatches</h2>
+              <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-2">
+                Latest writing
+              </p>
+              <h2 className="text-4xl font-serif font-bold text-foreground">
+                Recent Dispatches
+              </h2>
             </div>
             <Link
               href="/posts"
@@ -176,7 +186,8 @@ export default function Home() {
                   )}
                   {post.location && (
                     <div className="absolute top-3 left-3 bg-background/90 backdrop-blur text-foreground text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                      <MapPin className="w-3 h-3 text-secondary" /> {post.location}
+                      <MapPin className="w-3 h-3 text-secondary" />{" "}
+                      {post.location}
                     </div>
                   )}
                 </div>
@@ -188,9 +199,16 @@ export default function Home() {
                     </span>
                   )}
                   <h3 className="font-serif font-bold text-xl text-foreground group-hover:text-secondary transition-colors leading-snug">
-                    <Link href={`/posts/${post.slug}`} data-testid={`link-post-title-${post.id}`}>{post.title}</Link>
+                    <Link
+                      href={`/posts/${post.slug}`}
+                      data-testid={`link-post-title-${post.id}`}
+                    >
+                      {post.title}
+                    </Link>
                   </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2 flex-1">{post.excerpt}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2 flex-1">
+                    {post.excerpt}
+                  </p>
                   <Link
                     href={`/posts/${post.slug}`}
                     className="text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors inline-flex items-center gap-1 mt-auto"
@@ -207,42 +225,38 @@ export default function Home() {
         <section className="space-y-8">
           <motion.div {...fadeUp()} className="flex items-end justify-between">
             <div>
-              <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-2">On the road</p>
-              <h2 className="text-4xl font-serif font-bold text-foreground">From Instagram</h2>
+              <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-2">
+                On the road
+              </p>
+              <h2 className="text-4xl font-serif font-bold text-foreground">
+                Photo Journal
+              </h2>
             </div>
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-              data-testid="link-instagram"
-            >
-              <Instagram className="w-4 h-4" /> Follow
-            </a>
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {instaGrid.map((item, i) => (
+            {gridPhotos.map((photo, i) => (
               <motion.a
-                key={item.id}
-                href="https://instagram.com"
-                target="_blank"
+                key={photo.id}
+                href={photo.link ?? "#"}
+                target={photo.link?.startsWith("/") ? undefined : photo.link ? "_blank" : undefined}
                 rel="noopener noreferrer"
                 {...fadeUp(i * 0.07)}
                 className="group relative aspect-square overflow-hidden rounded-2xl bg-muted block"
-                data-testid={`card-instagram-${item.id}`}
+                data-testid={`card-photo-${photo.id}`}
               >
                 <img
-                  src={item.img}
-                  alt={item.caption}
+                  src={photo.url}
+                  alt={photo.caption ?? "Photo"}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                  <p className="text-white text-sm font-serif leading-snug">{item.caption}</p>
-                  <p className="text-white/70 text-xs font-mono uppercase tracking-wide mt-1">
-                    <MapPin className="w-3 h-3 inline mr-1" />{item.location}
-                  </p>
-                </div>
+                {photo.caption && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                    <p className="text-white text-sm font-serif leading-snug line-clamp-3">
+                      {photo.caption}
+                    </p>
+                  </div>
+                )}
               </motion.a>
             ))}
           </div>
@@ -262,19 +276,26 @@ export default function Home() {
 
           <motion.div {...fadeUp(0.15)} className="space-y-6">
             <div>
-              <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-3">The wanderer</p>
-              <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground leading-tight">About This Blog</h2>
+              <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-3">
+                The wanderer
+              </p>
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground leading-tight">
+                About This Blog
+              </h2>
             </div>
             <div className="space-y-4 text-muted-foreground font-serif leading-relaxed text-lg">
               <p>
-                I'm a traveler, writer, and perpetual over-packer who believes the best conversations happen on overnight trains and in hole-in-the-wall restaurants nobody's heard of yet.
+                I'm a traveler, writer, and perpetual over-packer who believes
+                the best conversations happen on overnight trains and in
+                hole-in-the-wall restaurants nobody's heard of yet.
               </p>
               <p>
-                This blog is my attempt to slow down and actually remember the places I've been — the light, the smell, the people, the awkward language mistakes. It's a personal record more than anything else.
+                This blog is my attempt to slow down and actually remember the
+                places I've been — the light, the smell, the people, the awkward
+                language mistakes. It's a personal record more than anything
+                else.
               </p>
-              <p>
-                Currently based wherever the next flight is going.
-              </p>
+              <p>Currently based wherever the next flight is going.</p>
             </div>
             <div className="flex items-center gap-4 pt-2">
               <a
@@ -298,7 +319,7 @@ export default function Home() {
                 <Twitter className="w-4 h-4" />
               </a>
               <a
-                href="mailto:hello@wanderlust.blog"
+                href="mailto:hey@jeremymarchandeau.com"
                 className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
                 data-testid="link-social-email"
                 aria-label="Email"
@@ -312,10 +333,15 @@ export default function Home() {
         {/* ── Contact ── */}
         <section id="contact" className="max-w-2xl mx-auto space-y-8">
           <motion.div {...fadeUp()} className="text-center space-y-3">
-            <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground">Get in touch</p>
-            <h2 className="text-4xl font-serif font-bold text-foreground">Say Hello</h2>
+            <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground">
+              Get in touch
+            </p>
+            <h2 className="text-4xl font-serif font-bold text-foreground">
+              Say Hello
+            </h2>
             <p className="text-muted-foreground font-serif italic text-lg">
-              Travel tips, collaboration ideas, or just to share a story from the road.
+              Travel tips, collaboration ideas, or just to share a story from
+              the road.
             </p>
           </motion.div>
 
@@ -325,12 +351,18 @@ export default function Home() {
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
                   <Send className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-serif font-bold text-foreground">Message received!</h3>
+                <h3 className="text-2xl font-serif font-bold text-foreground">
+                  Message received!
+                </h3>
                 <p className="text-muted-foreground font-serif italic">
-                  Thanks for reaching out. I'll reply from wherever I am in the world.
+                  Thanks for reaching out. I'll reply from wherever I am in the
+                  world.
                 </p>
                 <button
-                  onClick={() => { setContactSent(false); setContactForm({ name: "", email: "", message: "" }); }}
+                  onClick={() => {
+                    setContactSent(false);
+                    setContactForm({ name: "", email: "", message: "" });
+                  }}
                   className="text-sm text-primary hover:text-secondary transition-colors font-medium"
                   data-testid="button-send-another"
                 >
@@ -338,52 +370,79 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleContact} className="space-y-4 bg-card rounded-3xl border border-border p-8">
+              <form
+                onSubmit={handleContact}
+                className="space-y-4 bg-card rounded-3xl border border-border p-8"
+              >
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground" htmlFor="contact-name">Name</label>
+                    <label
+                      className="text-sm font-medium text-foreground"
+                      htmlFor="contact-name"
+                    >
+                      Name
+                    </label>
                     <Input
                       id="contact-name"
                       placeholder="Your name"
                       value={contactForm.name}
-                      onChange={e => setContactForm(f => ({ ...f, name: e.target.value }))}
+                      onChange={(e) =>
+                        setContactForm((f) => ({ ...f, name: e.target.value }))
+                      }
                       required
                       data-testid="input-contact-name"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground" htmlFor="contact-email">Email</label>
+                    <label
+                      className="text-sm font-medium text-foreground"
+                      htmlFor="contact-email"
+                    >
+                      Email
+                    </label>
                     <Input
                       id="contact-email"
                       type="email"
                       placeholder="your@email.com"
                       value={contactForm.email}
-                      onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))}
+                      onChange={(e) =>
+                        setContactForm((f) => ({ ...f, email: e.target.value }))
+                      }
                       required
                       data-testid="input-contact-email"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground" htmlFor="contact-message">Message</label>
+                  <label
+                    className="text-sm font-medium text-foreground"
+                    htmlFor="contact-message"
+                  >
+                    Message
+                  </label>
                   <Textarea
                     id="contact-message"
                     placeholder="Tell me where you've been, where you're going, or what you're dreaming about..."
                     rows={5}
                     value={contactForm.message}
-                    onChange={e => setContactForm(f => ({ ...f, message: e.target.value }))}
+                    onChange={(e) =>
+                      setContactForm((f) => ({ ...f, message: e.target.value }))
+                    }
                     required
                     data-testid="input-contact-message"
                   />
                 </div>
-                <Button type="submit" className="w-full" data-testid="button-submit-contact">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  data-testid="button-submit-contact"
+                >
                   Send Message <Send className="w-4 h-4 ml-2" />
                 </Button>
               </form>
             )}
           </motion.div>
         </section>
-
       </div>
     </Layout>
   );

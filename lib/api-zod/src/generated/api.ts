@@ -265,6 +265,78 @@ export const DeleteTripParams = zod.object({
 });
 
 /**
+ * @summary List all photos
+ */
+export const ListPhotosResponseItem = zod.object({
+  id: zod.number(),
+  url: zod.string(),
+  caption: zod.string().nullable(),
+  link: zod.string().nullable(),
+  displayOrder: zod.number(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+export const ListPhotosResponse = zod.array(ListPhotosResponseItem);
+
+/**
+ * @summary Add a photo
+ */
+export const CreatePhotoBody = zod.object({
+  url: zod.string(),
+  caption: zod.string().nullish(),
+  link: zod.string().nullish(),
+  displayOrder: zod.number().optional(),
+});
+
+/**
+ * @summary Get a photo by id
+ */
+export const GetPhotoParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetPhotoResponse = zod.object({
+  id: zod.number(),
+  url: zod.string(),
+  caption: zod.string().nullable(),
+  link: zod.string().nullable(),
+  displayOrder: zod.number(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+
+/**
+ * @summary Update a photo
+ */
+export const UpdatePhotoParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdatePhotoBody = zod.object({
+  url: zod.string().optional(),
+  caption: zod.string().nullish(),
+  link: zod.string().nullish(),
+  displayOrder: zod.number().optional(),
+});
+
+export const UpdatePhotoResponse = zod.object({
+  id: zod.number(),
+  url: zod.string(),
+  caption: zod.string().nullable(),
+  link: zod.string().nullable(),
+  displayOrder: zod.number(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+
+/**
+ * @summary Delete a photo
+ */
+export const DeletePhotoParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
  * @summary Get all map pins (posts with lat/lng) for the world map
  */
 export const ListMapPinsResponseItem = zod.object({
