@@ -17,15 +17,15 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
-  Country,
-  CreateCountryBody,
   CreatePostBody,
+  CreateTripBody,
   HealthStatus,
   MapPin,
   Post,
   TravelStats,
-  UpdateCountryBody,
+  Trip,
   UpdatePostBody,
+  UpdateTripBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -513,72 +513,62 @@ export const useDeletePost = <
 };
 
 /**
- * @summary List all visited countries
+ * @summary List all trips
  */
-export const getListCountriesUrl = () => {
-  return `/api/countries`;
+export const getListTripsUrl = () => {
+  return `/api/trips`;
 };
 
-export const listCountries = async (
-  options?: RequestInit,
-): Promise<Country[]> => {
-  return customFetch<Country[]>(getListCountriesUrl(), {
+export const listTrips = async (options?: RequestInit): Promise<Trip[]> => {
+  return customFetch<Trip[]>(getListTripsUrl(), {
     ...options,
     method: "GET",
   });
 };
 
-export const getListCountriesQueryKey = () => {
-  return [`/api/countries`] as const;
+export const getListTripsQueryKey = () => {
+  return [`/api/trips`] as const;
 };
 
-export const getListCountriesQueryOptions = <
-  TData = Awaited<ReturnType<typeof listCountries>>,
+export const getListTripsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTrips>>,
   TError = ErrorType<unknown>,
 >(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof listCountries>>,
-    TError,
-    TData
-  >;
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listTrips>>, TError, TData>;
   request?: SecondParameter<typeof customFetch>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getListCountriesQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getListTripsQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof listCountries>>> = ({
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listTrips>>> = ({
     signal,
-  }) => listCountries({ signal, ...requestOptions });
+  }) => listTrips({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof listCountries>>,
+    Awaited<ReturnType<typeof listTrips>>,
     TError,
     TData
   > & { queryKey: QueryKey };
 };
 
-export type ListCountriesQueryResult = NonNullable<
-  Awaited<ReturnType<typeof listCountries>>
+export type ListTripsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTrips>>
 >;
-export type ListCountriesQueryError = ErrorType<unknown>;
+export type ListTripsQueryError = ErrorType<unknown>;
 
 /**
- * @summary List all visited countries
+ * @summary List all trips
  */
 
-export function useListCountries<
-  TData = Awaited<ReturnType<typeof listCountries>>,
+export function useListTrips<
+  TData = Awaited<ReturnType<typeof listTrips>>,
   TError = ErrorType<unknown>,
 >(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof listCountries>>,
-    TError,
-    TData
-  >;
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listTrips>>, TError, TData>;
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getListCountriesQueryOptions(options);
+  const queryOptions = getListTripsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -588,42 +578,42 @@ export function useListCountries<
 }
 
 /**
- * @summary Add a visited country
+ * @summary Add a trip
  */
-export const getCreateCountryUrl = () => {
-  return `/api/countries`;
+export const getCreateTripUrl = () => {
+  return `/api/trips`;
 };
 
-export const createCountry = async (
-  createCountryBody: CreateCountryBody,
+export const createTrip = async (
+  createTripBody: CreateTripBody,
   options?: RequestInit,
-): Promise<Country> => {
-  return customFetch<Country>(getCreateCountryUrl(), {
+): Promise<Trip> => {
+  return customFetch<Trip>(getCreateTripUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createCountryBody),
+    body: JSON.stringify(createTripBody),
   });
 };
 
-export const getCreateCountryMutationOptions = <
+export const getCreateTripMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createCountry>>,
+    Awaited<ReturnType<typeof createTrip>>,
     TError,
-    { data: BodyType<CreateCountryBody> },
+    { data: BodyType<CreateTripBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof createCountry>>,
+  Awaited<ReturnType<typeof createTrip>>,
   TError,
-  { data: BodyType<CreateCountryBody> },
+  { data: BodyType<CreateTripBody> },
   TContext
 > => {
-  const mutationKey = ["createCountry"];
+  const mutationKey = ["createTrip"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -633,125 +623,115 @@ export const getCreateCountryMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createCountry>>,
-    { data: BodyType<CreateCountryBody> }
+    Awaited<ReturnType<typeof createTrip>>,
+    { data: BodyType<CreateTripBody> }
   > = (props) => {
     const { data } = props ?? {};
 
-    return createCountry(data, requestOptions);
+    return createTrip(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type CreateCountryMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createCountry>>
+export type CreateTripMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createTrip>>
 >;
-export type CreateCountryMutationBody = BodyType<CreateCountryBody>;
-export type CreateCountryMutationError = ErrorType<unknown>;
+export type CreateTripMutationBody = BodyType<CreateTripBody>;
+export type CreateTripMutationError = ErrorType<unknown>;
 
 /**
- * @summary Add a visited country
+ * @summary Add a trip
  */
-export const useCreateCountry = <
+export const useCreateTrip = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createCountry>>,
+    Awaited<ReturnType<typeof createTrip>>,
     TError,
-    { data: BodyType<CreateCountryBody> },
+    { data: BodyType<CreateTripBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
-  Awaited<ReturnType<typeof createCountry>>,
+  Awaited<ReturnType<typeof createTrip>>,
   TError,
-  { data: BodyType<CreateCountryBody> },
+  { data: BodyType<CreateTripBody> },
   TContext
 > => {
-  return useMutation(getCreateCountryMutationOptions(options));
+  return useMutation(getCreateTripMutationOptions(options));
 };
 
 /**
- * @summary Get a visited country by id
+ * @summary Get a trip by id
  */
-export const getGetCountryUrl = (id: number) => {
-  return `/api/countries/${id}`;
+export const getGetTripUrl = (id: number) => {
+  return `/api/trips/${id}`;
 };
 
-export const getCountry = async (
+export const getTrip = async (
   id: number,
   options?: RequestInit,
-): Promise<Country> => {
-  return customFetch<Country>(getGetCountryUrl(id), {
+): Promise<Trip> => {
+  return customFetch<Trip>(getGetTripUrl(id), {
     ...options,
     method: "GET",
   });
 };
 
-export const getGetCountryQueryKey = (id: number) => {
-  return [`/api/countries/${id}`] as const;
+export const getGetTripQueryKey = (id: number) => {
+  return [`/api/trips/${id}`] as const;
 };
 
-export const getGetCountryQueryOptions = <
-  TData = Awaited<ReturnType<typeof getCountry>>,
+export const getGetTripQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTrip>>,
   TError = ErrorType<void>,
 >(
   id: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getCountry>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getTrip>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetCountryQueryKey(id);
+  const queryKey = queryOptions?.queryKey ?? getGetTripQueryKey(id);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCountry>>> = ({
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getTrip>>> = ({
     signal,
-  }) => getCountry(id, { signal, ...requestOptions });
+  }) => getTrip(id, { signal, ...requestOptions });
 
   return {
     queryKey,
     queryFn,
     enabled: !!id,
     ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getCountry>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
+  } as UseQueryOptions<Awaited<ReturnType<typeof getTrip>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
 };
 
-export type GetCountryQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getCountry>>
+export type GetTripQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTrip>>
 >;
-export type GetCountryQueryError = ErrorType<void>;
+export type GetTripQueryError = ErrorType<void>;
 
 /**
- * @summary Get a visited country by id
+ * @summary Get a trip by id
  */
 
-export function useGetCountry<
-  TData = Awaited<ReturnType<typeof getCountry>>,
+export function useGetTrip<
+  TData = Awaited<ReturnType<typeof getTrip>>,
   TError = ErrorType<void>,
 >(
   id: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getCountry>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getTrip>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetCountryQueryOptions(id, options);
+  const queryOptions = getGetTripQueryOptions(id, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -761,43 +741,43 @@ export function useGetCountry<
 }
 
 /**
- * @summary Update a visited country
+ * @summary Update a trip
  */
-export const getUpdateCountryUrl = (id: number) => {
-  return `/api/countries/${id}`;
+export const getUpdateTripUrl = (id: number) => {
+  return `/api/trips/${id}`;
 };
 
-export const updateCountry = async (
+export const updateTrip = async (
   id: number,
-  updateCountryBody: UpdateCountryBody,
+  updateTripBody: UpdateTripBody,
   options?: RequestInit,
-): Promise<Country> => {
-  return customFetch<Country>(getUpdateCountryUrl(id), {
+): Promise<Trip> => {
+  return customFetch<Trip>(getUpdateTripUrl(id), {
     ...options,
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(updateCountryBody),
+    body: JSON.stringify(updateTripBody),
   });
 };
 
-export const getUpdateCountryMutationOptions = <
+export const getUpdateTripMutationOptions = <
   TError = ErrorType<void>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateCountry>>,
+    Awaited<ReturnType<typeof updateTrip>>,
     TError,
-    { id: number; data: BodyType<UpdateCountryBody> },
+    { id: number; data: BodyType<UpdateTripBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof updateCountry>>,
+  Awaited<ReturnType<typeof updateTrip>>,
   TError,
-  { id: number; data: BodyType<UpdateCountryBody> },
+  { id: number; data: BodyType<UpdateTripBody> },
   TContext
 > => {
-  const mutationKey = ["updateCountry"];
+  const mutationKey = ["updateTrip"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -807,81 +787,81 @@ export const getUpdateCountryMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof updateCountry>>,
-    { id: number; data: BodyType<UpdateCountryBody> }
+    Awaited<ReturnType<typeof updateTrip>>,
+    { id: number; data: BodyType<UpdateTripBody> }
   > = (props) => {
     const { id, data } = props ?? {};
 
-    return updateCountry(id, data, requestOptions);
+    return updateTrip(id, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type UpdateCountryMutationResult = NonNullable<
-  Awaited<ReturnType<typeof updateCountry>>
+export type UpdateTripMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateTrip>>
 >;
-export type UpdateCountryMutationBody = BodyType<UpdateCountryBody>;
-export type UpdateCountryMutationError = ErrorType<void>;
+export type UpdateTripMutationBody = BodyType<UpdateTripBody>;
+export type UpdateTripMutationError = ErrorType<void>;
 
 /**
- * @summary Update a visited country
+ * @summary Update a trip
  */
-export const useUpdateCountry = <
+export const useUpdateTrip = <
   TError = ErrorType<void>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateCountry>>,
+    Awaited<ReturnType<typeof updateTrip>>,
     TError,
-    { id: number; data: BodyType<UpdateCountryBody> },
+    { id: number; data: BodyType<UpdateTripBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
-  Awaited<ReturnType<typeof updateCountry>>,
+  Awaited<ReturnType<typeof updateTrip>>,
   TError,
-  { id: number; data: BodyType<UpdateCountryBody> },
+  { id: number; data: BodyType<UpdateTripBody> },
   TContext
 > => {
-  return useMutation(getUpdateCountryMutationOptions(options));
+  return useMutation(getUpdateTripMutationOptions(options));
 };
 
 /**
- * @summary Delete a visited country
+ * @summary Delete a trip
  */
-export const getDeleteCountryUrl = (id: number) => {
-  return `/api/countries/${id}`;
+export const getDeleteTripUrl = (id: number) => {
+  return `/api/trips/${id}`;
 };
 
-export const deleteCountry = async (
+export const deleteTrip = async (
   id: number,
   options?: RequestInit,
 ): Promise<void> => {
-  return customFetch<void>(getDeleteCountryUrl(id), {
+  return customFetch<void>(getDeleteTripUrl(id), {
     ...options,
     method: "DELETE",
   });
 };
 
-export const getDeleteCountryMutationOptions = <
+export const getDeleteTripMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteCountry>>,
+    Awaited<ReturnType<typeof deleteTrip>>,
     TError,
     { id: number },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteCountry>>,
+  Awaited<ReturnType<typeof deleteTrip>>,
   TError,
   { id: number },
   TContext
 > => {
-  const mutationKey = ["deleteCountry"];
+  const mutationKey = ["deleteTrip"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -891,44 +871,44 @@ export const getDeleteCountryMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteCountry>>,
+    Awaited<ReturnType<typeof deleteTrip>>,
     { id: number }
   > = (props) => {
     const { id } = props ?? {};
 
-    return deleteCountry(id, requestOptions);
+    return deleteTrip(id, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type DeleteCountryMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteCountry>>
+export type DeleteTripMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteTrip>>
 >;
 
-export type DeleteCountryMutationError = ErrorType<unknown>;
+export type DeleteTripMutationError = ErrorType<unknown>;
 
 /**
- * @summary Delete a visited country
+ * @summary Delete a trip
  */
-export const useDeleteCountry = <
+export const useDeleteTrip = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteCountry>>,
+    Awaited<ReturnType<typeof deleteTrip>>,
     TError,
     { id: number },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
-  Awaited<ReturnType<typeof deleteCountry>>,
+  Awaited<ReturnType<typeof deleteTrip>>,
   TError,
   { id: number },
   TContext
 > => {
-  return useMutation(getDeleteCountryMutationOptions(options));
+  return useMutation(getDeleteTripMutationOptions(options));
 };
 
 /**

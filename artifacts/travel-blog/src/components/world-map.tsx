@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from "react-simple-maps";
-import { useListMapPins, useListCountries } from "@workspace/api-client-react";
+import { useListMapPins, useListTrips } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { MapPin, ZoomIn, ZoomOut, RotateCcw, X } from "lucide-react";
 
@@ -8,7 +8,7 @@ const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 export function WorldMap() {
   const { data: pins = [] } = useListMapPins({ query: { queryKey: ["pins"] } });
-  const { data: countries = [] } = useListCountries({ query: { queryKey: ["countries"] } });
+  const { data: trips = [] } = useListTrips({ query: { queryKey: ["trips"] } });
   const [activePin, setActivePin] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState<[number, number]>([10, 20]);
@@ -16,8 +16,8 @@ export function WorldMap() {
   const outerRef = useRef<HTMLDivElement>(null);
 
   const visitedCountryCodes = useMemo(() => {
-    return new Set(countries.map(c => c.countryCode.toUpperCase()));
-  }, [countries]);
+    return new Set(trips.map(t => t.countryCode.toUpperCase()));
+  }, [trips]);
 
   const activeData = pins.find(p => p.id === activePin);
 
@@ -107,7 +107,7 @@ export function WorldMap() {
                     visitedCountryCodes.has(geo.properties.ISO_A2) ||
                     visitedCountryCodes.has(geo.properties.ISO_A3) ||
                     visitedCountryCodes.has(geo.id) ||
-                    countries.some(c => c.name.toLowerCase() === geo.properties.name?.toLowerCase());
+                    trips.some(t => t.name.toLowerCase() === geo.properties.name?.toLowerCase());
 
                   return (
                     <Geography
@@ -167,7 +167,7 @@ export function WorldMap() {
 
         {/* Countries count badge */}
         <div className="absolute bottom-4 left-4 z-10 bg-white/10 backdrop-blur rounded-xl px-4 py-2 text-white/90 text-xs font-mono">
-          {countries.length} countries · {pins.length} dispatches
+          {trips.length} trips · {pins.length} dispatches
         </div>
       </div>
 

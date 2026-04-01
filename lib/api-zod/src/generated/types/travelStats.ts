@@ -7,7 +7,7 @@
  */
 
 export interface TravelStats {
-  totalCountries: number;
+  totalTrips: number;
   totalPosts: number;
   totalCities: number;
   continents: number;

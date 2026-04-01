@@ -9,7 +9,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/", label: "Home", icon: Compass, exact: true },
     { href: "/atlas", label: "Atlas", icon: Map },
     { href: "/posts", label: "Journal", icon: BookOpen },
-    { href: "/countries", label: "Countries", icon: Globe },
+    { href: "/trips", label: "Trips", icon: Globe },
   ];
 
   return (

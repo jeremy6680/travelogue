@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import Markdown from "react-markdown";
 import { Layout } from "@/components/layout";
-import { useListPosts, useListCountries } from "@workspace/api-client-react";
+import { useListPosts, useListTrips } from "@workspace/api-client-react";
 import { useParams, Link } from "wouter";
 import { format } from "date-fns";
 import { MapPin, Calendar, ArrowLeft, Globe2 } from "lucide-react";
@@ -11,10 +11,10 @@ import { motion } from "framer-motion";
 export default function PostDetail() {
   const { slug } = useParams();
   const { data: posts = [], isLoading } = useListPosts({ query: { queryKey: ["posts"] } });
-  const { data: countries = [] } = useListCountries({ query: { queryKey: ["countries"] } });
+  const { data: trips = [] } = useListTrips({ query: { queryKey: ["trips"] } });
 
   const post = useMemo(() => posts.find(p => p.slug === slug), [posts, slug]);
-  const country = useMemo(() => countries.find(c => c.id === post?.countryId), [countries, post]);
+  const trip = useMemo(() => trips.find(t => t.id === post?.tripId), [trips, post]);
   const gallery = post?.gallery ?? [];
 
   if (isLoading) {
@@ -117,18 +117,18 @@ export default function PostDetail() {
           </section>
         )}
 
-        {/* Country footer */}
-        {country && (
+        {/* Trip footer */}
+        {trip && (
           <div className="mt-16 pt-10 border-t flex flex-col md:flex-row items-center gap-8 bg-card/50 p-8 rounded-3xl border border-border/50">
             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
               <Globe2 className="w-10 h-10 text-primary" />
             </div>
             <div className="text-center md:text-left space-y-2">
-              <h3 className="text-2xl font-serif font-bold text-foreground">More from {country.name}</h3>
+              <h3 className="text-2xl font-serif font-bold text-foreground">More from {trip.name}</h3>
               <p className="text-base text-muted-foreground">Explore other dispatches and notes from this region.</p>
             </div>
             <Link
-              href="/countries"
+              href="/trips"
               className="md:ml-auto inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground text-sm font-bold uppercase tracking-wider rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
               data-testid="link-view-itinerary"
             >

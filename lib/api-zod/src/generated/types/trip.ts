@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface Country {
+export interface Trip {
   id: number;
   name: string;
   countryCode: string;
@@ -17,7 +17,9 @@ export interface Country {
   visitedAt: string;
   latitude: number;
   longitude: number;
+  /** @nullable */
   transportationTo: string | null;
+  /** @nullable */
   transportationOnSite: string | null;
   createdAt: string;
   updatedAt: string;

@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout";
 import { TravelTimeline } from "@/components/travel-timeline";
 
-export default function CountriesPage() {
+export default function TripsPage() {
   return (
     <Layout>
       <div className="max-w-3xl mx-auto space-y-12">

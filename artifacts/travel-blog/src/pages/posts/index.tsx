@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Layout } from "@/components/layout";
-import { useListPosts, useListCountries } from "@workspace/api-client-react";
+import { useListPosts, useListTrips } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -18,23 +18,23 @@ export default function PostsPage() {
   const { data: posts = [], isLoading } = useListPosts({
     query: { queryKey: ["posts"] },
   });
-  const { data: countries = [] } = useListCountries({
-    query: { queryKey: ["countries"] },
+  const { data: trips = [] } = useListTrips({
+    query: { queryKey: ["trips"] },
   });
-  const [filterCountry, setFilterCountry] = useState<string>("all");
+  const [filterTrip, setFilterTrip] = useState<string>("all");
   const [filterTransport, setFilterTransport] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   const transportOptions = useMemo(() => {
     const modes = new Set<string>();
-    for (const c of countries) {
-      for (const field of [c.transportationTo, c.transportationOnSite]) {
-        if (field) field.split(",").forEach(t => modes.add(t.trim()));
+    for (const t of trips) {
+      for (const field of [t.transportationTo, t.transportationOnSite]) {
+        if (field) field.split(",").forEach(m => modes.add(m.trim()));
       }
     }
     return Array.from(modes).sort();
-  }, [countries]);
+  }, [trips]);
 
   const yearOptions = useMemo(() => {
     const years = new Set<string>();
@@ -46,15 +46,15 @@ export default function PostsPage() {
 
   const filtered = useMemo(() => {
     let list = [...posts];
-    if (filterCountry !== "all") {
-      list = list.filter(p => p.countryId != null && String(p.countryId) === filterCountry);
+    if (filterTrip !== "all") {
+      list = list.filter(p => p.tripId != null && String(p.tripId) === filterTrip);
     }
     if (filterTransport !== "all") {
       list = list.filter(p => {
-        const country = countries.find(c => c.id === p.countryId);
-        if (!country) return false;
-        const modes = [country.transportationTo, country.transportationOnSite]
-          .filter(Boolean).join(",").split(",").map(t => t.trim());
+        const trip = trips.find(t => t.id === p.tripId);
+        if (!trip) return false;
+        const modes = [trip.transportationTo, trip.transportationOnSite]
+          .filter(Boolean).join(",").split(",").map(m => m.trim());
         return modes.includes(filterTransport);
       });
     }
@@ -67,7 +67,7 @@ export default function PostsPage() {
       return sortOrder === "newest" ? db - da : da - db;
     });
     return list;
-  }, [posts, countries, filterCountry, filterTransport, filterYear, sortOrder]);
+  }, [posts, trips, filterTrip, filterTransport, filterYear, sortOrder]);
 
   function getFlagEmoji(code: string) {
     if (!code || code.length !== 2) return "";
@@ -94,15 +94,15 @@ export default function PostsPage() {
         {/* Filters */}
         <div className="flex flex-wrap gap-3 items-center">
           <Filter className="w-4 h-4 text-muted-foreground" />
-          <Select value={filterCountry} onValueChange={setFilterCountry}>
-            <SelectTrigger className="w-48" data-testid="select-filter-country">
-              <SelectValue placeholder="All Countries" />
+          <Select value={filterTrip} onValueChange={setFilterTrip}>
+            <SelectTrigger className="w-48" data-testid="select-filter-trip">
+              <SelectValue placeholder="All Trips" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Countries</SelectItem>
-              {countries.map((c) => (
-                <SelectItem key={c.id} value={String(c.id)}>
-                  {getFlagEmoji(c.countryCode)} {c.name}
+              <SelectItem value="all">All Trips</SelectItem>
+              {trips.map((t) => (
+                <SelectItem key={t.id} value={String(t.id)}>
+                  {getFlagEmoji(t.countryCode)} {t.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -149,11 +149,11 @@ export default function PostsPage() {
             {sortOrder === "newest" ? "Newest First" : "Oldest First"}
           </Button>
 
-          {(filterCountry !== "all" || filterTransport !== "all" || filterYear !== "all") && (
+          {(filterTrip !== "all" || filterTransport !== "all" || filterYear !== "all") && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { setFilterCountry("all"); setFilterTransport("all"); setFilterYear("all"); }}
+              onClick={() => { setFilterTrip("all"); setFilterTransport("all"); setFilterYear("all"); }}
               className="text-muted-foreground"
               data-testid="button-clear-filters"
             >
@@ -209,14 +209,14 @@ export default function PostsPage() {
                         {format(new Date(post.publishedAt), "MMM d, yyyy")}
                       </span>
                     )}
-                    {post.countryId &&
+                    {post.tripId &&
                       (() => {
-                        const c = countries.find(
-                          (x) => x.id === post.countryId,
+                        const t = trips.find(
+                          (x) => x.id === post.tripId,
                         );
-                        return c ? (
+                        return t ? (
                           <span className="flex items-center gap-1">
-                            {getFlagEmoji(c.countryCode)} {c.name}
+                            {getFlagEmoji(t.countryCode)} {t.name}
                           </span>
                         ) : null;
                       })()}

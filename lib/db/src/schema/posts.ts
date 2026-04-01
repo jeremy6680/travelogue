@@ -13,7 +13,7 @@ export const postsTable = pgTable("posts", {
   latitude: real("latitude"),
   longitude: real("longitude"),
   location: text("location"),
-  countryId: integer("country_id"),
+  tripId: integer("trip_id"),
   publishedAt: text("published_at"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

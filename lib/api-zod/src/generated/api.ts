@@ -36,7 +36,7 @@ export const ListPostsResponseItem = zod.object({
   latitude: zod.number().nullable(),
   longitude: zod.number().nullable(),
   location: zod.string().nullable(),
-  countryId: zod.number().nullable(),
+  tripId: zod.number().nullable(),
   publishedAt: zod.string().nullable(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
@@ -63,7 +63,7 @@ export const CreatePostBody = zod.object({
   latitude: zod.number().nullish(),
   longitude: zod.number().nullish(),
   location: zod.string().nullish(),
-  countryId: zod.number().nullish(),
+  tripId: zod.number().nullish(),
   publishedAt: zod.string().nullish(),
 });
 
@@ -92,7 +92,7 @@ export const GetPostResponse = zod.object({
   latitude: zod.number().nullable(),
   longitude: zod.number().nullable(),
   location: zod.string().nullable(),
-  countryId: zod.number().nullable(),
+  tripId: zod.number().nullable(),
   publishedAt: zod.string().nullable(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
@@ -122,7 +122,7 @@ export const UpdatePostBody = zod.object({
   latitude: zod.number().nullish(),
   longitude: zod.number().nullish(),
   location: zod.string().nullish(),
-  countryId: zod.number().nullish(),
+  tripId: zod.number().nullish(),
   publishedAt: zod.string().nullish(),
 });
 
@@ -144,7 +144,7 @@ export const UpdatePostResponse = zod.object({
   latitude: zod.number().nullable(),
   longitude: zod.number().nullable(),
   location: zod.string().nullable(),
-  countryId: zod.number().nullable(),
+  tripId: zod.number().nullable(),
   publishedAt: zod.string().nullable(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
@@ -158,9 +158,9 @@ export const DeletePostParams = zod.object({
 });
 
 /**
- * @summary List all visited countries
+ * @summary List all trips
  */
-export const ListCountriesResponseItem = zod.object({
+export const ListTripsResponseItem = zod.object({
   id: zod.number(),
   name: zod.string(),
   countryCode: zod.string(),
@@ -176,12 +176,12 @@ export const ListCountriesResponseItem = zod.object({
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
-export const ListCountriesResponse = zod.array(ListCountriesResponseItem);
+export const ListTripsResponse = zod.array(ListTripsResponseItem);
 
 /**
- * @summary Add a visited country
+ * @summary Add a trip
  */
-export const CreateCountryBody = zod.object({
+export const CreateTripBody = zod.object({
   name: zod.string(),
   countryCode: zod.string(),
   visitedCities: zod.string(),
@@ -191,18 +191,18 @@ export const CreateCountryBody = zod.object({
   visitedAt: zod.string(),
   latitude: zod.number(),
   longitude: zod.number(),
-  transportationTo: zod.string().nullable().optional(),
-  transportationOnSite: zod.string().nullable().optional(),
+  transportationTo: zod.string().nullish(),
+  transportationOnSite: zod.string().nullish(),
 });
 
 /**
- * @summary Get a visited country by id
+ * @summary Get a trip by id
  */
-export const GetCountryParams = zod.object({
+export const GetTripParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const GetCountryResponse = zod.object({
+export const GetTripResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   countryCode: zod.string(),
@@ -220,13 +220,13 @@ export const GetCountryResponse = zod.object({
 });
 
 /**
- * @summary Update a visited country
+ * @summary Update a trip
  */
-export const UpdateCountryParams = zod.object({
+export const UpdateTripParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const UpdateCountryBody = zod.object({
+export const UpdateTripBody = zod.object({
   name: zod.string().optional(),
   countryCode: zod.string().optional(),
   visitedCities: zod.string().optional(),
@@ -236,11 +236,11 @@ export const UpdateCountryBody = zod.object({
   visitedAt: zod.string().optional(),
   latitude: zod.number().optional(),
   longitude: zod.number().optional(),
-  transportationTo: zod.string().nullable().optional(),
-  transportationOnSite: zod.string().nullable().optional(),
+  transportationTo: zod.string().nullish(),
+  transportationOnSite: zod.string().nullish(),
 });
 
-export const UpdateCountryResponse = zod.object({
+export const UpdateTripResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   countryCode: zod.string(),
@@ -258,9 +258,9 @@ export const UpdateCountryResponse = zod.object({
 });
 
 /**
- * @summary Delete a visited country
+ * @summary Delete a trip
  */
-export const DeleteCountryParams = zod.object({
+export const DeleteTripParams = zod.object({
   id: zod.coerce.number(),
 });
 
@@ -284,7 +284,7 @@ export const ListMapPinsResponse = zod.array(ListMapPinsResponseItem);
  * @summary Get travel stats summary
  */
 export const GetStatsResponse = zod.object({
-  totalCountries: zod.number(),
+  totalTrips: zod.number(),
   totalPosts: zod.number(),
   totalCities: zod.number(),
   continents: zod.number(),

@@ -13,9 +13,9 @@ try {
   }
 } catch {}
 
-const { db, pool, countriesTable, postsTable } = await import("@workspace/db");
+const { db, pool, tripsTable, postsTable } = await import("@workspace/db");
 
-type CountryRow = {
+type TripRow = {
   id: number;
   name: string;
   country_code: string;
@@ -39,41 +39,41 @@ type PostRow = {
   latitude: number | null;
   longitude: number | null;
   location: string | null;
-  country_id: number | null;
+  trip_id: number | null;
   published_at: string | null;
 };
 
-const countriesData: CountryRow[] = JSON.parse(
-  readFileSync(resolve(__dirname, "../data/countries.json"), "utf-8"),
+const tripsData: TripRow[] = JSON.parse(
+  readFileSync(resolve(__dirname, "../data/trips.json"), "utf-8"),
 );
 const postsData: PostRow[] = JSON.parse(
   readFileSync(resolve(__dirname, "../data/posts.json"), "utf-8"),
 );
 
-// Insert countries and capture generated IDs
-const insertedCountries = await db
-  .insert(countriesTable)
+// Insert trips and capture generated IDs
+const insertedTrips = await db
+  .insert(tripsTable)
   .values(
-    countriesData.map((c) => ({
-      name: c.name,
-      countryCode: c.country_code,
-      visitedCities: c.visited_cities,
-      reasonForVisit: c.reason_for_visit,
-      travelCompanions: c.travel_companions,
-      friendsFamilyMet: c.friends_family_met,
-      visitedAt: c.visited_at,
-      latitude: c.latitude,
-      longitude: c.longitude,
+    tripsData.map((t) => ({
+      name: t.name,
+      countryCode: t.country_code,
+      visitedCities: t.visited_cities,
+      reasonForVisit: t.reason_for_visit,
+      travelCompanions: t.travel_companions,
+      friendsFamilyMet: t.friends_family_met,
+      visitedAt: t.visited_at,
+      latitude: t.latitude,
+      longitude: t.longitude,
     })),
   )
-  .returning({ id: countriesTable.id });
+  .returning({ id: tripsTable.id });
 
 // Map JSON id → new DB-generated id (insertion order is preserved by .returning())
-const countryIdMap = new Map(
-  countriesData.map((c, i) => [c.id, insertedCountries[i].id]),
+const tripIdMap = new Map(
+  tripsData.map((t, i) => [t.id, insertedTrips[i].id]),
 );
 
-// Insert posts, remapping country_id to the newly generated DB ids
+// Insert posts, remapping trip_id to the newly generated DB ids
 await db.insert(postsTable).values(
   postsData.map((p) => ({
     title: p.title,
@@ -85,11 +85,11 @@ await db.insert(postsTable).values(
     latitude: p.latitude ?? null,
     longitude: p.longitude ?? null,
     location: p.location ?? null,
-    countryId: p.country_id != null ? (countryIdMap.get(p.country_id) ?? null) : null,
+    tripId: p.trip_id != null ? (tripIdMap.get(p.trip_id) ?? null) : null,
     publishedAt: p.published_at ?? null,
   })),
 );
 
-console.log(`Seeded ${insertedCountries.length} countries and ${postsData.length} posts.`);
+console.log(`Seeded ${insertedTrips.length} trips and ${postsData.length} posts.`);
 
 await pool.end();

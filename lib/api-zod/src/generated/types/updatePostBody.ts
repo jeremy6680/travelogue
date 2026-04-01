@@ -23,7 +23,7 @@ export interface UpdatePostBody {
   /** @nullable */
   location?: string | null;
   /** @nullable */
-  countryId?: number | null;
+  tripId?: number | null;
   /** @nullable */
   publishedAt?: string | null;
 }

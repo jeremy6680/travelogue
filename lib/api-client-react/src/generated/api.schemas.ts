@@ -31,7 +31,7 @@ export interface Post {
   /** @nullable */
   location: string | null;
   /** @nullable */
-  countryId: number | null;
+  tripId: number | null;
   /** @nullable */
   publishedAt: string | null;
   createdAt: string;
@@ -54,7 +54,7 @@ export interface CreatePostBody {
   /** @nullable */
   location?: string | null;
   /** @nullable */
-  countryId?: number | null;
+  tripId?: number | null;
   /** @nullable */
   publishedAt?: string | null;
 }
@@ -75,12 +75,12 @@ export interface UpdatePostBody {
   /** @nullable */
   location?: string | null;
   /** @nullable */
-  countryId?: number | null;
+  tripId?: number | null;
   /** @nullable */
   publishedAt?: string | null;
 }
 
-export interface Country {
+export interface Trip {
   id: number;
   name: string;
   countryCode: string;
@@ -99,7 +99,7 @@ export interface Country {
   updatedAt: string;
 }
 
-export interface CreateCountryBody {
+export interface CreateTripBody {
   name: string;
   countryCode: string;
   visitedCities: string;
@@ -109,11 +109,13 @@ export interface CreateCountryBody {
   visitedAt: string;
   latitude: number;
   longitude: number;
+  /** @nullable */
   transportationTo?: string | null;
+  /** @nullable */
   transportationOnSite?: string | null;
 }
 
-export interface UpdateCountryBody {
+export interface UpdateTripBody {
   name?: string;
   countryCode?: string;
   visitedCities?: string;
@@ -123,7 +125,9 @@ export interface UpdateCountryBody {
   visitedAt?: string;
   latitude?: number;
   longitude?: number;
+  /** @nullable */
   transportationTo?: string | null;
+  /** @nullable */
   transportationOnSite?: string | null;
 }
 
@@ -143,7 +147,7 @@ export interface MapPin {
 }
 
 export interface TravelStats {
-  totalCountries: number;
+  totalTrips: number;
   totalPosts: number;
   totalCities: number;
   continents: number;

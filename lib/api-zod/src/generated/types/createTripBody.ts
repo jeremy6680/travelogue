@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CreateCountryBody {
+export interface CreateTripBody {
   name: string;
   countryCode: string;
   visitedCities: string;
@@ -16,4 +16,8 @@ export interface CreateCountryBody {
   visitedAt: string;
   latitude: number;
   longitude: number;
+  /** @nullable */
+  transportationTo?: string | null;
+  /** @nullable */
+  transportationOnSite?: string | null;
 }

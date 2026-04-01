@@ -1,2 +1,2 @@
 export * from "./posts";
-export * from "./countries";
+export * from "./trips";

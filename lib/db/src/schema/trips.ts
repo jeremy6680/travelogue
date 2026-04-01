@@ -2,7 +2,7 @@ import { pgTable, text, serial, timestamp, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const countriesTable = pgTable("countries", {
+export const tripsTable = pgTable("trips", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   countryCode: text("country_code").notNull(),
@@ -19,6 +19,6 @@ export const countriesTable = pgTable("countries", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
-export const insertCountrySchema = createInsertSchema(countriesTable).omit({ id: true, createdAt: true, updatedAt: true });
-export type InsertCountry = z.infer<typeof insertCountrySchema>;
-export type Country = typeof countriesTable.$inferSelect;
+export const insertTripSchema = createInsertSchema(tripsTable).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertTrip = z.infer<typeof insertTripSchema>;
+export type Trip = typeof tripsTable.$inferSelect;

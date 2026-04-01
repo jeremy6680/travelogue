@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useListCountries, useListPosts } from "@workspace/api-client-react";
+import { useListTrips, useListPosts } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -21,52 +21,52 @@ interface TravelTimelineProps {
 }
 
 export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
-  const { data: countries = [], isLoading } = useListCountries({ query: { queryKey: ["countries"] } });
+  const { data: trips = [], isLoading } = useListTrips({ query: { queryKey: ["trips"] } });
   const { data: posts = [] } = useListPosts({ query: { queryKey: ["posts"] } });
-  const [filterCountry, setFilterCountry] = useState<string>("all");
+  const [filterTrip, setFilterTrip] = useState<string>("all");
   const [filterTransport, setFilterTransport] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   const transportOptions = useMemo(() => {
     const modes = new Set<string>();
-    for (const c of countries) {
-      for (const field of [c.transportationTo, c.transportationOnSite]) {
-        if (field) field.split(",").forEach(t => modes.add(t.trim()));
+    for (const t of trips) {
+      for (const field of [t.transportationTo, t.transportationOnSite]) {
+        if (field) field.split(",").forEach(m => modes.add(m.trim()));
       }
     }
     return Array.from(modes).sort();
-  }, [countries]);
+  }, [trips]);
 
   const yearOptions = useMemo(() => {
     const years = new Set<string>();
-    for (const c of countries) {
-      if (c.visitedAt) years.add(new Date(c.visitedAt).getFullYear().toString());
+    for (const t of trips) {
+      if (t.visitedAt) years.add(new Date(t.visitedAt).getFullYear().toString());
     }
     return Array.from(years).sort((a, b) => Number(b) - Number(a));
-  }, [countries]);
+  }, [trips]);
 
   const filteredSorted = useMemo(() => {
-    let list = [...countries];
-    if (filterCountry !== "all") {
-      list = list.filter(c => String(c.id) === filterCountry);
+    let list = [...trips];
+    if (filterTrip !== "all") {
+      list = list.filter(t => String(t.id) === filterTrip);
     }
     if (filterTransport !== "all") {
-      list = list.filter(c => {
-        const modes = [c.transportationTo, c.transportationOnSite]
-          .filter(Boolean).join(",").split(",").map(t => t.trim());
+      list = list.filter(t => {
+        const modes = [t.transportationTo, t.transportationOnSite]
+          .filter(Boolean).join(",").split(",").map(m => m.trim());
         return modes.includes(filterTransport);
       });
     }
     if (filterYear !== "all") {
-      list = list.filter(c => c.visitedAt && new Date(c.visitedAt).getFullYear().toString() === filterYear);
+      list = list.filter(t => t.visitedAt && new Date(t.visitedAt).getFullYear().toString() === filterYear);
     }
     list.sort((a, b) => {
       const diff = new Date(a.visitedAt).getTime() - new Date(b.visitedAt).getTime();
       return sortOrder === "newest" ? -diff : diff;
     });
     return list;
-  }, [countries, filterCountry, filterTransport, filterYear, sortOrder]);
+  }, [trips, filterTrip, filterTransport, filterYear, sortOrder]);
 
   if (isLoading) {
     return <div className="py-20 text-center text-muted-foreground animate-pulse font-serif italic">Unfolding the map...</div>;
@@ -76,15 +76,15 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
     <div className="space-y-8">
       {showFilters && (
         <div className="flex flex-wrap gap-3 items-center">
-          <Select value={filterCountry} onValueChange={setFilterCountry}>
-            <SelectTrigger className="w-48" data-testid="select-filter-country">
-              <SelectValue placeholder="All Countries" />
+          <Select value={filterTrip} onValueChange={setFilterTrip}>
+            <SelectTrigger className="w-48" data-testid="select-filter-trip">
+              <SelectValue placeholder="All Trips" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Countries</SelectItem>
-              {countries.map(c => (
-                <SelectItem key={c.id} value={String(c.id)}>
-                  {getFlagEmoji(c.countryCode)} {c.name}
+              <SelectItem value="all">All Trips</SelectItem>
+              {trips.map(t => (
+                <SelectItem key={t.id} value={String(t.id)}>
+                  {getFlagEmoji(t.countryCode)} {t.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -129,11 +129,11 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
             {sortOrder === "newest" ? "Newest First" : "Oldest First"}
           </Button>
 
-          {(filterCountry !== "all" || filterTransport !== "all" || filterYear !== "all") && (
+          {(filterTrip !== "all" || filterTransport !== "all" || filterYear !== "all") && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { setFilterCountry("all"); setFilterTransport("all"); setFilterYear("all"); }}
+              onClick={() => { setFilterTrip("all"); setFilterTransport("all"); setFilterYear("all"); }}
               className="text-muted-foreground"
               data-testid="button-clear-filters"
             >
@@ -148,12 +148,12 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
       )}
 
       <div className="relative border-l-2 border-primary/20 ml-4 md:ml-8 py-4 space-y-16">
-        {filteredSorted.map((country, idx) => {
-          const countryPosts = posts.filter(p => p.countryId === country.id);
+        {filteredSorted.map((trip, idx) => {
+          const tripPosts = posts.filter(p => p.tripId === trip.id);
 
           return (
             <motion.div
-              key={country.id}
+              key={trip.id}
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-80px" }}
@@ -166,80 +166,80 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                 <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
                   <div>
                     <h3 className="font-serif text-3xl font-bold flex items-center gap-3 text-foreground">
-                      <span className="text-4xl" aria-hidden="true">{getFlagEmoji(country.countryCode)}</span>
-                      {country.name}
+                      <span className="text-4xl" aria-hidden="true">{getFlagEmoji(trip.countryCode)}</span>
+                      {trip.name}
                     </h3>
                     <p className="text-sm text-muted-foreground font-mono mt-2 uppercase tracking-wider">
-                      {format(new Date(country.visitedAt), "MMMM yyyy")}
+                      {format(new Date(trip.visitedAt), "MMMM yyyy")}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm bg-background/50 p-4 rounded-xl border border-border/50">
-                  {country.visitedCities && (
+                  {trip.visitedCities && (
                     <div className="flex items-start gap-2.5">
                       <MapPin className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
                         <strong className="block text-foreground mb-0.5 font-serif">Cities Visited</strong>
-                        <span className="text-muted-foreground leading-relaxed">{country.visitedCities}</span>
+                        <span className="text-muted-foreground leading-relaxed">{trip.visitedCities}</span>
                       </div>
                     </div>
                   )}
-                  {country.reasonForVisit && (
+                  {trip.reasonForVisit && (
                     <div className="flex items-start gap-2.5">
                       <Navigation className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
                         <strong className="block text-foreground mb-0.5 font-serif">The Mission</strong>
-                        <span className="text-muted-foreground leading-relaxed">{country.reasonForVisit}</span>
+                        <span className="text-muted-foreground leading-relaxed">{trip.reasonForVisit}</span>
                       </div>
                     </div>
                   )}
-                  {country.travelCompanions && (
+                  {trip.travelCompanions && (
                     <div className="flex items-start gap-2.5">
                       <Users className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
                         <strong className="block text-foreground mb-0.5 font-serif">Companions</strong>
-                        <span className="text-muted-foreground leading-relaxed">{country.travelCompanions}</span>
+                        <span className="text-muted-foreground leading-relaxed">{trip.travelCompanions}</span>
                       </div>
                     </div>
                   )}
-                  {country.friendsFamilyMet && (
+                  {trip.friendsFamilyMet && (
                     <div className="flex items-start gap-2.5">
                       <Heart className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
                         <strong className="block text-foreground mb-0.5 font-serif">Met Along the Way</strong>
-                        <span className="text-muted-foreground leading-relaxed">{country.friendsFamilyMet}</span>
+                        <span className="text-muted-foreground leading-relaxed">{trip.friendsFamilyMet}</span>
                       </div>
                     </div>
                   )}
-                  {country.transportationTo && (
+                  {trip.transportationTo && (
                     <div className="flex items-start gap-2.5">
                       <PlaneTakeoff className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
                         <strong className="block text-foreground mb-0.5 font-serif">Getting There</strong>
-                        <span className="text-muted-foreground leading-relaxed">{country.transportationTo}</span>
+                        <span className="text-muted-foreground leading-relaxed">{trip.transportationTo}</span>
                       </div>
                     </div>
                   )}
-                  {country.transportationOnSite && (
+                  {trip.transportationOnSite && (
                     <div className="flex items-start gap-2.5">
                       <Car className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
                         <strong className="block text-foreground mb-0.5 font-serif">Getting Around</strong>
-                        <span className="text-muted-foreground leading-relaxed">{country.transportationOnSite}</span>
+                        <span className="text-muted-foreground leading-relaxed">{trip.transportationOnSite}</span>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {countryPosts.length > 0 && (
+                {tripPosts.length > 0 && (
                   <div className="mt-6 pt-6 border-t border-border/60">
                     <h4 className="font-serif font-medium mb-4 text-foreground/80 flex items-center gap-2">
                       <span className="w-8 h-px bg-border inline-block" />
-                      Dispatches from {country.name}
+                      Dispatches from {trip.name}
                     </h4>
                     <div className="grid gap-3">
-                      {countryPosts.map(post => (
+                      {tripPosts.map(post => (
                         <Link
                           key={post.id}
                           href={`/posts/${post.slug}`}

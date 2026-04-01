@@ -6,7 +6,7 @@ import Home from "@/pages/home";
 import AtlasPage from "@/pages/atlas";
 import PostsPage from "@/pages/posts/index";
 import PostDetail from "@/pages/posts/detail";
-import CountriesPage from "@/pages/countries/index";
+import TripsPage from "@/pages/trips/index";
 import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
@@ -26,7 +26,7 @@ function Router() {
       <Route path="/atlas" component={AtlasPage} />
       <Route path="/posts" component={PostsPage} />
       <Route path="/posts/:slug" component={PostDetail} />
-      <Route path="/countries" component={CountriesPage} />
+      <Route path="/trips" component={TripsPage} />
       <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>

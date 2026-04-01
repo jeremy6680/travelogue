@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Layout } from "@/components/layout";
 import { 
-  useListPosts, useCreatePost, useUpdatePost, useDeletePost, 
-  useListCountries, useCreateCountry, useUpdateCountry, useDeleteCountry,
-  getListPostsQueryKey, getListCountriesQueryKey,
+  useListPosts, useCreatePost, useUpdatePost, useDeletePost,
+  useListTrips, useCreateTrip, useUpdateTrip, useDeleteTrip,
+  getListPostsQueryKey, getListTripsQueryKey,
   useHealthCheck, getHealthCheckQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,7 +15,7 @@ import { Plus, Trash2, Edit2, CheckCircle2, XCircle } from "lucide-react";
 
 export default function AdminPage() {
   const { data: posts = [] } = useListPosts({ query: { queryKey: ["posts"] } });
-  const { data: countries = [] } = useListCountries({ query: { queryKey: ["countries"] } });
+  const { data: trips = [] } = useListTrips({ query: { queryKey: ["trips"] } });
   const { data: health } = useHealthCheck({ query: { queryKey: getHealthCheckQueryKey() } });
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -24,12 +24,12 @@ export default function AdminPage() {
   const updatePost = useUpdatePost();
   const deletePost = useDeletePost();
 
-  const createCountry = useCreateCountry();
-  const updateCountry = useUpdateCountry();
-  const deleteCountry = useDeleteCountry();
+  const createTrip = useCreateTrip();
+  const updateTrip = useUpdateTrip();
+  const deleteTrip = useDeleteTrip();
 
   const [editingPost, setEditingPost] = useState<any>(null);
-  const [editingCountry, setEditingCountry] = useState<any>(null);
+  const [editingTrip, setEditingTrip] = useState<any>(null);
 
   const handlePostSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,7 +41,7 @@ export default function AdminPage() {
       excerpt: formData.get("excerpt") as string,
       coverImageUrl: (formData.get("coverImageUrl") as string) || null,
       location: (formData.get("location") as string) || null,
-      countryId: formData.get("countryId") ? Number(formData.get("countryId")) : null,
+      tripId: formData.get("tripId") ? Number(formData.get("tripId")) : null,
       latitude: formData.get("latitude") ? Number(formData.get("latitude")) : null,
       longitude: formData.get("longitude") ? Number(formData.get("longitude")) : null,
       publishedAt: (formData.get("publishedAt") as string) || null,
@@ -66,7 +66,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleCountrySubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleTripSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -81,19 +81,19 @@ export default function AdminPage() {
       longitude: Number(formData.get("longitude")),
     };
 
-    if (editingCountry) {
-      updateCountry.mutate({ id: editingCountry.id, data }, {
+    if (editingTrip) {
+      updateTrip.mutate({ id: editingTrip.id, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListCountriesQueryKey() });
-          setEditingCountry(null);
-          toast({ title: "Country updated successfully" });
+          queryClient.invalidateQueries({ queryKey: getListTripsQueryKey() });
+          setEditingTrip(null);
+          toast({ title: "Trip updated successfully" });
         }
       });
     } else {
-      createCountry.mutate({ data }, {
+      createTrip.mutate({ data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListCountriesQueryKey() });
-          toast({ title: "Country added successfully" });
+          queryClient.invalidateQueries({ queryKey: getListTripsQueryKey() });
+          toast({ title: "Trip added successfully" });
           (e.target as HTMLFormElement).reset();
         }
       });
@@ -135,7 +135,7 @@ export default function AdminPage() {
                 <Input name="coverImageUrl" placeholder="Cover Image URL (optional)" defaultValue={editingPost?.coverImageUrl || ''} />
                 <div className="grid grid-cols-2 gap-3">
                   <Input name="location" placeholder="Location string" defaultValue={editingPost?.location || ''} />
-                  <Input name="countryId" type="number" placeholder="Country ID" defaultValue={editingPost?.countryId || ''} />
+                  <Input name="tripId" type="number" placeholder="Trip ID" defaultValue={editingPost?.tripId || ''} />
                   <Input name="latitude" type="number" step="any" placeholder="Latitude" defaultValue={editingPost?.latitude || ''} />
                   <Input name="longitude" type="number" step="any" placeholder="Longitude" defaultValue={editingPost?.longitude || ''} />
                 </div>
@@ -178,58 +178,58 @@ export default function AdminPage() {
             </div>
           </section>
 
-          {/* Countries Section */}
+          {/* Trips Section */}
           <section className="space-y-6">
             <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-              Countries <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{countries.length}</span>
+              Trips <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{trips.length}</span>
             </h2>
-            
-            <form onSubmit={handleCountrySubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingCountry ? 'Edit Country' : 'Log New Country'}</h3>
-              
+
+            <form onSubmit={handleTripSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
+              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingTrip ? 'Edit Trip' : 'Log New Trip'}</h3>
+
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="name" placeholder="Country Name" defaultValue={editingCountry?.name} required />
-                  <Input name="countryCode" placeholder="Code (e.g. JP)" defaultValue={editingCountry?.countryCode} required maxLength={2} />
+                  <Input name="name" placeholder="Trip Name" defaultValue={editingTrip?.name} required />
+                  <Input name="countryCode" placeholder="Code (e.g. JP)" defaultValue={editingTrip?.countryCode} required maxLength={2} />
                 </div>
-                <Input name="visitedCities" placeholder="Visited Cities" defaultValue={editingCountry?.visitedCities} required />
-                <Input name="reasonForVisit" placeholder="Reason for Visit" defaultValue={editingCountry?.reasonForVisit} required />
-                <Input name="travelCompanions" placeholder="Travel Companions" defaultValue={editingCountry?.travelCompanions} required />
-                <Input name="friendsFamilyMet" placeholder="Friends/Family Met" defaultValue={editingCountry?.friendsFamilyMet} required />
+                <Input name="visitedCities" placeholder="Visited Cities" defaultValue={editingTrip?.visitedCities} required />
+                <Input name="reasonForVisit" placeholder="Reason for Visit" defaultValue={editingTrip?.reasonForVisit} required />
+                <Input name="travelCompanions" placeholder="Travel Companions" defaultValue={editingTrip?.travelCompanions} required />
+                <Input name="friendsFamilyMet" placeholder="Friends/Family Met" defaultValue={editingTrip?.friendsFamilyMet} required />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="latitude" type="number" step="any" placeholder="Latitude" defaultValue={editingCountry?.latitude} required />
-                  <Input name="longitude" type="number" step="any" placeholder="Longitude" defaultValue={editingCountry?.longitude} required />
+                  <Input name="latitude" type="number" step="any" placeholder="Latitude" defaultValue={editingTrip?.latitude} required />
+                  <Input name="longitude" type="number" step="any" placeholder="Longitude" defaultValue={editingTrip?.longitude} required />
                 </div>
-                <Input name="visitedAt" type="datetime-local" placeholder="Visited At" defaultValue={editingCountry?.visitedAt ? new Date(editingCountry.visitedAt).toISOString().slice(0, 16) : ''} required />
+                <Input name="visitedAt" type="datetime-local" placeholder="Visited At" defaultValue={editingTrip?.visitedAt ? new Date(editingTrip.visitedAt).toISOString().slice(0, 16) : ''} required />
               </div>
 
               <div className="flex gap-3 pt-4">
                 <Button type="submit" className="flex-1">
-                  {editingCountry ? 'Update Country' : 'Log Country'}
+                  {editingTrip ? 'Update Trip' : 'Log Trip'}
                 </Button>
-                {editingCountry && (
-                  <Button type="button" variant="outline" onClick={() => setEditingCountry(null)}>Cancel</Button>
+                {editingTrip && (
+                  <Button type="button" variant="outline" onClick={() => setEditingTrip(null)}>Cancel</Button>
                 )}
               </div>
             </form>
 
             <div className="space-y-3">
-              {countries.map(country => (
-                <div key={country.id} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors">
+              {trips.map(trip => (
+                <div key={trip.id} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors">
                   <div>
                     <h4 className="font-serif font-bold flex items-center gap-2">
-                      {country.name} <span className="text-xs font-mono font-normal text-muted-foreground">{country.countryCode}</span>
+                      {trip.name} <span className="text-xs font-mono font-normal text-muted-foreground">{trip.countryCode}</span>
                     </h4>
-                    <p className="text-xs text-muted-foreground">{country.visitedCities}</p>
+                    <p className="text-xs text-muted-foreground">{trip.visitedCities}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="ghost" onClick={() => setEditingCountry(country)}>
+                    <Button size="icon" variant="ghost" onClick={() => setEditingTrip(trip)}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <Button size="icon" variant="destructive" onClick={() => {
-                      if(confirm("Remove this country from passport?")) {
-                        deleteCountry.mutate({ id: country.id }, {
-                          onSuccess: () => queryClient.invalidateQueries({ queryKey: getListCountriesQueryKey() })
+                      if(confirm("Remove this trip from passport?")) {
+                        deleteTrip.mutate({ id: trip.id }, {
+                          onSuccess: () => queryClient.invalidateQueries({ queryKey: getListTripsQueryKey() })
                         });
                       }
                     }}>

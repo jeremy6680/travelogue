@@ -11,8 +11,8 @@ tags:
     description: Health operations
   - name: posts
     description: Blog post operations
-  - name: countries
-    description: Country visit operations
+  - name: trips
+    description: Trip operations
 paths:
   /healthz:
     get:
@@ -119,43 +119,43 @@ paths:
         "204":
           description: Deleted
 
-  /countries:
+  /trips:
     get:
-      operationId: listCountries
-      tags: [countries]
-      summary: List all visited countries
+      operationId: listTrips
+      tags: [trips]
+      summary: List all trips
       responses:
         "200":
-          description: List of visited countries
+          description: List of trips
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Country"
+                  $ref: "#/components/schemas/Trip"
     post:
-      operationId: createCountry
-      tags: [countries]
-      summary: Add a visited country
+      operationId: createTrip
+      tags: [trips]
+      summary: Add a trip
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateCountryBody"
+              $ref: "#/components/schemas/CreateTripBody"
       responses:
         "201":
-          description: Created country
+          description: Created trip
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Country"
+                $ref: "#/components/schemas/Trip"
 
-  /countries/{id}:
+  /trips/{id}:
     get:
-      operationId: getCountry
-      tags: [countries]
-      summary: Get a visited country by id
+      operationId: getTrip
+      tags: [trips]
+      summary: Get a trip by id
       parameters:
         - name: id
           in: path
@@ -164,17 +164,17 @@ paths:
             type: integer
       responses:
         "200":
-          description: A visited country
+          description: A trip
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Country"
+                $ref: "#/components/schemas/Trip"
         "404":
           description: Not found
     patch:
-      operationId: updateCountry
-      tags: [countries]
-      summary: Update a visited country
+      operationId: updateTrip
+      tags: [trips]
+      summary: Update a trip
       parameters:
         - name: id
           in: path
@@ -186,20 +186,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateCountryBody"
+              $ref: "#/components/schemas/UpdateTripBody"
       responses:
         "200":
-          description: Updated country
+          description: Updated trip
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Country"
+                $ref: "#/components/schemas/Trip"
         "404":
           description: Not found
     delete:
-      operationId: deleteCountry
-      tags: [countries]
-      summary: Delete a visited country
+      operationId: deleteTrip
+      tags: [trips]
+      summary: Delete a trip
       parameters:
         - name: id
           in: path
@@ -228,7 +228,7 @@ paths:
   /stats:
     get:
       operationId: getStats
-      tags: [countries]
+      tags: [trips]
       summary: Get travel stats summary
       responses:
         "200":
@@ -284,7 +284,7 @@ components:
           type: ["number", "null"]
         location:
           type: ["string", "null"]
-        countryId:
+        tripId:
           type: ["integer", "null"]
         publishedAt:
           type: ["string", "null"]
@@ -303,7 +303,7 @@ components:
         - latitude
         - longitude
         - location
-        - countryId
+        - tripId
         - publishedAt
         - createdAt
         - updatedAt
@@ -331,7 +331,7 @@ components:
           type: ["number", "null"]
         location:
           type: ["string", "null"]
-        countryId:
+        tripId:
           type: ["integer", "null"]
         publishedAt:
           type: ["string", "null"]
@@ -364,12 +364,12 @@ components:
           type: ["number", "null"]
         location:
           type: ["string", "null"]
-        countryId:
+        tripId:
           type: ["integer", "null"]
         publishedAt:
           type: ["string", "null"]
 
-    Country:
+    Trip:
       type: object
       properties:
         id:
@@ -416,7 +416,7 @@ components:
         - createdAt
         - updatedAt
 
-    CreateCountryBody:
+    CreateTripBody:
       type: object
       properties:
         name:
@@ -452,7 +452,7 @@ components:
         - latitude
         - longitude
 
-    UpdateCountryBody:
+    UpdateTripBody:
       type: object
       properties:
         name:
@@ -513,7 +513,7 @@ components:
     TravelStats:
       type: object
       properties:
-        totalCountries:
+        totalTrips:
           type: integer
         totalPosts:
           type: integer
@@ -522,7 +522,7 @@ components:
         continents:
           type: integer
       required:
-        - totalCountries
+        - totalTrips
         - totalPosts
         - totalCities
         - continents

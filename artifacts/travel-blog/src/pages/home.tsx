@@ -125,7 +125,7 @@ export default function Home() {
               className="flex flex-wrap justify-center gap-12 pt-4 border-t border-border/40 mt-8"
             >
               {[
-                { value: stats.totalCountries, label: "Countries" },
+                { value: stats.totalTrips, label: "Trips" },
                 { value: stats.continents, label: "Continents" },
                 { value: stats.totalCities, label: "Cities" },
                 { value: stats.totalPosts, label: "Dispatches" },

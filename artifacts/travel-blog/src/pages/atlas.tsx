@@ -30,7 +30,7 @@ export default function AtlasPage() {
             className="flex flex-wrap gap-8 justify-center"
           >
             {[
-              { value: stats.totalCountries, label: "Countries" },
+              { value: stats.totalTrips, label: "Trips" },
               { value: stats.continents, label: "Continents" },
               { value: stats.totalCities, label: "Cities" },
               { value: stats.totalPosts, label: "Dispatches" },

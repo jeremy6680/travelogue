@@ -15,7 +15,7 @@
     "latitude": 35.6897,
     "longitude": 139.6922,
     "location": "Shinjuku, Tokyo, Japan",
-    "country_id": 1,
+    "trip_id": 1,
     "published_at": "2023-04-08",
     "created_at": "2026-03-30T20:21:08.776Z",
     "updated_at": "2026-03-30T20:21:08.776Z"
@@ -31,7 +31,7 @@
     "latitude": 35.0116,
     "longitude": 135.7681,
     "location": "Gion, Kyoto, Japan",
-    "country_id": 1,
+    "trip_id": 1,
     "published_at": "2023-04-12",
     "created_at": "2026-03-30T20:21:08.776Z",
     "updated_at": "2026-03-30T20:21:08.776Z"
@@ -51,7 +51,7 @@
     "latitude": 41.8902,
     "longitude": 12.4922,
     "location": "Trastevere, Rome, Italy",
-    "country_id": 2,
+    "trip_id": 2,
     "published_at": "2022-09-14",
     "created_at": "2026-03-30T20:21:08.776Z",
     "updated_at": "2026-03-30T20:21:08.776Z"
@@ -67,7 +67,7 @@
     "latitude": 35.1688,
     "longitude": -5.2636,
     "location": "Chefchaouen, Morocco",
-    "country_id": 3,
+    "trip_id": 3,
     "published_at": "2022-02-18",
     "created_at": "2026-03-30T20:21:08.776Z",
     "updated_at": "2026-03-30T20:21:08.776Z"
@@ -87,7 +87,7 @@
     "latitude": -44.6414,
     "longitude": 167.8974,
     "location": "Milford Sound, New Zealand",
-    "country_id": 4,
+    "trip_id": 4,
     "published_at": "2021-12-09",
     "created_at": "2026-03-30T20:21:08.776Z",
     "updated_at": "2026-03-30T20:21:08.776Z"
