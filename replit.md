@@ -2,7 +2,7 @@
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. A full-stack travel blog called "Wanderlust" with an interactive world map and travel timeline.
+pnpm workspace monorepo using TypeScript. A full-stack travel blog called "Travelogue" with an interactive world map and travel timeline.
 
 ## Stack
 

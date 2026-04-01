@@ -1,6 +1,14 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { Compass, BookOpen, Map, Globe, Instagram, Twitter, Mail } from "lucide-react";
+import {
+  Compass,
+  BookOpen,
+  Map,
+  Globe,
+  Instagram,
+  Twitter,
+  Mail,
+} from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -16,18 +24,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col bg-background selection:bg-secondary/30 selection:text-secondary-foreground">
       <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-background/80 border-b border-border/50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group" data-testid="link-home-logo">
+          <Link
+            href="/"
+            className="flex items-center gap-2 group"
+            data-testid="link-home-logo"
+          >
             <div className="bg-primary text-primary-foreground p-1.5 rounded-md group-hover:bg-secondary transition-colors shadow-sm">
               <Compass className="w-5 h-5" />
             </div>
-            <span className="font-serif font-bold text-xl tracking-tight">Wanderlust</span>
+            <span className="font-serif font-bold text-xl tracking-tight">
+              Travelogue
+            </span>
           </Link>
 
           <nav className="flex items-center gap-1">
             {navItems.map((item) => {
               const isActive = item.exact
                 ? location === item.href
-                : location === item.href || location.startsWith(item.href + "/");
+                : location === item.href ||
+                  location.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}
@@ -58,11 +73,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="bg-primary text-primary-foreground p-1 rounded-md">
               <Compass className="w-4 h-4" />
             </div>
-            <span className="font-serif font-bold text-lg">Wanderlust</span>
+            <span className="font-serif font-bold text-lg">Travelogue</span>
           </div>
 
           <p className="text-sm text-muted-foreground font-serif italic text-center">
-            &copy; {new Date().getFullYear()} Wanderlust Journals. Crafted with intention.
+            &copy; {new Date().getFullYear()} Travelogue Journals. Crafted with
+            intention.
           </p>
 
           <div className="flex items-center gap-3">
@@ -85,7 +101,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Twitter className="w-3.5 h-3.5" />
             </a>
             <a
-              href="mailto:hello@wanderlust.blog"
+              href="mailto:hey@jeremymarchandeau.com"
               className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
               aria-label="Email"
             >
