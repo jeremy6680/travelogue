@@ -12,6 +12,7 @@ import {
   UpdateTripResponse,
   GetStatsResponse,
 } from "@workspace/api-zod";
+import { requireAdminAuth } from "../middlewares/admin-auth";
 
 function serializeTrip(trip: Record<string, unknown>) {
   return {
@@ -28,7 +29,7 @@ router.get("/trips", async (_req, res): Promise<void> => {
   res.json(ListTripsResponse.parse(trips.map(serializeTrip)));
 });
 
-router.post("/trips", async (req, res): Promise<void> => {
+router.post("/trips", requireAdminAuth, async (req, res): Promise<void> => {
   const parsed = CreateTripBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -89,7 +90,7 @@ router.get("/trips/:id", async (req, res): Promise<void> => {
   res.json(GetTripResponse.parse(serializeTrip(trip as unknown as Record<string, unknown>)));
 });
 
-router.patch("/trips/:id", async (req, res): Promise<void> => {
+router.patch("/trips/:id", requireAdminAuth, async (req, res): Promise<void> => {
   const params = UpdateTripParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -108,7 +109,7 @@ router.patch("/trips/:id", async (req, res): Promise<void> => {
   res.json(UpdateTripResponse.parse(serializeTrip(trip as unknown as Record<string, unknown>)));
 });
 
-router.delete("/trips/:id", async (req, res): Promise<void> => {
+router.delete("/trips/:id", requireAdminAuth, async (req, res): Promise<void> => {
   const params = DeleteTripParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

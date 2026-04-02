@@ -121,6 +121,12 @@ pnpm --filter @workspace/travel-blog dev
 
 Vite dev server with HMR. The frontend expects the API to be running at `http://localhost:3000`.
 
+If you want the frontend to target a different API base URL, set:
+
+```sh
+VITE_API_BASE_URL=https://api.example.com
+```
+
 ---
 
 ## Viewing the database
@@ -153,6 +159,105 @@ pnpm run build
 ```
 
 Runs `typecheck` first, then `build` in every package that has one. Frontend output goes to `artifacts/travel-blog/dist/public/`.
+
+## Production Deployment
+
+### Recommended topology
+
+- `travelogue.jeremymarchandeau.com` → frontend (`artifacts/travel-blog`) on Netlify
+- `api.travelogue.jeremymarchandeau.com` → API (`artifacts/api-server`) on Coolify
+- PostgreSQL → private service on Coolify
+- Directus → optional, only if you want the CMS in production
+
+### API on Coolify
+
+The repo includes a production Dockerfile for the API at [artifacts/api-server/Dockerfile](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/api-server/Dockerfile).
+
+Suggested Coolify settings:
+
+- Build pack: `Dockerfile`
+- Dockerfile path: `artifacts/api-server/Dockerfile`
+- Build context: repository root
+- Exposed port: `3000`
+
+Required environment variables for the API service:
+
+```sh
+PORT=3000
+DATABASE_URL=postgresql://<user>:<password>@<postgres-host>:5432/travelogue
+CORS_ORIGIN=https://travelogue.jeremymarchandeau.com
+ADMIN_API_TOKEN=<long-random-secret>
+```
+
+The API runs database migrations automatically on startup.
+
+Health check endpoint:
+
+```txt
+/api/healthz
+```
+
+### Frontend on Netlify
+
+Set this environment variable in Netlify for the frontend site:
+
+```sh
+VITE_API_BASE_URL=https://api.travelogue.jeremymarchandeau.com
+```
+
+Then redeploy the frontend.
+
+### Protecting `/admin`
+
+The `/admin` page is part of the frontend app, not the API. By default, anyone who knows the URL can open it unless you protect it at the edge.
+
+Recommended setup:
+
+1. Protect `https://travelogue.jeremymarchandeau.com/admin*` with Cloudflare Access
+2. Limit access to your email address only
+3. Keep the admin link hidden in the public UI by default
+
+The footer admin link is hidden unless this Netlify environment variable is enabled:
+
+```sh
+VITE_SHOW_ADMIN_LINK=true
+```
+
+Suggested Cloudflare Access policy:
+
+- Application type: Self-hosted
+- Domain / destination: `travelogue.jeremymarchandeau.com/admin*`
+- Policy action: Allow
+- Include rule: your email address only
+
+Important: protecting `/admin` is not enough on its own. The API write routes should also be protected so nobody can call them directly without authorization.
+
+This repo now protects all API write routes (`POST`, `PATCH`, `DELETE` on posts, trips, photos) with a bearer token.
+
+How it works:
+
+- Set `ADMIN_API_TOKEN` on the API service
+- Open `/admin`
+- Enter the token once per browser session
+- The frontend sends `Authorization: Bearer <token>` on admin write requests
+
+### PostgreSQL on Coolify
+
+- Create a Postgres service
+- Create a database named `travelogue`
+- Copy the internal connection string into `DATABASE_URL` for the API service
+- Do not expose Postgres publicly unless you have a specific reason
+
+### Directus on Coolify
+
+Directus is optional. Deploy it only if you want a production CMS/admin separate from the custom Travelogue admin.
+
+If you deploy it:
+
+- Give it the same Postgres instance (or a separate one if you prefer)
+- Set `PUBLIC_URL`
+- Persist the uploads directory
+- Restrict access to the admin domain if needed
 
 ---
 

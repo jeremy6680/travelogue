@@ -18,6 +18,10 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
 
+function isApiRequestUrl(url: string): boolean {
+  return url === "/api" || url.startsWith("/api/") || /^https?:\/\/[^/]+\/api(?:\/|$)/i.test(url);
+}
+
 /**
  * Set a base URL that is prepended to every relative request URL
  * (i.e. paths that start with `/`).
@@ -324,7 +328,12 @@ export async function customFetch<T = unknown>(
   options: CustomFetchOptions = {},
 ): Promise<T> {
   input = applyBaseUrl(input);
-  const { responseType = "auto", headers: headersInit, ...init } = options;
+  const resolvedUrl = resolveUrl(input);
+  const effectiveResponseType =
+    options.responseType === undefined && isApiRequestUrl(resolvedUrl)
+      ? "json"
+      : (options.responseType ?? "auto");
+  const { responseType: _ignoredResponseType, headers: headersInit, ...init } = options;
 
   const method = resolveMethod(input, init.method);
 
@@ -342,7 +351,7 @@ export async function customFetch<T = unknown>(
     headers.set("content-type", "application/json");
   }
 
-  if (responseType === "json" && !headers.has("accept")) {
+  if (effectiveResponseType === "json" && !headers.has("accept")) {
     headers.set("accept", DEFAULT_JSON_ACCEPT);
   }
 
@@ -364,5 +373,5 @@ export async function customFetch<T = unknown>(
     throw new ApiError(response, errorData, requestInfo);
   }
 
-  return (await parseSuccessBody(response, responseType, requestInfo)) as T;
+  return (await parseSuccessBody(response, effectiveResponseType, requestInfo)) as T;
 }

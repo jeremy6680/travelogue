@@ -169,8 +169,8 @@ export const ListTripsResponseItem = zod.object({
   travelCompanions: zod.string(),
   friendsFamilyMet: zod.string(),
   visitedAt: zod.string(),
-  latitude: zod.number(),
-  longitude: zod.number(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
   transportationTo: zod.string().nullable(),
   transportationOnSite: zod.string().nullable(),
   createdAt: zod.string(),
@@ -189,8 +189,8 @@ export const CreateTripBody = zod.object({
   travelCompanions: zod.string(),
   friendsFamilyMet: zod.string(),
   visitedAt: zod.string(),
-  latitude: zod.number(),
-  longitude: zod.number(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
   transportationTo: zod.string().nullish(),
   transportationOnSite: zod.string().nullish(),
 });
@@ -211,8 +211,8 @@ export const GetTripResponse = zod.object({
   travelCompanions: zod.string(),
   friendsFamilyMet: zod.string(),
   visitedAt: zod.string(),
-  latitude: zod.number(),
-  longitude: zod.number(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
   transportationTo: zod.string().nullable(),
   transportationOnSite: zod.string().nullable(),
   createdAt: zod.string(),
@@ -234,8 +234,8 @@ export const UpdateTripBody = zod.object({
   travelCompanions: zod.string().optional(),
   friendsFamilyMet: zod.string().optional(),
   visitedAt: zod.string().optional(),
-  latitude: zod.number().optional(),
-  longitude: zod.number().optional(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
   transportationTo: zod.string().nullish(),
   transportationOnSite: zod.string().nullish(),
 });
@@ -249,8 +249,8 @@ export const UpdateTripResponse = zod.object({
   travelCompanions: zod.string(),
   friendsFamilyMet: zod.string(),
   visitedAt: zod.string(),
-  latitude: zod.number(),
-  longitude: zod.number(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
   transportationTo: zod.string().nullable(),
   transportationOnSite: zod.string().nullable(),
   createdAt: zod.string(),
@@ -286,23 +286,6 @@ export const CreatePhotoBody = zod.object({
   caption: zod.string().nullish(),
   link: zod.string().nullish(),
   displayOrder: zod.number().optional(),
-});
-
-/**
- * @summary Get a photo by id
- */
-export const GetPhotoParams = zod.object({
-  id: zod.coerce.number(),
-});
-
-export const GetPhotoResponse = zod.object({
-  id: zod.number(),
-  url: zod.string(),
-  caption: zod.string().nullable(),
-  link: zod.string().nullable(),
-  displayOrder: zod.number(),
-  createdAt: zod.string(),
-  updatedAt: zod.string(),
 });
 
 /**

@@ -12,6 +12,7 @@ import {
   UpdatePostResponse,
   ListMapPinsResponse,
 } from "@workspace/api-zod";
+import { requireAdminAuth } from "../middlewares/admin-auth";
 
 function serializePost(post: Record<string, unknown>) {
   return {
@@ -28,7 +29,7 @@ router.get("/posts", async (_req, res): Promise<void> => {
   res.json(ListPostsResponse.parse(posts.map(serializePost)));
 });
 
-router.post("/posts", async (req, res): Promise<void> => {
+router.post("/posts", requireAdminAuth, async (req, res): Promise<void> => {
   const parsed = CreatePostBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -71,7 +72,7 @@ router.get("/posts/:id", async (req, res): Promise<void> => {
   res.json(GetPostResponse.parse(serializePost(post as unknown as Record<string, unknown>)));
 });
 
-router.patch("/posts/:id", async (req, res): Promise<void> => {
+router.patch("/posts/:id", requireAdminAuth, async (req, res): Promise<void> => {
   const params = UpdatePostParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -90,7 +91,7 @@ router.patch("/posts/:id", async (req, res): Promise<void> => {
   res.json(UpdatePostResponse.parse(serializePost(post as unknown as Record<string, unknown>)));
 });
 
-router.delete("/posts/:id", async (req, res): Promise<void> => {
+router.delete("/posts/:id", requireAdminAuth, async (req, res): Promise<void> => {
   const params = DeletePostParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

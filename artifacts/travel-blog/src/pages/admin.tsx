@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const COUNTRY_CODES: { code: string; name: string }[] = [
@@ -83,7 +83,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Edit2, CheckCircle2, XCircle } from "lucide-react";
 
+const actionButtonClass =
+  "transition-all hover:scale-105 hover:bg-muted active:scale-95 active:opacity-80";
+
 export default function AdminPage() {
+  const [adminToken, setAdminToken] = useState(() =>
+    typeof window === "undefined"
+      ? ""
+      : window.sessionStorage.getItem("travelogue_admin_api_token") ?? "",
+  );
   const { data: posts = [] } = useListPosts({ query: { queryKey: ["posts"] } });
   const { data: trips = [] } = useListTrips({ query: { queryKey: ["trips"] } });
   const { data: photos = [] } = useListPhotos({ query: { queryKey: ["photos"] } });
@@ -106,6 +114,60 @@ export default function AdminPage() {
   const [editingPost, setEditingPost] = useState<any>(null);
   const [editingTrip, setEditingTrip] = useState<any>(null);
   const [editingPhoto, setEditingPhoto] = useState<any>(null);
+  const isUnlocked = adminToken.trim().length > 0;
+  const tripOptions = useMemo(
+    () =>
+      [...trips].sort((a, b) => a.name.localeCompare(b.name, "en")).map((trip) => ({
+        id: trip.id,
+        label: `${trip.name}, ${trip.countryCode}, Trip ID ${trip.id}`,
+      })),
+    [trips],
+  );
+
+  const handleUnlock = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const token = String(formData.get("adminToken") ?? "").trim();
+    if (!token) return;
+    window.sessionStorage.setItem("travelogue_admin_api_token", token);
+    setAdminToken(token);
+    toast({ title: "Admin unlocked for this session" });
+  };
+
+  const handleLock = () => {
+    window.sessionStorage.removeItem("travelogue_admin_api_token");
+    setAdminToken("");
+    toast({ title: "Admin locked" });
+  };
+
+  if (!isUnlocked) {
+    return (
+      <Layout>
+        <div className="max-w-md mx-auto pt-16">
+          <div className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-serif font-bold text-foreground">Unlock Admin</h1>
+              <p className="text-sm text-muted-foreground">
+                Enter your admin API token. It will be stored only in this browser session.
+              </p>
+            </div>
+            <form onSubmit={handleUnlock} className="space-y-4">
+              <Input
+                name="adminToken"
+                type="password"
+                placeholder="Admin API token"
+                autoComplete="current-password"
+                required
+              />
+              <Button type="submit" className="w-full">
+                Unlock admin
+              </Button>
+            </form>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   const handlePostSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -153,8 +215,10 @@ export default function AdminPage() {
       travelCompanions: formData.get("travelCompanions") as string,
       friendsFamilyMet: formData.get("friendsFamilyMet") as string,
       visitedAt: formData.get("visitedAt") as string,
-      latitude: Number(formData.get("latitude")),
-      longitude: Number(formData.get("longitude")),
+      latitude: formData.get("latitude") ? Number(formData.get("latitude")) : undefined,
+      longitude: formData.get("longitude") ? Number(formData.get("longitude")) : undefined,
+      transportationTo: (formData.get("transportationTo") as string) || undefined,
+      transportationOnSite: (formData.get("transportationOnSite") as string) || undefined,
     };
 
     if (editingTrip) {
@@ -213,12 +277,17 @@ export default function AdminPage() {
             <h1 className="text-4xl font-serif font-bold text-foreground">Admin Journal</h1>
             <p className="text-muted-foreground mt-2 font-serif italic">Manage your dispatches and map pins.</p>
           </div>
-          <div className="flex items-center gap-2 text-sm font-mono border rounded-full px-4 py-1.5 bg-card">
-            Server Status: 
-            {health?.status === 'ok' ? 
-              <CheckCircle2 className="w-4 h-4 text-green-500" /> : 
-              <XCircle className="w-4 h-4 text-red-500" />
-            }
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-sm font-mono border rounded-full px-4 py-1.5 bg-card">
+              Server Status: 
+              {health?.status === 'ok' ? 
+                <CheckCircle2 className="w-4 h-4 text-green-500" /> : 
+                <XCircle className="w-4 h-4 text-red-500" />
+              }
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={handleLock}>
+              Lock
+            </Button>
           </div>
         </header>
 
@@ -240,7 +309,22 @@ export default function AdminPage() {
                 <Input name="coverImageUrl" placeholder="Cover Image URL (optional)" defaultValue={editingPost?.coverImageUrl || ''} />
                 <div className="grid grid-cols-2 gap-3">
                   <Input name="location" placeholder="Location string" defaultValue={editingPost?.location || ''} />
-                  <Input name="tripId" type="number" placeholder="Trip ID" defaultValue={editingPost?.tripId || ''} />
+                  <select
+                    name="tripId"
+                    defaultValue={editingPost?.tripId != null ? String(editingPost.tripId) : ""}
+                    className={cn(
+                      "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      "disabled:cursor-not-allowed disabled:opacity-50"
+                    )}
+                  >
+                    <option value="">No linked trip</option>
+                    {tripOptions.map((trip) => (
+                      <option key={trip.id} value={String(trip.id)}>
+                        {trip.label}
+                      </option>
+                    ))}
+                  </select>
                   <Input name="latitude" type="number" step="any" placeholder="Latitude" defaultValue={editingPost?.latitude || ''} />
                   <Input name="longitude" type="number" step="any" placeholder="Longitude" defaultValue={editingPost?.longitude || ''} />
                 </div>
@@ -265,10 +349,10 @@ export default function AdminPage() {
                     <p className="text-xs text-muted-foreground font-mono">{post.slug}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="ghost" onClick={() => setEditingPost(post)}>
+                    <Button size="icon" variant="ghost" className={actionButtonClass} onClick={() => setEditingPost(post)}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
-                    <Button size="icon" variant="destructive" onClick={() => {
+                    <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
                       if(confirm("Delete this dispatch?")) {
                         deletePost.mutate({ id: post.id }, {
                           onSuccess: () => queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() })
@@ -316,8 +400,12 @@ export default function AdminPage() {
                 <Input name="travelCompanions" placeholder="Travel Companions" defaultValue={editingTrip?.travelCompanions} required />
                 <Input name="friendsFamilyMet" placeholder="Friends/Family Met" defaultValue={editingTrip?.friendsFamilyMet} required />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="latitude" type="number" step="any" placeholder="Latitude" defaultValue={editingTrip?.latitude} required />
-                  <Input name="longitude" type="number" step="any" placeholder="Longitude" defaultValue={editingTrip?.longitude} required />
+                  <Input name="transportationTo" placeholder="Getting There (optional)" defaultValue={editingTrip?.transportationTo || ''} />
+                  <Input name="transportationOnSite" placeholder="Getting Around (optional)" defaultValue={editingTrip?.transportationOnSite || ''} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input name="latitude" type="number" step="any" placeholder="Latitude (optional)" defaultValue={editingTrip?.latitude ?? ''} />
+                  <Input name="longitude" type="number" step="any" placeholder="Longitude (optional)" defaultValue={editingTrip?.longitude ?? ''} />
                 </div>
                 <Input name="visitedAt" type="datetime-local" placeholder="Visited At" defaultValue={editingTrip?.visitedAt ? new Date(editingTrip.visitedAt).toISOString().slice(0, 16) : ''} required />
               </div>
@@ -339,13 +427,20 @@ export default function AdminPage() {
                     <h4 className="font-serif font-bold flex items-center gap-2">
                       {trip.name} <span className="text-xs font-mono font-normal text-muted-foreground">{trip.countryCode}</span>
                     </h4>
-                    <p className="text-xs text-muted-foreground">{trip.visitedCities}</p>
+                    <p className="text-xs text-muted-foreground">Trip ID {trip.id} · {trip.visitedCities}</p>
+                    {(trip.transportationTo || trip.transportationOnSite) && (
+                      <p className="text-xs text-muted-foreground">
+                        {trip.transportationTo ? `Getting There: ${trip.transportationTo}` : "Getting There: -"}
+                        {" · "}
+                        {trip.transportationOnSite ? `Getting Around: ${trip.transportationOnSite}` : "Getting Around: -"}
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="ghost" onClick={() => setEditingTrip(trip)}>
+                    <Button size="icon" variant="ghost" className={actionButtonClass} onClick={() => setEditingTrip(trip)}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
-                    <Button size="icon" variant="destructive" onClick={() => {
+                    <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
                       if(confirm("Remove this trip from passport?")) {
                         deleteTrip.mutate({ id: trip.id }, {
                           onSuccess: () => queryClient.invalidateQueries({ queryKey: getListTripsQueryKey() })
@@ -390,10 +485,10 @@ export default function AdminPage() {
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
                   <p className="text-white text-xs text-center line-clamp-2">{photo.caption}</p>
                   <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-white hover:text-white hover:bg-white/20" onClick={() => setEditingPhoto(photo)}>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-white hover:text-white hover:bg-white/20 active:scale-95 transition-all" onClick={() => setEditingPhoto(photo)}>
                       <Edit2 className="w-3 h-3" />
                     </Button>
-                    <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => {
+                    <Button size="icon" variant="destructive" className="h-7 w-7 active:scale-95 transition-all" onClick={() => {
                       if (confirm("Delete this photo?")) {
                         deletePhoto.mutate({ id: photo.id }, {
                           onSuccess: () => queryClient.invalidateQueries({ queryKey: getListPhotosQueryKey() })
