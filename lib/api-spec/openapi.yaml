@@ -463,9 +463,9 @@ components:
         visitedAt:
           type: string
         latitude:
-          type: number
+          type: ["number", "null"]
         longitude:
-          type: number
+          type: ["number", "null"]
         transportationTo:
           type: ["string", "null"]
         transportationOnSite:
@@ -483,8 +483,6 @@ components:
         - travelCompanions
         - friendsFamilyMet
         - visitedAt
-        - latitude
-        - longitude
         - transportationTo
         - transportationOnSite
         - createdAt
@@ -508,9 +506,9 @@ components:
         visitedAt:
           type: string
         latitude:
-          type: number
+          type: ["number", "null"]
         longitude:
-          type: number
+          type: ["number", "null"]
         transportationTo:
           type: ["string", "null"]
         transportationOnSite:
@@ -523,8 +521,6 @@ components:
         - travelCompanions
         - friendsFamilyMet
         - visitedAt
-        - latitude
-        - longitude
 
     UpdateTripBody:
       type: object
@@ -544,9 +540,9 @@ components:
         visitedAt:
           type: string
         latitude:
-          type: number
+          type: ["number", "null"]
         longitude:
-          type: number
+          type: ["number", "null"]
         transportationTo:
           type: ["string", "null"]
         transportationOnSite:

@@ -14,8 +14,10 @@ export interface CreateTripBody {
   travelCompanions: string;
   friendsFamilyMet: string;
   visitedAt: string;
-  latitude: number;
-  longitude: number;
+  /** @nullable */
+  latitude?: number | null;
+  /** @nullable */
+  longitude?: number | null;
   /** @nullable */
   transportationTo?: string | null;
   /** @nullable */
