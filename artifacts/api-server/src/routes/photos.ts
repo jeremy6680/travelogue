@@ -4,11 +4,9 @@ import { db, photosTable } from "@workspace/db";
 import {
   CreatePhotoBody,
   UpdatePhotoBody,
-  GetPhotoParams,
   UpdatePhotoParams,
   DeletePhotoParams,
   ListPhotosResponse,
-  GetPhotoResponse,
   UpdatePhotoResponse,
 } from "@workspace/api-zod";
 import { requireAdminAuth } from "../middlewares/admin-auth";
@@ -35,7 +33,7 @@ router.post("/photos", requireAdminAuth, async (req, res): Promise<void> => {
     return;
   }
   const [photo] = await db.insert(photosTable).values(parsed.data).returning();
-  res.status(201).json(GetPhotoResponse.parse(serializePhoto(photo as unknown as Record<string, unknown>)));
+  res.status(201).json(UpdatePhotoResponse.parse(serializePhoto(photo as unknown as Record<string, unknown>)));
 });
 
 router.patch("/photos/:id", requireAdminAuth, async (req, res): Promise<void> => {
