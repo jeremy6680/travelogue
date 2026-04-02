@@ -121,6 +121,12 @@ pnpm --filter @workspace/travel-blog dev
 
 Vite dev server with HMR. The frontend expects the API to be running at `http://localhost:3000`.
 
+If you want the frontend to target a different API base URL, set:
+
+```sh
+VITE_API_BASE_URL=https://api.example.com
+```
+
 ---
 
 ## Viewing the database
@@ -153,6 +159,70 @@ pnpm run build
 ```
 
 Runs `typecheck` first, then `build` in every package that has one. Frontend output goes to `artifacts/travel-blog/dist/public/`.
+
+## Production Deployment
+
+### Recommended topology
+
+- `travelogue.jeremymarchandeau.com` → frontend (`artifacts/travel-blog`) on Netlify
+- `api.travelogue.jeremymarchandeau.com` → API (`artifacts/api-server`) on Coolify
+- PostgreSQL → private service on Coolify
+- Directus → optional, only if you want the CMS in production
+
+### API on Coolify
+
+The repo includes a production Dockerfile for the API at [artifacts/api-server/Dockerfile](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/api-server/Dockerfile).
+
+Suggested Coolify settings:
+
+- Build pack: `Dockerfile`
+- Dockerfile path: `artifacts/api-server/Dockerfile`
+- Build context: repository root
+- Exposed port: `3000`
+
+Required environment variables for the API service:
+
+```sh
+PORT=3000
+DATABASE_URL=postgresql://<user>:<password>@<postgres-host>:5432/travelogue
+CORS_ORIGIN=https://travelogue.jeremymarchandeau.com
+```
+
+The API runs database migrations automatically on startup.
+
+Health check endpoint:
+
+```txt
+/api/healthz
+```
+
+### Frontend on Netlify
+
+Set this environment variable in Netlify for the frontend site:
+
+```sh
+VITE_API_BASE_URL=https://api.travelogue.jeremymarchandeau.com
+```
+
+Then redeploy the frontend.
+
+### PostgreSQL on Coolify
+
+- Create a Postgres service
+- Create a database named `travelogue`
+- Copy the internal connection string into `DATABASE_URL` for the API service
+- Do not expose Postgres publicly unless you have a specific reason
+
+### Directus on Coolify
+
+Directus is optional. Deploy it only if you want a production CMS/admin separate from the custom Travelogue admin.
+
+If you deploy it:
+
+- Give it the same Postgres instance (or a separate one if you prefer)
+- Set `PUBLIC_URL`
+- Persist the uploads directory
+- Restrict access to the admin domain if needed
 
 ---
 
