@@ -52,5 +52,10 @@ Thumbs.db
 .env
 **/.env
 
+# Netlify local state / deployment scratch
+.netlify/
+**/.netlify/
+**/.netlify-deploy/
+
 # Claude Code
 .claude/
