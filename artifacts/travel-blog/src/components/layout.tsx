@@ -107,12 +107,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               <Mail className="w-3.5 h-3.5" />
             </a>
-            <Link
-              href="/admin"
-              className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors ml-2"
-            >
-              Admin
-            </Link>
+            {import.meta.env.VITE_SHOW_ADMIN_LINK === "true" && (
+              <Link
+                href="/admin"
+                className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors ml-2"
+              >
+                Admin
+              </Link>
+            )}
           </div>
         </div>
       </footer>

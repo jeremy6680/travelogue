@@ -206,6 +206,31 @@ VITE_API_BASE_URL=https://api.travelogue.jeremymarchandeau.com
 
 Then redeploy the frontend.
 
+### Protecting `/admin`
+
+The `/admin` page is part of the frontend app, not the API. By default, anyone who knows the URL can open it unless you protect it at the edge.
+
+Recommended setup:
+
+1. Protect `https://travelogue.jeremymarchandeau.com/admin*` with Cloudflare Access
+2. Limit access to your email address only
+3. Keep the admin link hidden in the public UI by default
+
+The footer admin link is hidden unless this Netlify environment variable is enabled:
+
+```sh
+VITE_SHOW_ADMIN_LINK=true
+```
+
+Suggested Cloudflare Access policy:
+
+- Application type: Self-hosted
+- Domain / destination: `travelogue.jeremymarchandeau.com/admin*`
+- Policy action: Allow
+- Include rule: your email address only
+
+Important: protecting `/admin` is not enough on its own. The API write routes should also be protected so nobody can call them directly without authorization.
+
 ### PostgreSQL on Coolify
 
 - Create a Postgres service
