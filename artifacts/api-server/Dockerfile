@@ -20,8 +20,11 @@ RUN corepack enable
 COPY --from=deps /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml /app/.npmrc /app/tsconfig.base.json /app/tsconfig.json ./
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/artifacts/api-server/package.json artifacts/api-server/package.json
+COPY --from=deps /app/artifacts/api-server/node_modules artifacts/api-server/node_modules
 COPY --from=deps /app/lib/api-zod/package.json lib/api-zod/package.json
+COPY --from=deps /app/lib/api-zod/node_modules lib/api-zod/node_modules
 COPY --from=deps /app/lib/db/package.json lib/db/package.json
+COPY --from=deps /app/lib/db/node_modules lib/db/node_modules
 
 COPY artifacts/api-server artifacts/api-server
 COPY lib/api-zod lib/api-zod
@@ -37,6 +40,10 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 COPY --from=build /app/artifacts/api-server/dist ./dist
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/artifacts/api-server/node_modules ./artifacts/api-server/node_modules
+COPY --from=deps /app/lib/api-zod/node_modules ./lib/api-zod/node_modules
+COPY --from=deps /app/lib/db/node_modules ./lib/db/node_modules
 
 EXPOSE 3000
 
