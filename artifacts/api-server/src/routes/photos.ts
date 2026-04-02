@@ -11,6 +11,7 @@ import {
   GetPhotoResponse,
   UpdatePhotoResponse,
 } from "@workspace/api-zod";
+import { requireAdminAuth } from "../middlewares/admin-auth";
 
 function serializePhoto(photo: Record<string, unknown>) {
   return {
@@ -27,7 +28,7 @@ router.get("/photos", async (_req, res): Promise<void> => {
   res.json(ListPhotosResponse.parse(photos.map(serializePhoto)));
 });
 
-router.post("/photos", async (req, res): Promise<void> => {
+router.post("/photos", requireAdminAuth, async (req, res): Promise<void> => {
   const parsed = CreatePhotoBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -37,7 +38,7 @@ router.post("/photos", async (req, res): Promise<void> => {
   res.status(201).json(GetPhotoResponse.parse(serializePhoto(photo as unknown as Record<string, unknown>)));
 });
 
-router.patch("/photos/:id", async (req, res): Promise<void> => {
+router.patch("/photos/:id", requireAdminAuth, async (req, res): Promise<void> => {
   const params = UpdatePhotoParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -56,7 +57,7 @@ router.patch("/photos/:id", async (req, res): Promise<void> => {
   res.json(UpdatePhotoResponse.parse(serializePhoto(photo as unknown as Record<string, unknown>)));
 });
 
-router.delete("/photos/:id", async (req, res): Promise<void> => {
+router.delete("/photos/:id", requireAdminAuth, async (req, res): Promise<void> => {
   const params = DeletePhotoParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

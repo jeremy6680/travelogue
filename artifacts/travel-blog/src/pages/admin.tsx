@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const COUNTRY_CODES: { code: string; name: string }[] = [
@@ -87,6 +87,11 @@ const actionButtonClass =
   "transition-all hover:scale-105 hover:bg-muted active:scale-95 active:opacity-80";
 
 export default function AdminPage() {
+  const [adminToken, setAdminToken] = useState(() =>
+    typeof window === "undefined"
+      ? ""
+      : window.sessionStorage.getItem("travelogue_admin_api_token") ?? "",
+  );
   const { data: posts = [] } = useListPosts({ query: { queryKey: ["posts"] } });
   const { data: trips = [] } = useListTrips({ query: { queryKey: ["trips"] } });
   const { data: photos = [] } = useListPhotos({ query: { queryKey: ["photos"] } });
@@ -109,6 +114,60 @@ export default function AdminPage() {
   const [editingPost, setEditingPost] = useState<any>(null);
   const [editingTrip, setEditingTrip] = useState<any>(null);
   const [editingPhoto, setEditingPhoto] = useState<any>(null);
+  const isUnlocked = adminToken.trim().length > 0;
+  const tripOptions = useMemo(
+    () =>
+      [...trips].sort((a, b) => a.name.localeCompare(b.name, "en")).map((trip) => ({
+        id: trip.id,
+        label: `${trip.name}, ${trip.countryCode}, Trip ID ${trip.id}`,
+      })),
+    [trips],
+  );
+
+  const handleUnlock = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const token = String(formData.get("adminToken") ?? "").trim();
+    if (!token) return;
+    window.sessionStorage.setItem("travelogue_admin_api_token", token);
+    setAdminToken(token);
+    toast({ title: "Admin unlocked for this session" });
+  };
+
+  const handleLock = () => {
+    window.sessionStorage.removeItem("travelogue_admin_api_token");
+    setAdminToken("");
+    toast({ title: "Admin locked" });
+  };
+
+  if (!isUnlocked) {
+    return (
+      <Layout>
+        <div className="max-w-md mx-auto pt-16">
+          <div className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-serif font-bold text-foreground">Unlock Admin</h1>
+              <p className="text-sm text-muted-foreground">
+                Enter your admin API token. It will be stored only in this browser session.
+              </p>
+            </div>
+            <form onSubmit={handleUnlock} className="space-y-4">
+              <Input
+                name="adminToken"
+                type="password"
+                placeholder="Admin API token"
+                autoComplete="current-password"
+                required
+              />
+              <Button type="submit" className="w-full">
+                Unlock admin
+              </Button>
+            </form>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   const handlePostSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -218,12 +277,17 @@ export default function AdminPage() {
             <h1 className="text-4xl font-serif font-bold text-foreground">Admin Journal</h1>
             <p className="text-muted-foreground mt-2 font-serif italic">Manage your dispatches and map pins.</p>
           </div>
-          <div className="flex items-center gap-2 text-sm font-mono border rounded-full px-4 py-1.5 bg-card">
-            Server Status: 
-            {health?.status === 'ok' ? 
-              <CheckCircle2 className="w-4 h-4 text-green-500" /> : 
-              <XCircle className="w-4 h-4 text-red-500" />
-            }
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-sm font-mono border rounded-full px-4 py-1.5 bg-card">
+              Server Status: 
+              {health?.status === 'ok' ? 
+                <CheckCircle2 className="w-4 h-4 text-green-500" /> : 
+                <XCircle className="w-4 h-4 text-red-500" />
+              }
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={handleLock}>
+              Lock
+            </Button>
           </div>
         </header>
 
@@ -255,9 +319,9 @@ export default function AdminPage() {
                     )}
                   >
                     <option value="">No linked trip</option>
-                    {trips.map((trip) => (
+                    {tripOptions.map((trip) => (
                       <option key={trip.id} value={String(trip.id)}>
-                        {trip.name}, {trip.countryCode}, Trip ID {trip.id}
+                        {trip.label}
                       </option>
                     ))}
                   </select>

@@ -186,6 +186,7 @@ Required environment variables for the API service:
 PORT=3000
 DATABASE_URL=postgresql://<user>:<password>@<postgres-host>:5432/travelogue
 CORS_ORIGIN=https://travelogue.jeremymarchandeau.com
+ADMIN_API_TOKEN=<long-random-secret>
 ```
 
 The API runs database migrations automatically on startup.
@@ -230,6 +231,15 @@ Suggested Cloudflare Access policy:
 - Include rule: your email address only
 
 Important: protecting `/admin` is not enough on its own. The API write routes should also be protected so nobody can call them directly without authorization.
+
+This repo now protects all API write routes (`POST`, `PATCH`, `DELETE` on posts, trips, photos) with a bearer token.
+
+How it works:
+
+- Set `ADMIN_API_TOKEN` on the API service
+- Open `/admin`
+- Enter the token once per browser session
+- The frontend sends `Authorization: Bearer <token>` on admin write requests
 
 ### PostgreSQL on Coolify
 
