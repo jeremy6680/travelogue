@@ -31,9 +31,16 @@ pnpm install
 
 ```sh
 cp .env.example .env
+cp .env.local.example .env.local
 ```
 
-The `.env` at the workspace root is used by the API server and scripts:
+Le plus simple est d'utiliser cette convention :
+
+- `.env.local` pour ton poste de dev
+- `.env.production` comme fichier de référence local uniquement
+- les vraies variables de prod directement dans ton hébergeur
+
+Pour le local, mets ta base de dev dans `.env.local` :
 
 ```
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/travelogue
@@ -60,7 +67,7 @@ The database connection in that file defaults to `localhost:5432/travelogue` (sa
 ### 3. Run database migrations
 
 ```sh
-pnpm --filter @workspace/db migrate
+pnpm run db:migrate:local
 ```
 
 This applies all pending SQL migrations from `lib/db/migrations/` to the database. The migration history is tracked in a `__drizzle_migrations` table — already-applied migrations are skipped automatically.
@@ -86,10 +93,33 @@ This initialises the Directus system tables in the database and creates the admi
 ### 5. Seed the database
 
 ```sh
-pnpm --filter @workspace/scripts seed
+pnpm run db:seed:local
 ```
 
 Inserts the demo trips and posts from `scripts/data/`.
+
+Tu peux aussi faire les deux d'un coup :
+
+```sh
+pnpm run db:setup:local
+```
+
+### Local vs production
+
+Commandes locales :
+
+```sh
+pnpm run db:migrate:local
+pnpm run db:seed:local
+```
+
+Commande production depuis ta machine, seulement si `.env.production` existe et pointe bien vers la bonne base :
+
+```sh
+pnpm run db:migrate:prod
+```
+
+N'utilise pas `db:seed:prod` sauf si tu veux volontairement injecter les données de démo dans la base de production.
 
 ---
 
