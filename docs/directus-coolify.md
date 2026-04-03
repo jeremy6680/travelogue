@@ -16,7 +16,7 @@ Create a new **Application** in Coolify from this repository and configure:
 - **Build Context**: repository root
 - **Port**: `8055`
 
-This Dockerfile installs Directus as a standalone app with Node 20 and intentionally avoids the monorepo root `pnpm` overrides, because they can exclude Linux ARM native packages required on some Coolify hosts.
+This Dockerfile installs Directus as a standalone app with Node 22 and intentionally avoids the monorepo root `pnpm` overrides, because they can exclude Linux ARM native packages required on some Coolify hosts.
 
 ## Environment Variables
 

@@ -13,22 +13,22 @@ Deployment on Coolify is documented in [`docs/directus-coolify.md`](/Users/jerem
 
 ## Important Node Version
 
-Use Node 20 inside the Directus app.
+Use Node 22 inside the Directus app.
 
-The file [`artifacts/directus/.nvmrc`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/.nvmrc) contains:
+The file [`artifacts/directus/.nvmrc`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/.nvmrc) should contain:
 
 ```sh
-20
+22
 ```
 
 Before running Directus commands:
 
 ```sh
 cd /Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus
-nvm use 20
+nvm use 22
 ```
 
-If you run Directus with another Node version, native modules such as `isolated-vm` may fail with an ABI mismatch error.
+If you run Directus with another Node version, native modules may fail or Directus may reject the runtime because recent Directus releases require Node 22+.
 
 ## Environment Files
 
@@ -72,7 +72,7 @@ Bootstrap Directus only on the first run, or when initializing a fresh Directus 
 
 ```sh
 cd /Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus
-nvm use 20
+nvm use 22
 pnpm install
 pnpm run bootstrap
 ```
@@ -83,7 +83,7 @@ This creates the Directus system tables and the admin account from `.env`.
 
 ```sh
 cd /Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus
-nvm use 20
+nvm use 22
 pnpm install
 pnpm run dev
 ```
@@ -111,7 +111,7 @@ Run this after you changed collections, fields, relations, permissions, or other
 
 ```sh
 cd /Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus
-nvm use 20
+nvm use 22
 pnpm run schema:snapshot:local
 ```
 
@@ -132,7 +132,7 @@ If you need to reapply the saved schema to a local Directus database:
 
 ```sh
 cd /Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus
-nvm use 20
+nvm use 22
 pnpm run schema:apply:local
 ```
 
