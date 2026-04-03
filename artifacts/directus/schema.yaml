@@ -813,7 +813,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: null
+      sort: 1
       special: null
       translations: null
       validation: null
@@ -853,7 +853,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: null
+      sort: 2
       special: null
       translations: null
       validation: null
@@ -893,7 +893,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: null
+      sort: 3
       special: null
       translations: null
       validation: null
@@ -903,6 +903,583 @@ fields:
       name: country_code
       table: trips
       data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: visited_cities
+    type: text
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: visited_cities
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: visited_cities
+      table: trips
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: reason_for_visit
+    type: text
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: reason_for_visit
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: reason_for_visit
+      table: trips
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: travel_companions
+    type: text
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: travel_companions
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: travel_companions
+      table: trips
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: friends_family_met
+    type: text
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: friends_family_met
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: friends_family_met
+      table: trips
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: visited_at
+    type: date
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: visited_at
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 8
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: visited_at
+      table: trips
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: latitude
+    type: float
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: latitude
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 13
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: latitude
+      table: trips
+      data_type: double precision
+      default_value: null
+      max_length: null
+      numeric_precision: 53
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: longitude
+    type: float
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: longitude
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 14
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: longitude
+      table: trips
+      data_type: double precision
+      default_value: null
+      max_length: null
+      numeric_precision: 53
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: created_at
+    type: dateTime
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: created_at
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 15
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: created_at
+      table: trips
+      data_type: timestamp without time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: updated_at
+    type: dateTime
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: updated_at
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 16
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: updated_at
+      table: trips
+      data_type: timestamp without time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: visited_until
+    type: date
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: visited_until
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: visited_until
+      table: trips
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: accomodation
+    type: json
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: accomodation
+      group: null
+      hidden: false
+      interface: select-multiple-dropdown
+      note: null
+      options:
+        allowNone: true
+        allowOther: true
+        choices:
+          - text: Airbnb
+            value: airbnb
+          - text: Hôtel
+            value: hotel
+          - text: Couchsurfing
+            value: couchsurfing
+          - text: Location d'appartement
+            value: apartment-rental
+          - text: Famille d'accueil
+            value: homestay
+          - text: Hébergé (amis/famille)
+            value: hosted-by-friends-family
+          - text: Sonder
+            value: sonder
+        icon: house
+      readonly: false
+      required: false
+      searchable: true
+      sort: 12
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: accomodation
+      table: trips
+      data_type: json
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: transportation_to
+    type: json
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: transportation_to
+      group: null
+      hidden: false
+      interface: select-multiple-dropdown
+      note: null
+      options:
+        allowNone: true
+        allowOther: true
+        choices:
+          - text: Avion
+            value: plane
+          - text: Voiture personnelle
+            value: own car
+          - text: Voiture de location
+            value: rental car
+          - text: Train
+            value: train
+          - text: Bateau
+            value: boat
+          - text: Moto
+            value: motorbike
+          - text: Vélo
+            value: bicycle
+        icon: flight_takeoff
+      readonly: false
+      required: false
+      searchable: true
+      sort: 10
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: transportation_to
+      table: trips
+      data_type: json
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: transportation_on_site
+    type: json
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: transportation_on_site
+      group: null
+      hidden: false
+      interface: select-multiple-dropdown
+      note: null
+      options:
+        allowNone: true
+        allowOther: true
+        choices:
+          - text: Avion
+            value: plane
+          - text: Voiture personnelle
+            value: own car
+          - text: Voiture de location
+            value: rental car
+          - text: Train
+            value: train
+          - text: Bateau
+            value: boat
+          - text: Moto
+            value: motorbike
+          - text: Vélo
+            value: bicycle
+        icon: directions_car
+      readonly: false
+      required: false
+      searchable: true
+      sort: 11
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: transportation_on_site
+      table: trips
+      data_type: json
       default_value: null
       max_length: null
       numeric_precision: null
