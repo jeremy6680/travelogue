@@ -25,8 +25,8 @@ export default function PostsPage() {
   const transportOptions = useMemo(() => {
     const modes = new Set<string>();
     for (const t of trips) {
-      for (const field of [t.transportationTo, t.transportationOnSite]) {
-        if (field) field.split(",").forEach(m => modes.add(m.trim()));
+      for (const mode of [...t.transportationTo, ...t.transportationOnSite]) {
+        modes.add(mode);
       }
     }
     return Array.from(modes).sort();
@@ -49,8 +49,7 @@ export default function PostsPage() {
       list = list.filter(p => {
         const trip = trips.find(t => t.id === p.tripId);
         if (!trip) return false;
-        const modes = [trip.transportationTo, trip.transportationOnSite]
-          .filter(Boolean).join(",").split(",").map(m => m.trim());
+        const modes = [...trip.transportationTo, ...trip.transportationOnSite];
         return modes.includes(filterTransport);
       });
     }

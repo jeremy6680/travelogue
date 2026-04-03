@@ -53,14 +53,16 @@ type DirectusTrip = {
   name: string;
   country_code: string;
   visited_cities: string;
+  accomodation: string[] | string | null;
   reason_for_visit: string;
   travel_companions: string;
   friends_family_met: string;
   visited_at: string;
+  visited_until: string | null;
   latitude: number | null;
   longitude: number | null;
-  transportation_to: string | null;
-  transportation_on_site: string | null;
+  transportation_to: string[] | string | null;
+  transportation_on_site: string[] | string | null;
   created_at: string;
   updated_at: string;
 };
@@ -123,20 +125,30 @@ function mapPost(post: DirectusPost): Post {
   };
 }
 
+function normalizeMultiSelect(value: string[] | string | null | undefined): string[] {
+  if (Array.isArray(value)) return value.map((item) => item.trim()).filter(Boolean);
+  if (typeof value === "string") {
+    return value.split(",").map((item) => item.trim()).filter(Boolean);
+  }
+  return [];
+}
+
 function mapTrip(trip: DirectusTrip): Trip {
   return {
     id: trip.id,
     name: trip.name,
     countryCode: trip.country_code,
     visitedCities: trip.visited_cities,
+    accomodation: normalizeMultiSelect(trip.accomodation),
     reasonForVisit: trip.reason_for_visit,
     travelCompanions: trip.travel_companions,
     friendsFamilyMet: trip.friends_family_met,
     visitedAt: trip.visited_at,
+    visitedUntil: trip.visited_until,
     latitude: trip.latitude,
     longitude: trip.longitude,
-    transportationTo: trip.transportation_to,
-    transportationOnSite: trip.transportation_on_site,
+    transportationTo: normalizeMultiSelect(trip.transportation_to),
+    transportationOnSite: normalizeMultiSelect(trip.transportation_on_site),
     createdAt: trip.created_at,
     updatedAt: trip.updated_at,
   };
@@ -213,14 +225,16 @@ function mapCreateTripInput(data: CreateTripBody | UpdateTripBody) {
     name: data.name,
     country_code: data.countryCode,
     visited_cities: data.visitedCities,
+    accomodation: data.accomodation,
     reason_for_visit: data.reasonForVisit,
     travel_companions: data.travelCompanions,
     friends_family_met: data.friendsFamilyMet,
     visited_at: data.visitedAt,
+    visited_until: data.visitedUntil,
     latitude: data.latitude,
     longitude: data.longitude,
-    transportation_to: data.transportationTo,
-    transportation_on_site: data.transportationOnSite,
+    transportation_to: normalizeMultiSelect(data.transportationTo),
+    transportation_on_site: normalizeMultiSelect(data.transportationOnSite),
   };
 }
 
@@ -269,10 +283,12 @@ export async function fetchTrips(): Promise<Trip[]> {
         "name",
         "country_code",
         "visited_cities",
+        "accomodation",
         "reason_for_visit",
         "travel_companions",
         "friends_family_met",
         "visited_at",
+        "visited_until",
         "latitude",
         "longitude",
         "transportation_to",
@@ -437,10 +453,12 @@ export async function createTripWithToken(token: string, data: CreateTripBody): 
           "name",
           "country_code",
           "visited_cities",
+          "accomodation",
           "reason_for_visit",
           "travel_companions",
           "friends_family_met",
           "visited_at",
+          "visited_until",
           "latitude",
           "longitude",
           "transportation_to",
@@ -469,10 +487,12 @@ export async function updateTripWithToken(
           "name",
           "country_code",
           "visited_cities",
+          "accomodation",
           "reason_for_visit",
           "travel_companions",
           "friends_family_met",
           "visited_at",
+          "visited_until",
           "latitude",
           "longitude",
           "transportation_to",

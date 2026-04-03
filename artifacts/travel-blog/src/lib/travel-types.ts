@@ -53,14 +53,16 @@ export interface Trip {
   name: string;
   countryCode: string;
   visitedCities: string;
+  accomodation: string[];
   reasonForVisit: string;
   travelCompanions: string;
   friendsFamilyMet: string;
   visitedAt: string;
+  visitedUntil: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  transportationTo: string | null;
-  transportationOnSite: string | null;
+  transportationTo: string[];
+  transportationOnSite: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -69,28 +71,32 @@ export interface CreateTripBody {
   name: string;
   countryCode: string;
   visitedCities: string;
+  accomodation?: string[] | null;
   reasonForVisit: string;
   travelCompanions: string;
   friendsFamilyMet: string;
   visitedAt: string;
+  visitedUntil?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  transportationTo?: string | null;
-  transportationOnSite?: string | null;
+  transportationTo?: string[] | string | null;
+  transportationOnSite?: string[] | string | null;
 }
 
 export interface UpdateTripBody {
   name?: string;
   countryCode?: string;
   visitedCities?: string;
+  accomodation?: string[] | null;
   reasonForVisit?: string;
   travelCompanions?: string;
   friendsFamilyMet?: string;
   visitedAt?: string;
+  visitedUntil?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  transportationTo?: string | null;
-  transportationOnSite?: string | null;
+  transportationTo?: string[] | string | null;
+  transportationOnSite?: string[] | string | null;
 }
 
 export interface Photo {

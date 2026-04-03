@@ -2,9 +2,25 @@ import { useState, useMemo } from "react";
 import { usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
-import { MapPin, Users, Heart, Navigation, ArrowUpDown, PlaneTakeoff, Car } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { differenceInCalendarDays, format } from "date-fns";
+import {
+  BedDouble,
+  CalendarRange,
+  MapPin,
+  Users,
+  Heart,
+  Navigation,
+  ArrowUpDown,
+  PlaneTakeoff,
+  Car,
+} from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 function getFlagEmoji(countryCode: string) {
@@ -12,8 +28,26 @@ function getFlagEmoji(countryCode: string) {
   const codePoints = countryCode
     .toUpperCase()
     .split("")
-    .map(char => 127397 + char.charCodeAt(0));
+    .map((char) => 127397 + char.charCodeAt(0));
   return String.fromCodePoint(...codePoints);
+}
+
+function formatLengthOfStay(visitedAt: string, visitedUntil: string | null) {
+  if (!visitedUntil) return null;
+
+  const start = new Date(visitedAt);
+  const end = new Date(visitedUntil);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return null;
+  }
+
+  const days = differenceInCalendarDays(end, start);
+
+  if (days < 0) return null;
+  if (days === 0) return "Same day";
+
+  return `${days} day${days > 1 ? "s" : ""}`;
 }
 
 interface TravelTimelineProps {
@@ -30,9 +64,9 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
 
   const transportOptions = useMemo(() => {
     const modes = new Set<string>();
-    for (const t of trips) {
-      for (const field of [t.transportationTo, t.transportationOnSite]) {
-        if (field) field.split(",").forEach(m => modes.add(m.trim()));
+    for (const trip of trips) {
+      for (const mode of [...trip.transportationTo, ...trip.transportationOnSite]) {
+        modes.add(mode);
       }
     }
     return Array.from(modes).sort();
@@ -41,7 +75,8 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const yearOptions = useMemo(() => {
     const years = new Set<string>();
     for (const t of trips) {
-      if (t.visitedAt) years.add(new Date(t.visitedAt).getFullYear().toString());
+      if (t.visitedAt)
+        years.add(new Date(t.visitedAt).getFullYear().toString());
     }
     return Array.from(years).sort((a, b) => Number(b) - Number(a));
   }, [trips]);
@@ -49,27 +84,35 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const filteredSorted = useMemo(() => {
     let list = [...trips];
     if (filterTrip !== "all") {
-      list = list.filter(t => String(t.id) === filterTrip);
+      list = list.filter((t) => String(t.id) === filterTrip);
     }
     if (filterTransport !== "all") {
-      list = list.filter(t => {
-        const modes = [t.transportationTo, t.transportationOnSite]
-          .filter(Boolean).join(",").split(",").map(m => m.trim());
+      list = list.filter((t) => {
+        const modes = [...t.transportationTo, ...t.transportationOnSite];
         return modes.includes(filterTransport);
       });
     }
     if (filterYear !== "all") {
-      list = list.filter(t => t.visitedAt && new Date(t.visitedAt).getFullYear().toString() === filterYear);
+      list = list.filter(
+        (t) =>
+          t.visitedAt &&
+          new Date(t.visitedAt).getFullYear().toString() === filterYear,
+      );
     }
     list.sort((a, b) => {
-      const diff = new Date(a.visitedAt).getTime() - new Date(b.visitedAt).getTime();
+      const diff =
+        new Date(a.visitedAt).getTime() - new Date(b.visitedAt).getTime();
       return sortOrder === "newest" ? -diff : diff;
     });
     return list;
   }, [trips, filterTrip, filterTransport, filterYear, sortOrder]);
 
   if (isLoading) {
-    return <div className="py-20 text-center text-muted-foreground animate-pulse font-serif italic">Unfolding the map...</div>;
+    return (
+      <div className="py-20 text-center text-muted-foreground animate-pulse font-serif italic">
+        Unfolding the map...
+      </div>
+    );
   }
 
   return (
@@ -82,7 +125,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Trips</SelectItem>
-              {trips.map(t => (
+              {trips.map((t) => (
                 <SelectItem key={t.id} value={String(t.id)}>
                   {getFlagEmoji(t.countryCode)} {t.name}
                 </SelectItem>
@@ -92,13 +135,18 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
 
           {transportOptions.length > 0 && (
             <Select value={filterTransport} onValueChange={setFilterTransport}>
-              <SelectTrigger className="w-44" data-testid="select-filter-transport">
+              <SelectTrigger
+                className="w-44"
+                data-testid="select-filter-transport"
+              >
                 <SelectValue placeholder="All Transport" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Transport</SelectItem>
-                {transportOptions.map(t => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                {transportOptions.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -111,8 +159,10 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Years</SelectItem>
-                {yearOptions.map(y => (
-                  <SelectItem key={y} value={y}>{y}</SelectItem>
+                {yearOptions.map((y) => (
+                  <SelectItem key={y} value={y}>
+                    {y}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -121,7 +171,9 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setSortOrder(s => s === "newest" ? "oldest" : "newest")}
+            onClick={() =>
+              setSortOrder((s) => (s === "newest" ? "oldest" : "newest"))
+            }
             className="flex items-center gap-2"
             data-testid="button-sort-order"
           >
@@ -129,11 +181,17 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
             {sortOrder === "newest" ? "Newest First" : "Oldest First"}
           </Button>
 
-          {(filterTrip !== "all" || filterTransport !== "all" || filterYear !== "all") && (
+          {(filterTrip !== "all" ||
+            filterTransport !== "all" ||
+            filterYear !== "all") && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { setFilterTrip("all"); setFilterTransport("all"); setFilterYear("all"); }}
+              onClick={() => {
+                setFilterTrip("all");
+                setFilterTransport("all");
+                setFilterYear("all");
+              }}
               className="text-muted-foreground"
               data-testid="button-clear-filters"
             >
@@ -142,14 +200,22 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
           )}
 
           <span className="text-sm text-muted-foreground font-mono ml-auto">
-            {filteredSorted.length} {filteredSorted.length === 1 ? "entry" : "entries"}
+            {filteredSorted.length}{" "}
+            {filteredSorted.length === 1 ? "entry" : "entries"}
           </span>
         </div>
       )}
 
       <div className="relative border-l-2 border-primary/20 ml-4 md:ml-8 py-4 space-y-16">
         {filteredSorted.map((trip, idx) => {
-          const tripPosts = posts.filter(p => p.tripId === trip.id);
+          const tripPosts = posts.filter((p) => p.tripId === trip.id);
+          const accomodationLabel = trip.accomodation.join(", ");
+          const transportationToLabel = trip.transportationTo.join(", ");
+          const transportationOnSiteLabel = trip.transportationOnSite.join(", ");
+          const lengthOfStay = formatLengthOfStay(
+            trip.visitedAt,
+            trip.visitedUntil,
+          );
 
           return (
             <motion.div
@@ -166,7 +232,9 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                 <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
                   <div>
                     <h3 className="font-serif text-3xl font-bold flex items-center gap-3 text-foreground">
-                      <span className="text-4xl" aria-hidden="true">{getFlagEmoji(trip.countryCode)}</span>
+                      <span className="text-4xl" aria-hidden="true">
+                        {getFlagEmoji(trip.countryCode)}
+                      </span>
                       {trip.name}
                     </h3>
                     <p className="text-sm text-muted-foreground font-mono mt-2 uppercase tracking-wider">
@@ -180,8 +248,12 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                     <div className="flex items-start gap-2.5">
                       <MapPin className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
-                        <strong className="block text-foreground mb-0.5 font-serif">Cities Visited</strong>
-                        <span className="text-muted-foreground leading-relaxed">{trip.visitedCities}</span>
+                        <strong className="block text-foreground mb-0.5 font-serif">
+                          Cities Visited
+                        </strong>
+                        <span className="text-muted-foreground leading-relaxed">
+                          {trip.visitedCities}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -189,8 +261,12 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                     <div className="flex items-start gap-2.5">
                       <Navigation className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
-                        <strong className="block text-foreground mb-0.5 font-serif">The Mission</strong>
-                        <span className="text-muted-foreground leading-relaxed">{trip.reasonForVisit}</span>
+                        <strong className="block text-foreground mb-0.5 font-serif">
+                          The Mission
+                        </strong>
+                        <span className="text-muted-foreground leading-relaxed">
+                          {trip.reasonForVisit}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -198,8 +274,12 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                     <div className="flex items-start gap-2.5">
                       <Users className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
-                        <strong className="block text-foreground mb-0.5 font-serif">Companions</strong>
-                        <span className="text-muted-foreground leading-relaxed">{trip.travelCompanions}</span>
+                        <strong className="block text-foreground mb-0.5 font-serif">
+                          Companions
+                        </strong>
+                        <span className="text-muted-foreground leading-relaxed">
+                          {trip.travelCompanions}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -207,26 +287,64 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                     <div className="flex items-start gap-2.5">
                       <Heart className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
-                        <strong className="block text-foreground mb-0.5 font-serif">Met Along the Way</strong>
-                        <span className="text-muted-foreground leading-relaxed">{trip.friendsFamilyMet}</span>
+                        <strong className="block text-foreground mb-0.5 font-serif">
+                          Met Along the Way
+                        </strong>
+                        <span className="text-muted-foreground leading-relaxed">
+                          {trip.friendsFamilyMet}
+                        </span>
                       </div>
                     </div>
                   )}
-                  {trip.transportationTo && (
+                  {transportationToLabel && (
                     <div className="flex items-start gap-2.5">
                       <PlaneTakeoff className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
-                        <strong className="block text-foreground mb-0.5 font-serif">Getting There</strong>
-                        <span className="text-muted-foreground leading-relaxed">{trip.transportationTo}</span>
+                        <strong className="block text-foreground mb-0.5 font-serif">
+                          Getting There
+                        </strong>
+                        <span className="text-muted-foreground leading-relaxed">
+                          {transportationToLabel}
+                        </span>
                       </div>
                     </div>
                   )}
-                  {trip.transportationOnSite && (
+                  {transportationOnSiteLabel && (
                     <div className="flex items-start gap-2.5">
                       <Car className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
                       <div>
-                        <strong className="block text-foreground mb-0.5 font-serif">Getting Around</strong>
-                        <span className="text-muted-foreground leading-relaxed">{trip.transportationOnSite}</span>
+                        <strong className="block text-foreground mb-0.5 font-serif">
+                          Getting Around
+                        </strong>
+                        <span className="text-muted-foreground leading-relaxed">
+                          {transportationOnSiteLabel}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {accomodationLabel && (
+                    <div className="flex items-start gap-2.5">
+                      <BedDouble className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+                      <div>
+                        <strong className="block text-foreground mb-0.5 font-serif">
+                          Accomodation
+                        </strong>
+                        <span className="text-muted-foreground leading-relaxed">
+                          {accomodationLabel}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {lengthOfStay && (
+                    <div className="flex items-start gap-2.5">
+                      <CalendarRange className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+                      <div>
+                        <strong className="block text-foreground mb-0.5 font-serif">
+                          Length of Stay
+                        </strong>
+                        <span className="text-muted-foreground leading-relaxed">
+                          {lengthOfStay}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -239,7 +357,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                       Dispatches from {trip.name}
                     </h4>
                     <div className="grid gap-3">
-                      {tripPosts.map(post => (
+                      {tripPosts.map((post) => (
                         <Link
                           key={post.id}
                           href={`/posts/${post.slug}`}
@@ -248,7 +366,11 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                         >
                           {post.coverImageUrl ? (
                             <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden shrink-0 shadow-sm">
-                              <img src={post.coverImageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                              <img
+                                src={post.coverImageUrl}
+                                alt=""
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
                             </div>
                           ) : (
                             <div className="w-16 h-16 rounded-lg bg-primary/5 flex items-center justify-center shrink-0 border border-primary/10">
@@ -256,8 +378,12 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                             </div>
                           )}
                           <div>
-                            <h5 className="font-serif font-bold text-base group-hover:text-secondary transition-colors text-foreground">{post.title}</h5>
-                            <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{post.excerpt}</p>
+                            <h5 className="font-serif font-bold text-base group-hover:text-secondary transition-colors text-foreground">
+                              {post.title}
+                            </h5>
+                            <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
+                              {post.excerpt}
+                            </p>
                           </div>
                         </Link>
                       ))}
