@@ -5,12 +5,14 @@
   "scripts": {
     "dev": "directus start",
     "start": "directus start",
+    "start:container": "node ./scripts/container-start.mjs",
     "bootstrap": "directus bootstrap",
     "schema:snapshot:local": "directus schema snapshot schema.yaml",
     "schema:apply:local": "directus schema apply schema.yaml --yes",
     "schema:apply:prod": "node --env-file=.env.production ./node_modules/.bin/directus schema apply schema.yaml --yes"
   },
   "dependencies": {
-    "directus": "^11.17.1"
+    "directus": "^11.17.1",
+    "pg": "^8.16.3"
   }
 }

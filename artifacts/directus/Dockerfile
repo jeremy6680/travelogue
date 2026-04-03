@@ -15,4 +15,4 @@ RUN mkdir -p /data/uploads
 
 EXPOSE 8055
 
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start:container"]

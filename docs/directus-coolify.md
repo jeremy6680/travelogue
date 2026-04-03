@@ -64,34 +64,13 @@ This keeps media uploads after redeploys.
 
 ## First Deployment
 
-If the target database does not already contain the Directus system tables, bootstrap it once.
+If the target database does not already contain the Directus system tables, the container now bootstraps Directus automatically on first startup and applies [`schema.yaml`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/schema.yaml).
 
-You can do that from a shell in the running container:
-
-```sh
-cd /app/artifacts/directus
-pnpm bootstrap
-```
-
-After bootstrap, normal runtime is:
-
-```sh
-cd /app/artifacts/directus
-pnpm start
-```
-
-The Docker container already starts with `pnpm start`, so bootstrap is only needed once for a fresh database.
+After the first successful boot, normal restarts skip bootstrap automatically.
 
 ## Applying the Saved Schema
 
-After the first bootstrap, apply the repository schema snapshot:
-
-```sh
-cd /app/artifacts/directus
-node ./node_modules/.bin/directus schema apply schema.yaml --yes
-```
-
-That will create the collections, fields, relations, and permissions stored in [`artifacts/directus/schema.yaml`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/schema.yaml).
+On a fresh database, the container also applies the repository schema snapshot automatically during first startup. That creates the collections, fields, relations, and permissions stored in [`artifacts/directus/schema.yaml`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/schema.yaml).
 
 ## Suggested Order
 
@@ -100,9 +79,8 @@ That will create the collections, fields, relations, and permissions stored in [
 3. Add the environment variables.
 4. Add the `/data/uploads` persistent volume.
 5. Deploy once.
-6. Run `pnpm bootstrap` if the database is fresh.
-7. Run the schema apply command.
-8. Open `/admin` on the Directus URL and verify login.
+6. Let the first startup bootstrap the database if it is fresh.
+7. Open `/admin` on the Directus URL and verify login.
 
 ## Frontend Reminder
 
