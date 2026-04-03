@@ -9,6 +9,10 @@ Travelogue is a pnpm monorepo for a travel blog frontend backed by Directus and 
 - Database: PostgreSQL + Drizzle (`lib/db`)
 - Scripts: migrations and seeders from the workspace root
 
+## Documentation
+
+- Directus operations guide: [`docs/directus.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/directus.md)
+
 ## Prerequisites
 
 - Node.js 24 for the workspace
