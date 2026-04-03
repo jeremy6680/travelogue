@@ -12,6 +12,7 @@ Travelogue is a pnpm monorepo for a travel blog frontend backed by Directus and 
 ## Documentation
 
 - Directus operations guide: [`docs/directus.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/directus.md)
+- Directus deployment on Coolify: [`docs/directus-coolify.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/directus-coolify.md)
 
 ## Prerequisites
 

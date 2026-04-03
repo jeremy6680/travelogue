@@ -2,6 +2,8 @@
 
 This project uses Directus from [`artifacts/directus`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus) on top of the shared PostgreSQL database.
 
+Deployment on Coolify is documented in [`docs/directus-coolify.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/directus-coolify.md).
+
 ## Where Directus Lives
 
 - Directus app: [`artifacts/directus`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus)
