@@ -13,11 +13,12 @@ Travelogue is a pnpm monorepo for a travel blog frontend backed by Directus and 
 
 - Directus operations guide: [`docs/directus.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/directus.md)
 - Directus deployment on Coolify: [`docs/directus-coolify.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/directus-coolify.md)
+- Production checklist: [`docs/production-checklist.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/production-checklist.md)
 
 ## Prerequisites
 
 - Node.js 24 for the workspace
-- Node.js 20 inside `artifacts/directus` if you run Directus in isolation
+- Node.js 22 inside `artifacts/directus` if you run Directus in isolation
 - pnpm 10
 - A running PostgreSQL instance
 
