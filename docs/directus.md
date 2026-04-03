@@ -4,6 +4,37 @@ This project uses Directus from [`artifacts/directus`](/Users/jeremymarchandeau/
 
 Deployment on Coolify is documented in [`docs/directus-coolify.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/directus-coolify.md).
 
+## Quick Post-Deploy Checklist
+
+Use this right after deploying a Directus schema change to production.
+
+1. Apply the schema in production:
+
+```sh
+cd /app
+node ./node_modules/.bin/directus schema apply schema.yaml --yes
+```
+
+2. Restart Directus if the admin still looks stale.
+3. Check `Settings` → `Data Model` and confirm the new fields or collections are visible.
+4. Confirm `Public` still has `Read` access on the collections used by the frontend.
+5. Test:
+
+```txt
+/server/ping
+/items/posts?limit=1
+/items/trips?limit=1
+/items/photos?limit=1
+```
+
+6. Reload the public site and verify the new data flows through.
+
+If something fails:
+
+- `403` on `/items/...`: public permissions problem
+- field missing in admin after successful apply: restart Directus
+- `invalid input syntax for type json`: legacy DB values must be normalized before rerunning `schema apply`
+
 ## Where Directus Lives
 
 - Directus app: [`artifacts/directus`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus)
