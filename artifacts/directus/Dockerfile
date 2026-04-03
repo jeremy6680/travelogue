@@ -1,23 +1,18 @@
 FROM node:20-bookworm-slim
 
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-
-RUN corepack enable
-
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY artifacts/directus/package.json artifacts/directus/package.json
+COPY artifacts/directus/package.json ./package.json
 
-RUN pnpm install --filter @workspace/directus... --frozen-lockfile
+# Install Directus as a standalone app inside the image.
+# This avoids the monorepo pnpm overrides that strip Linux native optional deps
+# needed on ARM hosts such as Coolify/Hetzner.
+RUN npm install
 
-COPY artifacts/directus ./artifacts/directus
-
-WORKDIR /app/artifacts/directus
+COPY artifacts/directus ./
 
 RUN mkdir -p /data/uploads
 
 EXPOSE 8055
 
-CMD ["pnpm", "start"]
+CMD ["npm", "run", "start"]
