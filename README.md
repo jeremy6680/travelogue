@@ -67,6 +67,12 @@ Default local frontend config:
 VITE_API_BASE_URL=http://localhost:8055
 ```
 
+For production, set:
+
+```sh
+VITE_API_BASE_URL=https://directus.your-domain.com
+```
+
 ## Database
 
 Run migrations:

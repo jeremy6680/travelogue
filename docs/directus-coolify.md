@@ -111,3 +111,5 @@ Once Directus is live, point the frontend to the new API URL via:
 ```sh
 VITE_API_BASE_URL=https://directus.your-domain.com
 ```
+
+You can use [`artifacts/travel-blog/.env.production.example`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/travel-blog/.env.production.example) as the reference value for production.
