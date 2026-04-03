@@ -1,10 +1,10 @@
 import { Layout } from "@/components/layout";
 import { WorldMap } from "@/components/world-map";
-import { useGetStats } from "@workspace/api-client-react";
+import { useStatsQuery } from "@/lib/directus";
 import { motion } from "framer-motion";
 
 export default function AtlasPage() {
-  const { data: stats } = useGetStats({ query: { queryKey: ["stats"] } });
+  const { data: stats } = useStatsQuery();
 
   return (
     <Layout>

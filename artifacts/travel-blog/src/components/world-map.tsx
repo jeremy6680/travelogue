@@ -1,14 +1,14 @@
 import { useMemo, useRef, useState } from "react";
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from "react-simple-maps";
-import { useListMapPins, useListTrips } from "@workspace/api-client-react";
+import { useMapPinsQuery, useTripsQuery } from "@/lib/directus";
 import { Link } from "wouter";
 import { MapPin, ZoomIn, ZoomOut, RotateCcw, X } from "lucide-react";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 export function WorldMap() {
-  const { data: pins = [] } = useListMapPins({ query: { queryKey: ["pins"] } });
-  const { data: trips = [] } = useListTrips({ query: { queryKey: ["trips"] } });
+  const { data: pins = [] } = useMapPinsQuery();
+  const { data: trips = [] } = useTripsQuery();
   const [activePin, setActivePin] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState<[number, number]>([10, 20]);

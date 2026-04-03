@@ -1,5 +1,5 @@
-import { useListPosts, useGetStats, useListPhotos } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
+import { usePhotosQuery, usePostsQuery, useStatsQuery } from "@/lib/directus";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -36,11 +36,9 @@ const fadeUp = (delay = 0) => ({
 });
 
 export default function Home() {
-  const { data: allPosts = [] } = useListPosts({
-    query: { queryKey: ["posts"] },
-  });
-  const { data: stats } = useGetStats({ query: { queryKey: ["stats"] } });
-  const { data: dbPhotos = [] } = useListPhotos({ query: { queryKey: ["photos"] } });
+  const { data: allPosts = [] } = usePostsQuery();
+  const { data: stats } = useStatsQuery();
+  const { data: dbPhotos = [] } = usePhotosQuery();
   const gridPhotos = dbPhotos.length > 0 ? dbPhotos : FALLBACK_PHOTOS;
   const [contactSent, setContactSent] = useState(false);
   const [contactForm, setContactForm] = useState({
