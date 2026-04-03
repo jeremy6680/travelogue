@@ -1,16 +1,19 @@
-import { pgTable, text, serial, timestamp, real } from "drizzle-orm/pg-core";
+import { pgTable, varchar, serial, timestamp, real, date, text } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { countriesTable } from "./countries";
 
 export const tripsTable = pgTable("trips", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  countryCode: text("country_code").notNull(),
-  visitedCities: text("visited_cities").notNull(),
-  reasonForVisit: text("reason_for_visit").notNull(),
-  travelCompanions: text("travel_companions").notNull(),
-  friendsFamilyMet: text("friends_family_met").notNull(),
-  visitedAt: text("visited_at").notNull(),
+  name: varchar("name", { length: 160 }).notNull(),
+  countryCode: varchar("country_code", { length: 2 })
+    .notNull()
+    .references(() => countriesTable.code, { onUpdate: "cascade" }),
+  visitedCities: varchar("visited_cities", { length: 500 }).notNull(),
+  reasonForVisit: varchar("reason_for_visit", { length: 255 }).notNull(),
+  travelCompanions: varchar("travel_companions", { length: 255 }).notNull(),
+  friendsFamilyMet: varchar("friends_family_met", { length: 255 }).notNull(),
+  visitedAt: date("visited_at", { mode: "string" }).notNull(),
   latitude: real("latitude"),
   longitude: real("longitude"),
   transportationTo: text("transportation_to"),

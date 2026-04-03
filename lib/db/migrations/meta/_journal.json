@@ -8,6 +8,20 @@
       "when": 1775050119169,
       "tag": "0000_brainy_blizzard",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775050119170,
+      "tag": "0001_trip_coordinates_nullable",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775050119171,
+      "tag": "0002_country_taxonomy_and_input_cleanup",
+      "breakpoints": true
     }
   ]
 }

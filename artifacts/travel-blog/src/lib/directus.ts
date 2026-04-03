@@ -43,6 +43,7 @@ type DirectusPost = {
   longitude: number | null;
   location: string | null;
   trip_id: number | null;
+  country_code: string | null;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -72,6 +73,8 @@ type DirectusPhoto = {
   url: string;
   caption: string | null;
   link: string | null;
+  trip_id: number | null;
+  country_code: string | null;
   display_order: number;
   created_at: string;
   updated_at: string;
@@ -119,6 +122,7 @@ function mapPost(post: DirectusPost): Post {
     longitude: post.longitude,
     location: post.location,
     tripId: post.trip_id,
+    countryCode: post.country_code,
     publishedAt: post.published_at,
     createdAt: post.created_at,
     updatedAt: post.updated_at,
@@ -160,6 +164,8 @@ function mapPhoto(photo: DirectusPhoto): Photo {
     url: photo.url,
     caption: photo.caption,
     link: photo.link,
+    tripId: photo.trip_id,
+    countryCode: photo.country_code,
     displayOrder: photo.display_order,
     createdAt: photo.created_at,
     updatedAt: photo.updated_at,
@@ -216,6 +222,7 @@ function mapCreatePostInput(data: CreatePostBody | UpdatePostBody) {
     longitude: data.longitude,
     location: data.location,
     trip_id: data.tripId,
+    country_code: data.countryCode,
     published_at: data.publishedAt,
   };
 }
@@ -243,6 +250,8 @@ function mapCreatePhotoInput(data: CreatePhotoBody | UpdatePhotoBody) {
     url: data.url,
     caption: data.caption,
     link: data.link,
+    trip_id: data.tripId,
+    country_code: data.countryCode,
     display_order: data.displayOrder,
   };
 }
@@ -263,6 +272,7 @@ export async function fetchPosts(): Promise<Post[]> {
         "longitude",
         "location",
         "trip_id",
+        "country_code",
         "published_at",
         "created_at",
         "updated_at",
@@ -307,7 +317,7 @@ export async function fetchPhotos(): Promise<Photo[]> {
   const photos = await directus.request(
     readItems("photos", {
       sort: ["display_order", "created_at"],
-      fields: ["id", "url", "caption", "link", "display_order", "created_at", "updated_at"],
+      fields: ["id", "url", "caption", "link", "trip_id", "country_code", "display_order", "created_at", "updated_at"],
       limit: -1,
     }),
   );
@@ -331,6 +341,7 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
         "longitude",
         "location",
         "trip_id",
+        "country_code",
         "published_at",
         "created_at",
         "updated_at",
@@ -396,6 +407,7 @@ export async function createPostWithToken(token: string, data: CreatePostBody): 
           "longitude",
           "location",
           "trip_id",
+          "country_code",
           "published_at",
           "created_at",
           "updated_at",
@@ -428,6 +440,7 @@ export async function updatePostWithToken(
           "longitude",
           "location",
           "trip_id",
+          "country_code",
           "published_at",
           "created_at",
           "updated_at",
@@ -516,7 +529,7 @@ export async function createPhotoWithToken(token: string, data: CreatePhotoBody)
     withToken(
       token,
       createItem("photos", mapCreatePhotoInput(data), {
-        fields: ["id", "url", "caption", "link", "display_order", "created_at", "updated_at"],
+        fields: ["id", "url", "caption", "link", "trip_id", "country_code", "display_order", "created_at", "updated_at"],
       }),
     ),
   );
@@ -533,7 +546,7 @@ export async function updatePhotoWithToken(
     withToken(
       token,
       updateItem("photos", id, mapCreatePhotoInput(data), {
-        fields: ["id", "url", "caption", "link", "display_order", "created_at", "updated_at"],
+        fields: ["id", "url", "caption", "link", "trip_id", "country_code", "display_order", "created_at", "updated_at"],
       }),
     ),
   );

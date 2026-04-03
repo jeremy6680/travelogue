@@ -15,6 +15,7 @@ export interface Post {
   longitude: number | null;
   location: string | null;
   tripId: number | null;
+  countryCode: string | null;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -31,6 +32,7 @@ export interface CreatePostBody {
   longitude?: number | null;
   location?: string | null;
   tripId?: number | null;
+  countryCode?: string | null;
   publishedAt?: string | null;
 }
 
@@ -45,6 +47,7 @@ export interface UpdatePostBody {
   longitude?: number | null;
   location?: string | null;
   tripId?: number | null;
+  countryCode?: string | null;
   publishedAt?: string | null;
 }
 
@@ -104,6 +107,8 @@ export interface Photo {
   url: string;
   caption: string | null;
   link: string | null;
+  tripId: number | null;
+  countryCode: string | null;
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -113,6 +118,8 @@ export interface CreatePhotoBody {
   url: string;
   caption?: string | null;
   link?: string | null;
+  tripId?: number | null;
+  countryCode?: string | null;
   displayOrder?: number;
 }
 
@@ -120,6 +127,8 @@ export interface UpdatePhotoBody {
   url?: string;
   caption?: string | null;
   link?: string | null;
+  tripId?: number | null;
+  countryCode?: string | null;
   displayOrder?: number;
 }
 

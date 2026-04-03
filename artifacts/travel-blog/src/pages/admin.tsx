@@ -132,6 +132,10 @@ export default function AdminPage() {
       })),
     [trips],
   );
+  const findTripById = (value: FormDataEntryValue | null) => {
+    const tripId = value ? Number(value) : null;
+    return tripId != null ? trips.find((trip) => trip.id === tripId) ?? null : null;
+  };
 
   const handleUnlock = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -181,6 +185,9 @@ export default function AdminPage() {
   const handlePostSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const linkedTrip = findTripById(formData.get("tripId"));
+    const latitudeInput = formData.get("latitude") as string;
+    const longitudeInput = formData.get("longitude") as string;
     const data = {
       title: formData.get("title") as string,
       slug: formData.get("slug") as string,
@@ -189,8 +196,9 @@ export default function AdminPage() {
       coverImageUrl: (formData.get("coverImageUrl") as string) || null,
       location: (formData.get("location") as string) || null,
       tripId: formData.get("tripId") ? Number(formData.get("tripId")) : null,
-      latitude: formData.get("latitude") ? Number(formData.get("latitude")) : null,
-      longitude: formData.get("longitude") ? Number(formData.get("longitude")) : null,
+      countryCode: (formData.get("countryCode") as string) || linkedTrip?.countryCode || null,
+      latitude: latitudeInput ? Number(latitudeInput) : (linkedTrip?.latitude ?? null),
+      longitude: longitudeInput ? Number(longitudeInput) : (linkedTrip?.longitude ?? null),
       publishedAt: (formData.get("publishedAt") as string) || null,
     };
 
@@ -220,6 +228,8 @@ export default function AdminPage() {
   const handleTripSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const latitudeInput = formData.get("latitude") as string;
+    const longitudeInput = formData.get("longitude") as string;
     const data = {
       name: formData.get("name") as string,
       countryCode: formData.get("countryCode") as string,
@@ -228,8 +238,8 @@ export default function AdminPage() {
       travelCompanions: formData.get("travelCompanions") as string,
       friendsFamilyMet: formData.get("friendsFamilyMet") as string,
       visitedAt: formData.get("visitedAt") as string,
-      latitude: formData.get("latitude") ? Number(formData.get("latitude")) : undefined,
-      longitude: formData.get("longitude") ? Number(formData.get("longitude")) : undefined,
+      latitude: latitudeInput ? Number(latitudeInput) : undefined,
+      longitude: longitudeInput ? Number(longitudeInput) : undefined,
       transportationTo: (formData.get("transportationTo") as string) || undefined,
       transportationOnSite: (formData.get("transportationOnSite") as string) || undefined,
     };
@@ -258,10 +268,13 @@ export default function AdminPage() {
   const handlePhotoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const linkedTrip = findTripById(formData.get("tripId"));
     const data = {
       url: formData.get("url") as string,
       caption: (formData.get("caption") as string) || null,
       link: (formData.get("link") as string) || null,
+      tripId: formData.get("tripId") ? Number(formData.get("tripId")) : null,
+      countryCode: (formData.get("countryCode") as string) || linkedTrip?.countryCode || null,
       displayOrder: formData.get("displayOrder") ? Number(formData.get("displayOrder")) : 0,
     };
 
@@ -340,10 +353,32 @@ export default function AdminPage() {
                       </option>
                     ))}
                   </select>
-                  <Input name="latitude" type="number" step="any" placeholder="Latitude" defaultValue={editingPost?.latitude || ''} />
-                  <Input name="longitude" type="number" step="any" placeholder="Longitude" defaultValue={editingPost?.longitude || ''} />
+                  <select
+                    name="countryCode"
+                    defaultValue={editingPost?.countryCode ?? ""}
+                    className={cn(
+                      "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      "disabled:cursor-not-allowed disabled:opacity-50"
+                    )}
+                  >
+                    <option value="">Country from linked trip if possible</option>
+                    {COUNTRY_CODES.map(c => (
+                      <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                    ))}
+                  </select>
                 </div>
-                <Input name="publishedAt" type="datetime-local" placeholder="Published At" defaultValue={editingPost?.publishedAt ? new Date(editingPost.publishedAt).toISOString().slice(0, 16) : ''} />
+                <details className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
+                  <summary className="cursor-pointer font-medium text-foreground">Advanced coordinates override</summary>
+                  <p className="mt-2">
+                    If left empty, the post will reuse the linked trip coordinates when available. City-based geocoding is not configured in this project yet.
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <Input name="latitude" type="number" step="any" placeholder="Latitude override" defaultValue={editingPost?.latitude || ''} />
+                    <Input name="longitude" type="number" step="any" placeholder="Longitude override" defaultValue={editingPost?.longitude || ''} />
+                  </div>
+                </details>
+                <Input name="publishedAt" type="date" placeholder="Published At" defaultValue={editingPost?.publishedAt ?? ''} />
               </div>
 
               <div className="flex gap-3 pt-4">
@@ -422,11 +457,17 @@ export default function AdminPage() {
                   <Input name="transportationTo" placeholder="Getting There (optional)" defaultValue={editingTrip?.transportationTo || ''} />
                   <Input name="transportationOnSite" placeholder="Getting Around (optional)" defaultValue={editingTrip?.transportationOnSite || ''} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input name="latitude" type="number" step="any" placeholder="Latitude (optional)" defaultValue={editingTrip?.latitude ?? ''} />
-                  <Input name="longitude" type="number" step="any" placeholder="Longitude (optional)" defaultValue={editingTrip?.longitude ?? ''} />
-                </div>
-                <Input name="visitedAt" type="datetime-local" placeholder="Visited At" defaultValue={editingTrip?.visitedAt ? new Date(editingTrip.visitedAt).toISOString().slice(0, 16) : ''} required />
+                <details className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
+                  <summary className="cursor-pointer font-medium text-foreground">Advanced coordinates override</summary>
+                  <p className="mt-2">
+                    The schema now treats coordinates as secondary metadata. Automatic geocoding from the first listed city is not wired yet, so these fields remain optional overrides.
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <Input name="latitude" type="number" step="any" placeholder="Latitude override" defaultValue={editingTrip?.latitude ?? ''} />
+                    <Input name="longitude" type="number" step="any" placeholder="Longitude override" defaultValue={editingTrip?.longitude ?? ''} />
+                  </div>
+                </details>
+                <Input name="visitedAt" type="date" placeholder="Visited At" defaultValue={editingTrip?.visitedAt ?? ''} required />
               </div>
 
               <div className="flex gap-3 pt-4">
@@ -490,6 +531,38 @@ export default function AdminPage() {
               <Input name="url" placeholder="Image URL" defaultValue={editingPhoto?.url} required />
               <Input name="caption" placeholder="Caption (optional)" defaultValue={editingPhoto?.caption || ''} />
               <Input name="link" placeholder="Link URL (optional — e.g. /posts/my-post)" defaultValue={editingPhoto?.link || ''} />
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  name="tripId"
+                  defaultValue={editingPhoto?.tripId != null ? String(editingPhoto.tripId) : ""}
+                  className={cn(
+                    "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                    "disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
+                >
+                  <option value="">No linked trip</option>
+                  {tripOptions.map((trip) => (
+                    <option key={trip.id} value={String(trip.id)}>
+                      {trip.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  name="countryCode"
+                  defaultValue={editingPhoto?.countryCode ?? ""}
+                  className={cn(
+                    "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                    "disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
+                >
+                  <option value="">Country from linked trip if possible</option>
+                  {COUNTRY_CODES.map(c => (
+                    <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                  ))}
+                </select>
+              </div>
               <Input name="displayOrder" type="number" placeholder="Display order (0 = first)" defaultValue={editingPhoto?.displayOrder ?? 0} />
             </div>
             <div className="flex gap-3 pt-4">
