@@ -70,12 +70,21 @@ const COUNTRY_CODES: { code: string; name: string }[] = [
 ];
 import { Layout } from "@/components/layout";
 import {
-  useListPosts, useCreatePost, useUpdatePost, useDeletePost,
-  useListTrips, useCreateTrip, useUpdateTrip, useDeleteTrip,
-  useListPhotos, useCreatePhoto, useUpdatePhoto, useDeletePhoto,
-  getListPostsQueryKey, getListTripsQueryKey, getListPhotosQueryKey,
-  useHealthCheck, getHealthCheckQueryKey
-} from "@workspace/api-client-react";
+  directusQueryKeys,
+  useCreatePhotoMutation,
+  useCreatePostMutation,
+  useCreateTripMutation,
+  useDeletePhotoMutation,
+  useDeletePostMutation,
+  useDeleteTripMutation,
+  useDirectusHealthQuery,
+  usePhotosQuery,
+  usePostsQuery,
+  useTripsQuery,
+  useUpdatePhotoMutation,
+  useUpdatePostMutation,
+  useUpdateTripMutation,
+} from "@/lib/directus";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,24 +101,24 @@ export default function AdminPage() {
       ? ""
       : window.sessionStorage.getItem("travelogue_admin_api_token") ?? "",
   );
-  const { data: posts = [] } = useListPosts({ query: { queryKey: ["posts"] } });
-  const { data: trips = [] } = useListTrips({ query: { queryKey: ["trips"] } });
-  const { data: photos = [] } = useListPhotos({ query: { queryKey: ["photos"] } });
-  const { data: health } = useHealthCheck({ query: { queryKey: getHealthCheckQueryKey() } });
+  const { data: posts = [] } = usePostsQuery();
+  const { data: trips = [] } = useTripsQuery();
+  const { data: photos = [] } = usePhotosQuery();
+  const { data: health } = useDirectusHealthQuery();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const createPost = useCreatePost();
-  const updatePost = useUpdatePost();
-  const deletePost = useDeletePost();
+  const createPost = useCreatePostMutation();
+  const updatePost = useUpdatePostMutation();
+  const deletePost = useDeletePostMutation();
 
-  const createTrip = useCreateTrip();
-  const updateTrip = useUpdateTrip();
-  const deleteTrip = useDeleteTrip();
+  const createTrip = useCreateTripMutation();
+  const updateTrip = useUpdateTripMutation();
+  const deleteTrip = useDeleteTripMutation();
 
-  const createPhoto = useCreatePhoto();
-  const updatePhoto = useUpdatePhoto();
-  const deletePhoto = useDeletePhoto();
+  const createPhoto = useCreatePhotoMutation();
+  const updatePhoto = useUpdatePhotoMutation();
+  const deletePhoto = useDeletePhotoMutation();
 
   const [editingPost, setEditingPost] = useState<any>(null);
   const [editingTrip, setEditingTrip] = useState<any>(null);
@@ -186,17 +195,21 @@ export default function AdminPage() {
     };
 
     if (editingPost) {
-      updatePost.mutate({ id: editingPost.id, data }, {
+      updatePost.mutate({ token: adminToken, id: editingPost.id, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.posts });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.mapPins });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
           setEditingPost(null);
           toast({ title: "Post updated successfully" });
         }
       });
     } else {
-      createPost.mutate({ data }, {
+      createPost.mutate({ token: adminToken, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.posts });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.mapPins });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
           toast({ title: "Post created successfully" });
           (e.target as HTMLFormElement).reset();
         }
@@ -222,17 +235,19 @@ export default function AdminPage() {
     };
 
     if (editingTrip) {
-      updateTrip.mutate({ id: editingTrip.id, data }, {
+      updateTrip.mutate({ token: adminToken, id: editingTrip.id, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListTripsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
           setEditingTrip(null);
           toast({ title: "Trip updated successfully" });
         }
       });
     } else {
-      createTrip.mutate({ data }, {
+      createTrip.mutate({ token: adminToken, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListTripsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
           toast({ title: "Trip added successfully" });
           (e.target as HTMLFormElement).reset();
         }
@@ -251,17 +266,17 @@ export default function AdminPage() {
     };
 
     if (editingPhoto) {
-      updatePhoto.mutate({ id: editingPhoto.id, data }, {
+      updatePhoto.mutate({ token: adminToken, id: editingPhoto.id, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListPhotosQueryKey() });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.photos });
           setEditingPhoto(null);
           toast({ title: "Photo updated successfully" });
         }
       });
     } else {
-      createPhoto.mutate({ data }, {
+      createPhoto.mutate({ token: adminToken, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListPhotosQueryKey() });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.photos });
           toast({ title: "Photo added successfully" });
           (e.target as HTMLFormElement).reset();
         }
@@ -354,8 +369,12 @@ export default function AdminPage() {
                     </Button>
                     <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
                       if(confirm("Delete this dispatch?")) {
-                        deletePost.mutate({ id: post.id }, {
-                          onSuccess: () => queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() })
+                        deletePost.mutate({ token: adminToken, id: post.id }, {
+                          onSuccess: () => {
+                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.posts });
+                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.mapPins });
+                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
+                          }
                         });
                       }
                     }}>
@@ -442,8 +461,11 @@ export default function AdminPage() {
                     </Button>
                     <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
                       if(confirm("Remove this trip from passport?")) {
-                        deleteTrip.mutate({ id: trip.id }, {
-                          onSuccess: () => queryClient.invalidateQueries({ queryKey: getListTripsQueryKey() })
+                        deleteTrip.mutate({ token: adminToken, id: trip.id }, {
+                          onSuccess: () => {
+                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
+                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
+                          }
                         });
                       }
                     }}>
@@ -490,8 +512,8 @@ export default function AdminPage() {
                     </Button>
                     <Button size="icon" variant="destructive" className="h-7 w-7 active:scale-95 transition-all" onClick={() => {
                       if (confirm("Delete this photo?")) {
-                        deletePhoto.mutate({ id: photo.id }, {
-                          onSuccess: () => queryClient.invalidateQueries({ queryKey: getListPhotosQueryKey() })
+                        deletePhoto.mutate({ token: adminToken, id: photo.id }, {
+                          onSuccess: () => queryClient.invalidateQueries({ queryKey: directusQueryKeys.photos })
                         });
                       }
                     }}>

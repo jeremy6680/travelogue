@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useListTrips, useListPosts } from "@workspace/api-client-react";
+import { usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -21,8 +21,8 @@ interface TravelTimelineProps {
 }
 
 export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
-  const { data: trips = [], isLoading } = useListTrips({ query: { queryKey: ["trips"] } });
-  const { data: posts = [] } = useListPosts({ query: { queryKey: ["posts"] } });
+  const { data: trips = [], isLoading } = useTripsQuery();
+  const { data: posts = [] } = usePostsQuery();
   const [filterTrip, setFilterTrip] = useState<string>("all");
   const [filterTransport, setFilterTransport] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>("all");

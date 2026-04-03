@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import Markdown from "react-markdown";
 import { Layout } from "@/components/layout";
-import { useListPosts, useListTrips } from "@workspace/api-client-react";
+import { usePostBySlugQuery, useTripsQuery } from "@/lib/directus";
 import { useParams, Link } from "wouter";
 import { format } from "date-fns";
 import { MapPin, Calendar, ArrowLeft, Globe2 } from "lucide-react";
@@ -10,10 +10,9 @@ import { motion } from "framer-motion";
 
 export default function PostDetail() {
   const { slug } = useParams();
-  const { data: posts = [], isLoading } = useListPosts({ query: { queryKey: ["posts"] } });
-  const { data: trips = [] } = useListTrips({ query: { queryKey: ["trips"] } });
+  const { data: post, isLoading } = usePostBySlugQuery(slug);
+  const { data: trips = [] } = useTripsQuery();
 
-  const post = useMemo(() => posts.find(p => p.slug === slug), [posts, slug]);
   const trip = useMemo(() => trips.find(t => t.id === post?.tripId), [trips, post]);
   const gallery = post?.gallery ?? [];
 

@@ -416,6 +416,9 @@ importers:
 
   artifacts/travel-blog:
     dependencies:
+      '@directus/sdk':
+        specifier: ^21.2.2
+        version: 21.2.2
       react-markdown:
         specifier: ^10.1.0
         version: 10.1.0(@types/react@19.2.14)(react@19.1.0)
@@ -1145,6 +1148,10 @@ packages:
 
   '@directus/schema@13.0.7':
     resolution: {integrity: sha512-WHgLcrX9QHyzLdh4jmD1f03yZURIxP54owOTpTXoTgWK9CuXl5w5nWvYgSIc8NmZnllc1fVZLMHT10K4YPlcXA==}
+
+  '@directus/sdk@21.2.2':
+    resolution: {integrity: sha512-T8UhDG+GY534AqvLpRmycLYZmIYIaUYzu25X3WeUjWuxCvqAiKqXbYUrTRb0A5Mw93vUeVuyqabzvLbBY9AXxQ==}
+    engines: {node: '>=22'}
 
   '@directus/specs@13.0.0':
     resolution: {integrity: sha512-8X6DjflTwKs76jZ4CKiDgZvHoMc9RFK1jUWOy69m4jJeW0mGAgwLBw2rGRdENMMD8HxxaGQxHWJLWeaJ86v/9Q==}
@@ -9841,6 +9848,8 @@ snapshots:
       - sqlite3
       - supports-color
       - tedious
+
+  '@directus/sdk@21.2.2': {}
 
   '@directus/specs@13.0.0':
     dependencies:

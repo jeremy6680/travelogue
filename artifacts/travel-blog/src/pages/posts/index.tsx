@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Layout } from "@/components/layout";
-import { useListPosts, useListTrips } from "@workspace/api-client-react";
+import { usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -15,12 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 
 export default function PostsPage() {
-  const { data: posts = [], isLoading } = useListPosts({
-    query: { queryKey: ["posts"] },
-  });
-  const { data: trips = [] } = useListTrips({
-    query: { queryKey: ["trips"] },
-  });
+  const { data: posts = [], isLoading } = usePostsQuery();
+  const { data: trips = [] } = useTripsQuery();
   const [filterTrip, setFilterTrip] = useState<string>("all");
   const [filterTransport, setFilterTransport] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>("all");
