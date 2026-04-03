@@ -90,7 +90,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Edit2, CheckCircle2, XCircle } from "lucide-react";
+import { Trash2, Edit2, CheckCircle2, XCircle } from "lucide-react";
 
 const actionButtonClass =
   "transition-all hover:scale-105 hover:bg-muted active:scale-95 active:opacity-80";

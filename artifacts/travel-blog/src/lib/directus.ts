@@ -27,7 +27,7 @@ import type {
   UpdatePhotoBody,
   UpdatePostBody,
   UpdateTripBody,
-} from "@workspace/api-client-react";
+} from "@/lib/travel-types";
 
 type DirectusGalleryImage = GalleryImage;
 

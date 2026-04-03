@@ -6,11 +6,6 @@ publish = "artifacts/travel-blog/dist/public"
 NODE_VERSION = "22"
 
 [[redirects]]
-from = "/api/*"
-to = "/.netlify/functions/not-configured"
-status = 404
-
-[[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200
