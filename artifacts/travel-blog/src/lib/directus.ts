@@ -15,21 +15,42 @@ import {
   withToken,
 } from "@directus/sdk";
 import type {
+  CreateMediaAssetBody,
   CreatePhotoBody,
   CreatePostBody,
   CreateTripBody,
   GalleryImage,
   MapPin,
+  MediaAsset,
   Photo,
   Post,
   TravelStats,
   Trip,
+  UpdateMediaAssetBody,
   UpdatePhotoBody,
   UpdatePostBody,
   UpdateTripBody,
 } from "@/lib/travel-types";
 
 type DirectusGalleryImage = GalleryImage;
+
+type DirectusMediaAsset = {
+  id: number;
+  title: string | null;
+  public_id: string;
+  delivery_url: string | null;
+  width: number | null;
+  height: number | null;
+  format: string | null;
+  resource_type: string | null;
+  bytes: number | null;
+  alt: string | null;
+  caption: string | null;
+  folder: string | null;
+  placeholder_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 type DirectusPost = {
   id: number;
@@ -38,6 +59,8 @@ type DirectusPost = {
   content: string;
   excerpt: string;
   cover_image_url: string | null;
+  featured_image_id: number | null;
+  featured_image: DirectusMediaAsset | null;
   gallery: DirectusGalleryImage[] | null;
   latitude: number | null;
   longitude: number | null;
@@ -61,6 +84,8 @@ type DirectusTrip = {
   visited_until: string | null;
   latitude: number | null;
   longitude: number | null;
+  cover_image_id: number | null;
+  cover_image: DirectusMediaAsset | null;
   transportation_to: string[] | string | null;
   transportation_on_site: string[] | string | null;
   created_at: string;
@@ -69,7 +94,9 @@ type DirectusTrip = {
 
 type DirectusPhoto = {
   id: number;
-  url: string;
+  url: string | null;
+  media_asset_id: number | null;
+  media_asset: DirectusMediaAsset | null;
   caption: string | null;
   link: string | null;
   display_order: number;
@@ -81,7 +108,78 @@ type DirectusSchema = {
   posts: DirectusPost[];
   trips: DirectusTrip[];
   photos: DirectusPhoto[];
+  media_assets: DirectusMediaAsset[];
 };
+
+const MEDIA_ASSET_FIELDS = [
+  "id",
+  "title",
+  "public_id",
+  "delivery_url",
+  "width",
+  "height",
+  "format",
+  "resource_type",
+  "bytes",
+  "alt",
+  "caption",
+  "folder",
+  "placeholder_url",
+  "created_at",
+  "updated_at",
+] as const;
+
+const POST_FIELDS = [
+  "id",
+  "title",
+  "slug",
+  "content",
+  "excerpt",
+  "cover_image_url",
+  "featured_image_id",
+  { featured_image: [...MEDIA_ASSET_FIELDS] },
+  "gallery",
+  "latitude",
+  "longitude",
+  "location",
+  "trip_id",
+  "published_at",
+  "created_at",
+  "updated_at",
+] as const;
+
+const TRIP_FIELDS = [
+  "id",
+  "name",
+  "country_code",
+  "visited_cities",
+  "accomodation",
+  "reason_for_visit",
+  "travel_companions",
+  "friends_family_met",
+  "visited_at",
+  "visited_until",
+  "latitude",
+  "longitude",
+  "cover_image_id",
+  { cover_image: [...MEDIA_ASSET_FIELDS] },
+  "transportation_to",
+  "transportation_on_site",
+  "created_at",
+  "updated_at",
+] as const;
+
+const PHOTO_FIELDS = [
+  "id",
+  "url",
+  "media_asset_id",
+  { media_asset: [...MEDIA_ASSET_FIELDS] },
+  "caption",
+  "link",
+  "display_order",
+  "created_at",
+  "updated_at",
+] as const;
 
 const continentMap: Record<string, string[]> = {
   EU: ["FR", "DE", "IT", "ES", "PT", "NL", "BE", "CH", "AT", "PL", "CZ", "HU", "SE", "NO", "DK", "FI", "GR", "HR", "RO", "BG"],
@@ -101,10 +199,45 @@ export const directusQueryKeys = {
   postBySlug: (slug: string | undefined) => ["directus", "posts", slug] as const,
   trips: ["directus", "trips"] as const,
   photos: ["directus", "photos"] as const,
+  mediaAssets: ["directus", "media-assets"] as const,
   mapPins: ["directus", "map-pins"] as const,
   stats: ["directus", "stats"] as const,
   health: ["directus", "health"] as const,
 };
+
+function mapMediaAsset(asset: DirectusMediaAsset | null | undefined): MediaAsset | null {
+  if (!asset) return null;
+
+  return {
+    id: asset.id,
+    title: asset.title,
+    publicId: asset.public_id,
+    deliveryUrl: asset.delivery_url,
+    width: asset.width,
+    height: asset.height,
+    format: asset.format,
+    resourceType: asset.resource_type,
+    bytes: asset.bytes,
+    alt: asset.alt,
+    caption: asset.caption,
+    folder: asset.folder,
+    placeholderUrl: asset.placeholder_url,
+    createdAt: asset.created_at,
+    updatedAt: asset.updated_at,
+  };
+}
+
+function mapGalleryImage(image: DirectusGalleryImage): GalleryImage {
+  return {
+    assetId: image.assetId ?? null,
+    publicId: image.publicId ?? null,
+    url: image.url ?? null,
+    alt: image.alt ?? null,
+    caption: image.caption,
+    width: image.width ?? null,
+    height: image.height ?? null,
+  };
+}
 
 function mapPost(post: DirectusPost): Post {
   return {
@@ -114,7 +247,8 @@ function mapPost(post: DirectusPost): Post {
     content: post.content,
     excerpt: post.excerpt,
     coverImageUrl: post.cover_image_url,
-    gallery: post.gallery,
+    coverImage: mapMediaAsset(post.featured_image),
+    gallery: post.gallery?.map(mapGalleryImage) ?? null,
     latitude: post.latitude,
     longitude: post.longitude,
     location: post.location,
@@ -147,6 +281,8 @@ function mapTrip(trip: DirectusTrip): Trip {
     visitedUntil: trip.visited_until,
     latitude: trip.latitude,
     longitude: trip.longitude,
+    coverImageId: trip.cover_image_id,
+    coverImage: mapMediaAsset(trip.cover_image),
     transportationTo: normalizeMultiSelect(trip.transportation_to),
     transportationOnSite: normalizeMultiSelect(trip.transportation_on_site),
     createdAt: trip.created_at,
@@ -158,6 +294,8 @@ function mapPhoto(photo: DirectusPhoto): Photo {
   return {
     id: photo.id,
     url: photo.url,
+    mediaAssetId: photo.media_asset_id,
+    mediaAsset: mapMediaAsset(photo.media_asset),
     caption: photo.caption,
     link: photo.link,
     displayOrder: photo.display_order,
@@ -173,6 +311,7 @@ function mapPin(post: Post): MapPin {
     slug: post.slug,
     excerpt: post.excerpt,
     coverImageUrl: post.coverImageUrl,
+    coverImage: post.coverImage,
     latitude: post.latitude ?? 0,
     longitude: post.longitude ?? 0,
     location: post.location,
@@ -211,6 +350,7 @@ function mapCreatePostInput(data: CreatePostBody | UpdatePostBody) {
     content: data.content,
     excerpt: data.excerpt,
     cover_image_url: data.coverImageUrl,
+    featured_image_id: data.coverImageId,
     gallery: data.gallery,
     latitude: data.latitude,
     longitude: data.longitude,
@@ -233,6 +373,7 @@ function mapCreateTripInput(data: CreateTripBody | UpdateTripBody) {
     visited_until: data.visitedUntil,
     latitude: data.latitude,
     longitude: data.longitude,
+    cover_image_id: data.coverImageId,
     transportation_to: normalizeMultiSelect(data.transportationTo),
     transportation_on_site: normalizeMultiSelect(data.transportationOnSite),
   };
@@ -241,9 +382,27 @@ function mapCreateTripInput(data: CreateTripBody | UpdateTripBody) {
 function mapCreatePhotoInput(data: CreatePhotoBody | UpdatePhotoBody) {
   return {
     url: data.url,
+    media_asset_id: data.mediaAssetId,
     caption: data.caption,
     link: data.link,
     display_order: data.displayOrder,
+  };
+}
+
+function mapCreateMediaAssetInput(data: CreateMediaAssetBody | UpdateMediaAssetBody) {
+  return {
+    title: data.title,
+    public_id: data.publicId,
+    delivery_url: data.deliveryUrl,
+    width: data.width,
+    height: data.height,
+    format: data.format,
+    resource_type: data.resourceType,
+    bytes: data.bytes,
+    alt: data.alt,
+    caption: data.caption,
+    folder: data.folder,
+    placeholder_url: data.placeholderUrl,
   };
 }
 
@@ -251,22 +410,7 @@ export async function fetchPosts(): Promise<Post[]> {
   const posts = await directus.request(
     readItems("posts", {
       sort: ["created_at"],
-      fields: [
-        "id",
-        "title",
-        "slug",
-        "content",
-        "excerpt",
-        "cover_image_url",
-        "gallery",
-        "latitude",
-        "longitude",
-        "location",
-        "trip_id",
-        "published_at",
-        "created_at",
-        "updated_at",
-      ],
+      fields: [...POST_FIELDS],
       limit: -1,
     }),
   );
@@ -278,24 +422,7 @@ export async function fetchTrips(): Promise<Trip[]> {
   const trips = await directus.request(
     readItems("trips", {
       sort: ["visited_at"],
-      fields: [
-        "id",
-        "name",
-        "country_code",
-        "visited_cities",
-        "accomodation",
-        "reason_for_visit",
-        "travel_companions",
-        "friends_family_met",
-        "visited_at",
-        "visited_until",
-        "latitude",
-        "longitude",
-        "transportation_to",
-        "transportation_on_site",
-        "created_at",
-        "updated_at",
-      ],
+      fields: [...TRIP_FIELDS],
       limit: -1,
     }),
   );
@@ -307,7 +434,7 @@ export async function fetchPhotos(): Promise<Photo[]> {
   const photos = await directus.request(
     readItems("photos", {
       sort: ["display_order", "created_at"],
-      fields: ["id", "url", "caption", "link", "display_order", "created_at", "updated_at"],
+      fields: [...PHOTO_FIELDS],
       limit: -1,
     }),
   );
@@ -315,26 +442,23 @@ export async function fetchPhotos(): Promise<Photo[]> {
   return photos.map(mapPhoto);
 }
 
+export async function fetchMediaAssets(): Promise<MediaAsset[]> {
+  const assets = await directus.request(
+    readItems("media_assets", {
+      sort: ["folder", "public_id"],
+      fields: [...MEDIA_ASSET_FIELDS],
+      limit: -1,
+    }),
+  );
+
+  return assets.map(mapMediaAsset).filter((asset): asset is MediaAsset => Boolean(asset));
+}
+
 export async function fetchPostBySlug(slug: string): Promise<Post | null> {
   const posts = await directus.request(
     readItems("posts", {
       filter: { slug: { _eq: slug } },
-      fields: [
-        "id",
-        "title",
-        "slug",
-        "content",
-        "excerpt",
-        "cover_image_url",
-        "gallery",
-        "latitude",
-        "longitude",
-        "location",
-        "trip_id",
-        "published_at",
-        "created_at",
-        "updated_at",
-      ],
+      fields: [...POST_FIELDS],
       limit: 1,
     }),
   );
@@ -346,22 +470,9 @@ export async function fetchMapPins(): Promise<MapPin[]> {
   const posts = await directus.request(
     readItems("posts", {
       filter: {
-        _and: [
-          { latitude: { _nnull: true } },
-          { longitude: { _nnull: true } },
-        ],
+        _and: [{ latitude: { _nnull: true } }, { longitude: { _nnull: true } }],
       },
-      fields: [
-        "id",
-        "title",
-        "slug",
-        "excerpt",
-        "cover_image_url",
-        "latitude",
-        "longitude",
-        "location",
-        "published_at",
-      ],
+      fields: [...POST_FIELDS],
       limit: -1,
     }),
   );
@@ -384,22 +495,7 @@ export async function createPostWithToken(token: string, data: CreatePostBody): 
     withToken(
       token,
       createItem("posts", mapCreatePostInput(data), {
-        fields: [
-          "id",
-          "title",
-          "slug",
-          "content",
-          "excerpt",
-          "cover_image_url",
-          "gallery",
-          "latitude",
-          "longitude",
-          "location",
-          "trip_id",
-          "published_at",
-          "created_at",
-          "updated_at",
-        ],
+        fields: [...POST_FIELDS],
       }),
     ),
   );
@@ -416,22 +512,7 @@ export async function updatePostWithToken(
     withToken(
       token,
       updateItem("posts", id, mapCreatePostInput(data), {
-        fields: [
-          "id",
-          "title",
-          "slug",
-          "content",
-          "excerpt",
-          "cover_image_url",
-          "gallery",
-          "latitude",
-          "longitude",
-          "location",
-          "trip_id",
-          "published_at",
-          "created_at",
-          "updated_at",
-        ],
+        fields: [...POST_FIELDS],
       }),
     ),
   );
@@ -448,24 +529,7 @@ export async function createTripWithToken(token: string, data: CreateTripBody): 
     withToken(
       token,
       createItem("trips", mapCreateTripInput(data), {
-        fields: [
-          "id",
-          "name",
-          "country_code",
-          "visited_cities",
-          "accomodation",
-          "reason_for_visit",
-          "travel_companions",
-          "friends_family_met",
-          "visited_at",
-          "visited_until",
-          "latitude",
-          "longitude",
-          "transportation_to",
-          "transportation_on_site",
-          "created_at",
-          "updated_at",
-        ],
+        fields: [...TRIP_FIELDS],
       }),
     ),
   );
@@ -482,24 +546,7 @@ export async function updateTripWithToken(
     withToken(
       token,
       updateItem("trips", id, mapCreateTripInput(data), {
-        fields: [
-          "id",
-          "name",
-          "country_code",
-          "visited_cities",
-          "accomodation",
-          "reason_for_visit",
-          "travel_companions",
-          "friends_family_met",
-          "visited_at",
-          "visited_until",
-          "latitude",
-          "longitude",
-          "transportation_to",
-          "transportation_on_site",
-          "created_at",
-          "updated_at",
-        ],
+        fields: [...TRIP_FIELDS],
       }),
     ),
   );
@@ -516,7 +563,7 @@ export async function createPhotoWithToken(token: string, data: CreatePhotoBody)
     withToken(
       token,
       createItem("photos", mapCreatePhotoInput(data), {
-        fields: ["id", "url", "caption", "link", "display_order", "created_at", "updated_at"],
+        fields: [...PHOTO_FIELDS],
       }),
     ),
   );
@@ -533,7 +580,7 @@ export async function updatePhotoWithToken(
     withToken(
       token,
       updateItem("photos", id, mapCreatePhotoInput(data), {
-        fields: ["id", "url", "caption", "link", "display_order", "created_at", "updated_at"],
+        fields: [...PHOTO_FIELDS],
       }),
     ),
   );
@@ -543,6 +590,43 @@ export async function updatePhotoWithToken(
 
 export async function deletePhotoWithToken(token: string, id: number): Promise<void> {
   await directus.request(withToken(token, deleteItem("photos", id)));
+}
+
+export async function createMediaAssetWithToken(
+  token: string,
+  data: CreateMediaAssetBody,
+): Promise<MediaAsset> {
+  const asset = await directus.request(
+    withToken(
+      token,
+      createItem("media_assets", mapCreateMediaAssetInput(data), {
+        fields: [...MEDIA_ASSET_FIELDS],
+      }),
+    ),
+  );
+
+  return mapMediaAsset(asset)!;
+}
+
+export async function updateMediaAssetWithToken(
+  token: string,
+  id: number,
+  data: UpdateMediaAssetBody,
+): Promise<MediaAsset> {
+  const asset = await directus.request(
+    withToken(
+      token,
+      updateItem("media_assets", id, mapCreateMediaAssetInput(data), {
+        fields: [...MEDIA_ASSET_FIELDS],
+      }),
+    ),
+  );
+
+  return mapMediaAsset(asset)!;
+}
+
+export async function deleteMediaAssetWithToken(token: string, id: number): Promise<void> {
+  await directus.request(withToken(token, deleteItem("media_assets", id)));
 }
 
 export function usePostsQuery(): UseQueryResult<Post[]> {
@@ -563,6 +647,13 @@ export function usePhotosQuery(): UseQueryResult<Photo[]> {
   return useQuery({
     queryKey: directusQueryKeys.photos,
     queryFn: fetchPhotos,
+  });
+}
+
+export function useMediaAssetsQuery(): UseQueryResult<MediaAsset[]> {
+  return useQuery({
+    queryKey: directusQueryKeys.mediaAssets,
+    queryFn: fetchMediaAssets,
   });
 }
 
@@ -658,5 +749,35 @@ export function useUpdatePhotoMutation(): UseMutationResult<
 export function useDeletePhotoMutation(): UseMutationResult<void, Error, { token: string; id: number }> {
   return useMutation({
     mutationFn: ({ token, id }) => deletePhotoWithToken(token, id),
+  });
+}
+
+export function useCreateMediaAssetMutation(): UseMutationResult<
+  MediaAsset,
+  Error,
+  { token: string; data: CreateMediaAssetBody }
+> {
+  return useMutation({
+    mutationFn: ({ token, data }) => createMediaAssetWithToken(token, data),
+  });
+}
+
+export function useUpdateMediaAssetMutation(): UseMutationResult<
+  MediaAsset,
+  Error,
+  { token: string; id: number; data: UpdateMediaAssetBody }
+> {
+  return useMutation({
+    mutationFn: ({ token, id, data }) => updateMediaAssetWithToken(token, id, data),
+  });
+}
+
+export function useDeleteMediaAssetMutation(): UseMutationResult<
+  void,
+  Error,
+  { token: string; id: number }
+> {
+  return useMutation({
+    mutationFn: ({ token, id }) => deleteMediaAssetWithToken(token, id),
   });
 }

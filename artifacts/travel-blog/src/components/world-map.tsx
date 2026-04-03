@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from "react-simple-maps";
 import { useMapPinsQuery, useTripsQuery } from "@/lib/directus";
 import { Link } from "wouter";
@@ -191,9 +192,13 @@ export function WorldMap() {
             >
               <X className="w-3 h-3" />
             </button>
-            {activeData.coverImageUrl && (
+            {(activeData.coverImage || activeData.coverImageUrl) && (
               <div className="w-full h-28 rounded-xl overflow-hidden bg-muted mb-3 shadow-sm">
-                <img src={activeData.coverImageUrl} alt={activeData.title} className="w-full h-full object-cover" />
+                <img
+                  src={getMediaAssetImageUrl(activeData.coverImage, { width: 520, height: 224, crop: "fill" }) ?? activeData.coverImageUrl ?? ""}
+                  alt={activeData.coverImage?.alt ?? activeData.title}
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
             <h4 className="font-serif font-bold text-base leading-tight text-foreground pr-4">{activeData.title}</h4>

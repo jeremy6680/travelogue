@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import Markdown from "react-markdown";
 import { Layout } from "@/components/layout";
+import { getGalleryImageUrl, getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePostBySlugQuery, useTripsQuery } from "@/lib/directus";
 import { useParams, Link } from "wouter";
 import { format } from "date-fns";
@@ -64,7 +65,7 @@ export default function PostDetail() {
         </header>
 
         {/* Cover image */}
-        {post.coverImageUrl && (
+        {(post.coverImage || post.coverImageUrl) && (
           <motion.div
             initial={{ opacity: 0, scale: 0.99 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -72,7 +73,11 @@ export default function PostDetail() {
             className="w-full aspect-[16/9] md:aspect-[21/9] rounded-2xl overflow-hidden bg-muted shadow-md border"
             data-testid="img-cover"
           >
-            <img src={post.coverImageUrl} alt={post.title} className="w-full h-full object-cover" />
+            <img
+              src={getMediaAssetImageUrl(post.coverImage, { width: 1600, height: 900, crop: "fill" }) ?? post.coverImageUrl ?? ""}
+              alt={post.coverImage?.alt ?? post.title}
+              className="w-full h-full object-cover"
+            />
           </motion.div>
         )}
 
@@ -103,8 +108,8 @@ export default function PostDetail() {
                   data-testid={`img-gallery-${i}`}
                 >
                   <img
-                    src={photo.url}
-                    alt={photo.caption}
+                    src={getGalleryImageUrl(photo, { width: i === 0 ? 1600 : 900, height: i === 0 ? 900 : 900, crop: "fill" }) ?? ""}
+                    alt={photo.alt ?? photo.caption}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <figcaption className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent text-white text-xs font-serif italic opacity-0 group-hover:opacity-100 transition-opacity duration-300">

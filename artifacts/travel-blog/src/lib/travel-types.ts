@@ -1,6 +1,29 @@
+export interface MediaAsset {
+  id: number;
+  title: string | null;
+  publicId: string;
+  deliveryUrl: string | null;
+  width: number | null;
+  height: number | null;
+  format: string | null;
+  resourceType: string | null;
+  bytes: number | null;
+  alt: string | null;
+  caption: string | null;
+  folder: string | null;
+  placeholderUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface GalleryImage {
-  url: string;
+  assetId?: number | null;
+  publicId?: string | null;
+  url: string | null;
+  alt?: string | null;
   caption: string;
+  width?: number | null;
+  height?: number | null;
 }
 
 export interface Post {
@@ -10,6 +33,7 @@ export interface Post {
   content: string;
   excerpt: string;
   coverImageUrl: string | null;
+  coverImage: MediaAsset | null;
   gallery: GalleryImage[] | null;
   latitude: number | null;
   longitude: number | null;
@@ -25,6 +49,7 @@ export interface CreatePostBody {
   slug: string;
   content: string;
   excerpt: string;
+  coverImageId?: number | null;
   coverImageUrl?: string | null;
   gallery?: GalleryImage[] | null;
   latitude?: number | null;
@@ -39,6 +64,7 @@ export interface UpdatePostBody {
   slug?: string;
   content?: string;
   excerpt?: string;
+  coverImageId?: number | null;
   coverImageUrl?: string | null;
   gallery?: GalleryImage[] | null;
   latitude?: number | null;
@@ -61,6 +87,8 @@ export interface Trip {
   visitedUntil: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  coverImageId: number | null;
+  coverImage: MediaAsset | null;
   transportationTo: string[];
   transportationOnSite: string[];
   createdAt: string;
@@ -79,6 +107,7 @@ export interface CreateTripBody {
   visitedUntil?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  coverImageId?: number | null;
   transportationTo?: string[] | string | null;
   transportationOnSite?: string[] | string | null;
 }
@@ -95,13 +124,16 @@ export interface UpdateTripBody {
   visitedUntil?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  coverImageId?: number | null;
   transportationTo?: string[] | string | null;
   transportationOnSite?: string[] | string | null;
 }
 
 export interface Photo {
   id: number;
-  url: string;
+  url: string | null;
+  mediaAssetId: number | null;
+  mediaAsset: MediaAsset | null;
   caption: string | null;
   link: string | null;
   displayOrder: number;
@@ -110,17 +142,49 @@ export interface Photo {
 }
 
 export interface CreatePhotoBody {
-  url: string;
+  url?: string | null;
+  mediaAssetId?: number | null;
   caption?: string | null;
   link?: string | null;
   displayOrder?: number;
 }
 
 export interface UpdatePhotoBody {
-  url?: string;
+  url?: string | null;
+  mediaAssetId?: number | null;
   caption?: string | null;
   link?: string | null;
   displayOrder?: number;
+}
+
+export interface CreateMediaAssetBody {
+  title?: string | null;
+  publicId: string;
+  deliveryUrl?: string | null;
+  width?: number | null;
+  height?: number | null;
+  format?: string | null;
+  resourceType?: string | null;
+  bytes?: number | null;
+  alt?: string | null;
+  caption?: string | null;
+  folder?: string | null;
+  placeholderUrl?: string | null;
+}
+
+export interface UpdateMediaAssetBody {
+  title?: string | null;
+  publicId?: string;
+  deliveryUrl?: string | null;
+  width?: number | null;
+  height?: number | null;
+  format?: string | null;
+  resourceType?: string | null;
+  bytes?: number | null;
+  alt?: string | null;
+  caption?: string | null;
+  folder?: string | null;
+  placeholderUrl?: string | null;
 }
 
 export interface MapPin {
@@ -129,6 +193,7 @@ export interface MapPin {
   slug: string;
   excerpt: string;
   coverImageUrl: string | null;
+  coverImage: MediaAsset | null;
   latitude: number;
   longitude: number;
   location: string | null;

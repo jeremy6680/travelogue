@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Layout } from "@/components/layout";
+import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { Link } from "wouter";
 import { format } from "date-fns";
@@ -177,10 +178,10 @@ export default function PostsPage() {
                 data-testid={`card-post-${post.id}`}
               >
                 <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted relative shadow-inner">
-                  {post.coverImageUrl ? (
+                  {(post.coverImage || post.coverImageUrl) ? (
                     <img
-                      src={post.coverImageUrl}
-                      alt={post.title}
+                      src={getMediaAssetImageUrl(post.coverImage, { width: 960, height: 720, crop: "fill" }) ?? post.coverImageUrl ?? ""}
+                      alt={post.coverImage?.alt ?? post.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                     />
                   ) : (

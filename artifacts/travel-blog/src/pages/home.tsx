@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout";
+import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePhotosQuery, usePostsQuery, useStatsQuery } from "@/lib/directus";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -20,12 +21,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 const FALLBACK_PHOTOS = [
-  { id: "f1", url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80", caption: "Tokyo neon dreams", link: null },
-  { id: "f2", url: "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=600&q=80", caption: "Milford Sound", link: null },
-  { id: "f3", url: "https://images.unsplash.com/photo-1598300188904-6e3b1dc9e3b6?w=600&q=80", caption: "Chefchaouen", link: null },
-  { id: "f4", url: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&q=80", caption: "Rome at golden hour", link: null },
-  { id: "f5", url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80", caption: "Kyoto before dawn", link: null },
-  { id: "f6", url: "https://images.unsplash.com/photo-1557409518-691ebcd96038?w=600&q=80", caption: "Japanese morning", link: null },
+  { id: "f1", url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80", mediaAsset: null, caption: "Tokyo neon dreams", link: null },
+  { id: "f2", url: "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=600&q=80", mediaAsset: null, caption: "Milford Sound", link: null },
+  { id: "f3", url: "https://images.unsplash.com/photo-1598300188904-6e3b1dc9e3b6?w=600&q=80", mediaAsset: null, caption: "Chefchaouen", link: null },
+  { id: "f4", url: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&q=80", mediaAsset: null, caption: "Rome at golden hour", link: null },
+  { id: "f5", url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80", mediaAsset: null, caption: "Kyoto before dawn", link: null },
+  { id: "f6", url: "https://images.unsplash.com/photo-1557409518-691ebcd96038?w=600&q=80", mediaAsset: null, caption: "Japanese morning", link: null },
 ];
 
 const fadeUp = (delay = 0) => ({
@@ -171,10 +172,10 @@ export default function Home() {
                 data-testid={`card-post-${post.id}`}
               >
                 <div className="aspect-[4/3] bg-muted overflow-hidden relative">
-                  {post.coverImageUrl ? (
+                  {(post.coverImage || post.coverImageUrl) ? (
                     <img
-                      src={post.coverImageUrl}
-                      alt={post.title}
+                      src={getMediaAssetImageUrl(post.coverImage, { width: 960, height: 720, crop: "fill" }) ?? post.coverImageUrl ?? ""}
+                      alt={post.coverImage?.alt ?? post.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
                   ) : (
@@ -244,8 +245,8 @@ export default function Home() {
                 data-testid={`card-photo-${photo.id}`}
               >
                 <img
-                  src={photo.url}
-                  alt={photo.caption ?? "Photo"}
+                  src={getMediaAssetImageUrl(photo.mediaAsset, { width: 720, height: 720, crop: "fill" }) ?? photo.url ?? ""}
+                  alt={photo.mediaAsset?.alt ?? photo.caption ?? "Photo"}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
                 {photo.caption && (

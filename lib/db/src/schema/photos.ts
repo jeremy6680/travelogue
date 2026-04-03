@@ -1,10 +1,14 @@
 import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
+import { mediaAssetsTable } from "./media-assets";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const photosTable = pgTable("photos", {
   id: serial("id").primaryKey(),
   url: text("url").notNull(),
+  mediaAssetId: integer("media_asset_id").references(() => mediaAssetsTable.id, {
+    onDelete: "set null",
+  }),
   caption: text("caption"),
   link: text("link"),
   displayOrder: integer("display_order").notNull().default(0),
