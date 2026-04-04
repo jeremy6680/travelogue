@@ -698,7 +698,7 @@ export default function AdminPage() {
                 <details className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
                   <summary className="cursor-pointer font-medium text-foreground">Advanced coordinates override</summary>
                   <p className="mt-2">
-                    The schema now treats coordinates as secondary metadata. Automatic geocoding from the first listed city is not wired yet, so these fields remain optional overrides.
+                    Latitude and longitude are now auto-calculated by default from the first listed city, with the trip country as context. These fields remain optional manual overrides.
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-3">
                     <Input name="latitude" type="number" step="any" placeholder="Latitude override" defaultValue={editingTrip?.latitude ?? ''} />

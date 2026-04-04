@@ -1790,7 +1790,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 4
+      sort: 2
       special: null
       translations: null
       validation: null
@@ -1830,7 +1830,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 5
+      sort: 3
       special: null
       translations: null
       validation: null
@@ -1864,8 +1864,10 @@ fields:
       field: visited_cities
       group: null
       hidden: false
-      interface: input
-      note: Comma-separated values are supported.
+      interface: travelogue-trip-location-geocode
+      note: >-
+        Enter visited cities as comma-separated values. The first city updates
+        latitude/longitude live and still allows manual overrides.
       options: null
       readonly: false
       required: false
@@ -1910,7 +1912,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 7
+      sort: 9
       special: null
       translations: null
       validation: null
@@ -1950,12 +1952,12 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 8
+      sort: 10
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: travel_companions
       table: trips
@@ -1990,12 +1992,12 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 9
+      sort: 11
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: friends_family_met
       table: trips
@@ -2030,7 +2032,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 10
+      sort: 14
       special: null
       translations: null
       validation: null
@@ -2065,12 +2067,14 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: Optional coordinate override. Leave empty to manage indirectly.
+      note: >-
+        Optional coordinate value. Auto-filled from the first visited city when
+        left empty, and still editable manually.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 15
+      sort: 7
       special: null
       translations: null
       validation: null
@@ -2105,12 +2109,14 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: Optional coordinate override. Leave empty to manage indirectly.
+      note: >-
+        Optional coordinate value. Auto-filled from the first visited city when
+        left empty, and still editable manually.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 16
+      sort: 8
       special: null
       translations: null
       validation: null
@@ -2230,7 +2236,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 11
+      sort: 15
       special: null
       translations: null
       validation: null
@@ -2288,7 +2294,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 14
+      sort: 16
       special:
         - cast-json
       translations: null
@@ -2448,7 +2454,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 2
+      sort: 4
       special: null
       translations: null
       validation: null
@@ -2488,7 +2494,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 3
+      sort: 5
       special: null
       translations: null
       validation: null
@@ -2585,7 +2591,7 @@ relations:
       column: trip_id
       foreign_key_table: trips
       foreign_key_column: id
-      constraint_name: posts_trip_id_trips_id_fk
+      constraint_name: posts_trip_id_fkey
       on_update: CASCADE
       on_delete: SET NULL
   - collection: posts
@@ -2606,7 +2612,7 @@ relations:
       column: trip_id
       foreign_key_table: trips
       foreign_key_column: id
-      constraint_name: posts_trip_id_fkey
+      constraint_name: posts_trip_id_trips_id_fk
       on_update: CASCADE
       on_delete: SET NULL
   - collection: posts
