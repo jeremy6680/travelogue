@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { getMediaAssetImageUrl } from "@/lib/cloudinary";
+import {
+  CLOUDINARY_UPLOAD_FOLDERS,
+  getMediaAssetImageUrl,
+  uploadImageToCloudinary,
+} from "@/lib/cloudinary";
 import { Layout } from "@/components/layout";
 import {
   directusQueryKeys,
@@ -31,7 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Edit2, CheckCircle2, XCircle } from "lucide-react";
+import { Trash2, Edit2, CheckCircle2, XCircle, LoaderCircle, UploadCloud } from "lucide-react";
 import type {
   Journey,
   MediaAsset,
@@ -188,6 +192,7 @@ export default function AdminPage() {
   const [postCountryCode, setPostCountryCode] = useState("");
   const [postLatitude, setPostLatitude] = useState("");
   const [postLongitude, setPostLongitude] = useState("");
+  const [isUploadingAsset, setIsUploadingAsset] = useState(false);
   const isUnlocked = adminToken.trim().length > 0;
   const journeyOptions = useMemo(
     () =>
@@ -496,6 +501,68 @@ export default function AdminPage() {
           toast({ title: "Media asset added successfully" });
           (e.target as HTMLFormElement).reset();
         },
+      });
+    }
+  };
+
+  const handleCloudinaryUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const selectedFile = formData.get("file");
+
+    if (!(selectedFile instanceof File) || selectedFile.size === 0) {
+      toast({
+        title: "No file selected",
+        description: "Choose an image before starting the Cloudinary upload.",
+      });
+      return;
+    }
+
+    setIsUploadingAsset(true);
+
+    try {
+      const uploaded = await uploadImageToCloudinary({
+        adminToken,
+        alt: (formData.get("alt") as string) || null,
+        assetFolder: formData.get("assetFolder") as (typeof CLOUDINARY_UPLOAD_FOLDERS)[number],
+        caption: (formData.get("caption") as string) || null,
+        file: selectedFile,
+        publicId: (formData.get("publicId") as string) || null,
+        title: (formData.get("title") as string) || null,
+      });
+
+      createMediaAsset.mutate(
+        {
+          token: adminToken,
+          data: uploaded.mediaAsset,
+        },
+        {
+          onSuccess: () => {
+            invalidation.invalidateMedia();
+            toast({
+              title: "Image uploaded to Cloudinary",
+              description: uploaded.upload.publicId,
+            });
+            (e.target as HTMLFormElement).reset();
+          },
+          onError: (error) => {
+            toast({
+              title: "Cloudinary upload saved, Directus sync failed",
+              description: error.message,
+              variant: "destructive",
+            });
+          },
+          onSettled: () => {
+            setIsUploadingAsset(false);
+          },
+        },
+      );
+    } catch (error) {
+      setIsUploadingAsset(false);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Unknown Cloudinary error",
+        variant: "destructive",
       });
     }
   };
@@ -874,6 +941,44 @@ export default function AdminPage() {
           <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
             Media Assets <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{mediaAssets.length}</span>
           </h2>
+
+          <form onSubmit={handleCloudinaryUpload} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
+            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">Upload Direct To Cloudinary</h3>
+            <p className="text-sm text-muted-foreground">
+              The file goes straight from your browser to Cloudinary. Directus only stores the metadata afterwards.
+            </p>
+            <div className="space-y-3">
+              <Input name="file" type="file" accept="image/*" required />
+              <select name="assetFolder" defaultValue={CLOUDINARY_UPLOAD_FOLDERS[0]} className={selectClassName}>
+                {CLOUDINARY_UPLOAD_FOLDERS.map((folder) => (
+                  <option key={folder} value={folder}>
+                    {folder}
+                  </option>
+                ))}
+              </select>
+              <div className="grid md:grid-cols-2 gap-3">
+                <Input name="title" placeholder="Title (optional)" />
+                <Input name="publicId" placeholder="Custom public_id without extension (optional)" />
+              </div>
+              <div className="grid md:grid-cols-2 gap-3">
+                <Input name="alt" placeholder="Alt text (optional)" />
+                <Input name="caption" placeholder="Caption (optional)" />
+              </div>
+            </div>
+            <Button type="submit" className="w-full" disabled={isUploadingAsset || createMediaAsset.isPending}>
+              {isUploadingAsset || createMediaAsset.isPending ? (
+                <>
+                  <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+                  Uploading to Cloudinary...
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="w-4 h-4 mr-2" />
+                  Upload image and create media asset
+                </>
+              )}
+            </Button>
+          </form>
 
           <form onSubmit={handleMediaAssetSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
             <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingMediaAsset ? "Edit Media Asset" : "Add Cloudinary Asset"}</h3>

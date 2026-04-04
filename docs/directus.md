@@ -107,7 +107,23 @@ DB_PASSWORD=postgres
 SECRET=replace-with-a-random-32-char-hex-string
 ADMIN_EMAIL=admin@travelogue.local
 ADMIN_PASSWORD=replace-with-a-strong-password
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret
 ```
+
+These Cloudinary variables are used by the custom Directus endpoint `cloudinary-upload`, which signs direct browser uploads for the frontend admin. The image file goes straight from the browser to Cloudinary, and only the metadata is written back into Directus.
+
+For `media_assets`, the recommended workflow is now directly inside the Directus CMS:
+
+1. Open the `Media Assets` collection in Directus.
+2. Create a new item.
+3. Use the custom `public_id` field interface to pick an image and upload it to Cloudinary.
+4. Let the widget fill `public_id`, `delivery_url`, `width`, `height`, `format`, `resource_type`, `bytes`, and `folder`.
+5. Adjust `title`, `alt`, or `caption` if needed.
+6. Save the item in Directus.
+
+This keeps Directus as the content source of truth while Cloudinary handles the actual image binary and delivery.
 
 ## First-Time Bootstrap
 

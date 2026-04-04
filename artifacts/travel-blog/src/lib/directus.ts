@@ -62,8 +62,8 @@ type DirectusPost = {
   content: string;
   excerpt: string;
   cover_image_url: string | null;
-  featured_image_id: number | null;
-  featured_image: DirectusMediaAsset | null;
+  featured_image_id?: number | null;
+  featured_image?: DirectusMediaAsset | null;
   gallery: DirectusGalleryImage[] | null;
   latitude: number | null;
   longitude: number | null;
@@ -88,10 +88,10 @@ type DirectusTrip = {
   visited_until: string | null;
   latitude: number | null;
   longitude: number | null;
-  cover_image_id: number | null;
-  cover_image: DirectusMediaAsset | null;
-  journey_id: number | null;
-  journey_order: number | null;
+  cover_image_id?: number | null;
+  cover_image?: DirectusMediaAsset | null;
+  journey_id?: number | null;
+  journey_order?: number | null;
   transportation_to: string[] | string | null;
   transportation_on_site: string[] | string | null;
   created_at: string;
@@ -118,8 +118,8 @@ type DirectusJourney = {
 type DirectusPhoto = {
   id: number;
   url: string | null;
-  media_asset_id: number | null;
-  media_asset: DirectusMediaAsset | null;
+  media_asset_id?: number | null;
+  media_asset?: DirectusMediaAsset | null;
   caption: string | null;
   link: string | null;
   trip_id: number | null;
@@ -203,6 +203,57 @@ const PHOTO_FIELDS = [
   "url",
   "media_asset_id",
   { media_asset: [...MEDIA_ASSET_FIELDS] },
+  "caption",
+  "link",
+  "trip_id",
+  "country_code",
+  "display_order",
+  "created_at",
+  "updated_at",
+] as const;
+
+const LEGACY_POST_FIELDS = [
+  "id",
+  "title",
+  "slug",
+  "content",
+  "excerpt",
+  "cover_image_url",
+  "gallery",
+  "latitude",
+  "longitude",
+  "location",
+  "trip_id",
+  "country_code",
+  "published_at",
+  "created_at",
+  "updated_at",
+] as const;
+
+const LEGACY_TRIP_FIELDS = [
+  "id",
+  "name",
+  "country_code",
+  "visited_cities",
+  "accomodation",
+  "reason_for_visit",
+  "travel_companions",
+  "friends_family_met",
+  "visited_at",
+  "visited_until",
+  "latitude",
+  "longitude",
+  "journey_id",
+  "journey_order",
+  "transportation_to",
+  "transportation_on_site",
+  "created_at",
+  "updated_at",
+] as const;
+
+const LEGACY_PHOTO_FIELDS = [
+  "id",
+  "url",
   "caption",
   "link",
   "trip_id",
@@ -314,10 +365,10 @@ function mapTrip(trip: DirectusTrip): Trip {
     visitedUntil: trip.visited_until,
     latitude: trip.latitude,
     longitude: trip.longitude,
-    coverImageId: trip.cover_image_id,
+    coverImageId: trip.cover_image_id ?? null,
     coverImage: mapMediaAsset(trip.cover_image),
-    journeyId: trip.journey_id,
-    journeyOrder: trip.journey_order,
+    journeyId: trip.journey_id ?? null,
+    journeyOrder: trip.journey_order ?? null,
     transportationTo: normalizeMultiSelect(trip.transportation_to),
     transportationOnSite: normalizeMultiSelect(trip.transportation_on_site),
     createdAt: trip.created_at,
@@ -348,7 +399,7 @@ function mapPhoto(photo: DirectusPhoto): Photo {
   return {
     id: photo.id,
     url: photo.url,
-    mediaAssetId: photo.media_asset_id,
+    mediaAssetId: photo.media_asset_id ?? null,
     mediaAsset: mapMediaAsset(photo.media_asset),
     caption: photo.caption,
     link: photo.link,
@@ -483,25 +534,96 @@ function mapCreateMediaAssetInput(data: CreateMediaAssetBody | UpdateMediaAssetB
   };
 }
 
+function isSchemaMismatchError(error: unknown) {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "object" && error && "message" in error
+        ? String((error as { message?: unknown }).message)
+        : String(error);
+  const statusCode =
+    typeof error === "object" && error && "status" in error
+      ? Number((error as { status?: unknown }).status)
+      : typeof error === "object" && error && "errors" in error
+        ? Number(
+            (
+              (error as {
+                errors?: Array<{
+                  extensions?: {
+                    code?: string | number;
+                  };
+                }>;
+              }).errors?.[0]?.extensions?.code ?? NaN
+            ),
+          )
+        : NaN;
+
+  return (
+    statusCode === 403 ||
+    message.includes("Invalid query") ||
+    message.includes("is not a field in collection") ||
+    message.includes("Collection") ||
+    message.includes("doesn't exist") ||
+    message.includes("Forbidden") ||
+    message.includes("forbidden") ||
+    message.includes("permission") ||
+    message.includes("permissions")
+  );
+}
+
+async function requestWithFallback<T>(primary: () => Promise<T>, fallback: () => Promise<T>) {
+  try {
+    return await primary();
+  } catch (error) {
+    if (!isSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    return fallback();
+  }
+}
+
 export async function fetchPosts(): Promise<Post[]> {
-  const posts = await directus.request(
-    readItems("posts", {
-      sort: ["created_at"],
-      fields: [...POST_FIELDS],
-      limit: -1,
-    }),
+  const posts = await requestWithFallback(
+    () =>
+      directus.request(
+        readItems("posts", {
+          sort: ["created_at"],
+          fields: [...POST_FIELDS],
+          limit: -1,
+        }),
+      ),
+    () =>
+      directus.request(
+        readItems("posts", {
+          sort: ["created_at"],
+          fields: [...LEGACY_POST_FIELDS],
+          limit: -1,
+        }),
+      ),
   );
 
   return posts.map(mapPost);
 }
 
 export async function fetchTrips(): Promise<Trip[]> {
-  const trips = await directus.request(
-    readItems("trips", {
-      sort: ["visited_at"],
-      fields: [...TRIP_FIELDS],
-      limit: -1,
-    }),
+  const trips = await requestWithFallback(
+    () =>
+      directus.request(
+        readItems("trips", {
+          sort: ["visited_at"],
+          fields: [...TRIP_FIELDS],
+          limit: -1,
+        }),
+      ),
+    () =>
+      directus.request(
+        readItems("trips", {
+          sort: ["visited_at"],
+          fields: [...LEGACY_TRIP_FIELDS],
+          limit: -1,
+        }),
+      ),
   );
 
   return trips.map(mapTrip);
@@ -535,50 +657,103 @@ export async function fetchJourneys(): Promise<Journey[]> {
 }
 
 export async function fetchPhotos(): Promise<Photo[]> {
-  const photos = await directus.request(
-    readItems("photos", {
-      sort: ["display_order", "created_at"],
-      fields: [...PHOTO_FIELDS],
-      limit: -1,
-    }),
+  const photos = await requestWithFallback(
+    () =>
+      directus.request(
+        readItems("photos", {
+          sort: ["display_order", "created_at"],
+          fields: [...PHOTO_FIELDS],
+          limit: -1,
+        }),
+      ),
+    () =>
+      directus.request(
+        readItems("photos", {
+          sort: ["display_order", "created_at"],
+          fields: [...LEGACY_PHOTO_FIELDS],
+          limit: -1,
+        }),
+      ),
   );
 
   return photos.map(mapPhoto);
 }
 
 export async function fetchMediaAssets(): Promise<MediaAsset[]> {
-  const assets = await directus.request(
-    readItems("media_assets", {
-      sort: ["folder", "public_id"],
-      fields: [...MEDIA_ASSET_FIELDS],
-      limit: -1,
-    }),
-  );
+  try {
+    const assets = await directus.request(
+      readItems("media_assets", {
+        sort: ["folder", "public_id"],
+        fields: [...MEDIA_ASSET_FIELDS],
+        limit: -1,
+      }),
+    );
 
-  return assets.map(mapMediaAsset).filter((asset): asset is MediaAsset => Boolean(asset));
+    return assets.map(mapMediaAsset).filter((asset): asset is MediaAsset => Boolean(asset));
+  } catch (error) {
+    if (!isSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    return [];
+  }
 }
 
 export async function fetchPostBySlug(slug: string): Promise<Post | null> {
-  const posts = await directus.request(
-    readItems("posts", {
-      filter: { slug: { _eq: slug } },
-      fields: [...POST_FIELDS],
-      limit: 1,
-    }),
+  const posts = await requestWithFallback(
+    () =>
+      directus.request(
+        readItems("posts", {
+          filter: { slug: { _eq: slug } },
+          fields: [...POST_FIELDS],
+          limit: 1,
+        }),
+      ),
+    () =>
+      directus.request(
+        readItems("posts", {
+          filter: { slug: { _eq: slug } },
+          fields: [...LEGACY_POST_FIELDS],
+          limit: 1,
+        }),
+      ),
   );
 
   return posts[0] ? mapPost(posts[0]) : null;
 }
 
 export async function fetchMapPins(): Promise<MapPin[]> {
-  const posts = await directus.request(
-    readItems("posts", {
-      filter: {
-        _and: [{ latitude: { _nnull: true } }, { longitude: { _nnull: true } }],
-      },
-      fields: [...POST_FIELDS],
-      limit: -1,
-    }),
+  const posts = await requestWithFallback(
+    () =>
+      directus.request(
+        readItems("posts", {
+          filter: {
+            _and: [{ latitude: { _nnull: true } }, { longitude: { _nnull: true } }],
+          },
+          fields: [...POST_FIELDS],
+          limit: -1,
+        }),
+      ),
+    () =>
+      directus.request(
+        readItems("posts", {
+          filter: {
+            _and: [{ latitude: { _nnull: true } }, { longitude: { _nnull: true } }],
+          },
+          fields: [
+            "id",
+            "title",
+            "slug",
+            "excerpt",
+            "cover_image_url",
+            "latitude",
+            "longitude",
+            "location",
+            "published_at",
+          ],
+          limit: -1,
+        }),
+      ),
   );
 
   return posts.map(mapPost).map(mapPin);
