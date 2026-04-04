@@ -18,8 +18,10 @@ import type {
   CreateMediaAssetBody,
   CreatePhotoBody,
   CreatePostBody,
+  CreateJourneyBody,
   CreateTripBody,
   GalleryImage,
+  Journey,
   MapPin,
   MediaAsset,
   Photo,
@@ -27,6 +29,7 @@ import type {
   TravelStats,
   Trip,
   UpdateMediaAssetBody,
+  UpdateJourneyBody,
   UpdatePhotoBody,
   UpdatePostBody,
   UpdateTripBody,
@@ -66,6 +69,7 @@ type DirectusPost = {
   longitude: number | null;
   location: string | null;
   trip_id: number | null;
+  country_code: string | null;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -86,8 +90,27 @@ type DirectusTrip = {
   longitude: number | null;
   cover_image_id: number | null;
   cover_image: DirectusMediaAsset | null;
+  journey_id: number | null;
+  journey_order: number | null;
   transportation_to: string[] | string | null;
   transportation_on_site: string[] | string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type DirectusJourney = {
+  id: number;
+  name: string;
+  slug: string;
+  start_date: string | null;
+  end_date: string | null;
+  origin_mode: "default_nice" | "custom";
+  origin_latitude: number | null;
+  origin_longitude: number | null;
+  destination_mode: "default_nice" | "custom";
+  destination_latitude: number | null;
+  destination_longitude: number | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -99,12 +122,15 @@ type DirectusPhoto = {
   media_asset: DirectusMediaAsset | null;
   caption: string | null;
   link: string | null;
+  trip_id: number | null;
+  country_code: string | null;
   display_order: number;
   created_at: string;
   updated_at: string;
 };
 
 type DirectusSchema = {
+  journeys: DirectusJourney[];
   posts: DirectusPost[];
   trips: DirectusTrip[];
   photos: DirectusPhoto[];
@@ -143,6 +169,7 @@ const POST_FIELDS = [
   "longitude",
   "location",
   "trip_id",
+  "country_code",
   "published_at",
   "created_at",
   "updated_at",
@@ -163,6 +190,8 @@ const TRIP_FIELDS = [
   "longitude",
   "cover_image_id",
   { cover_image: [...MEDIA_ASSET_FIELDS] },
+  "journey_id",
+  "journey_order",
   "transportation_to",
   "transportation_on_site",
   "created_at",
@@ -176,6 +205,8 @@ const PHOTO_FIELDS = [
   { media_asset: [...MEDIA_ASSET_FIELDS] },
   "caption",
   "link",
+  "trip_id",
+  "country_code",
   "display_order",
   "created_at",
   "updated_at",
@@ -198,6 +229,7 @@ export const directusQueryKeys = {
   posts: ["directus", "posts"] as const,
   postBySlug: (slug: string | undefined) => ["directus", "posts", slug] as const,
   trips: ["directus", "trips"] as const,
+  journeys: ["directus", "journeys"] as const,
   photos: ["directus", "photos"] as const,
   mediaAssets: ["directus", "media-assets"] as const,
   mapPins: ["directus", "map-pins"] as const,
@@ -253,6 +285,7 @@ function mapPost(post: DirectusPost): Post {
     longitude: post.longitude,
     location: post.location,
     tripId: post.trip_id,
+    countryCode: post.country_code,
     publishedAt: post.published_at,
     createdAt: post.created_at,
     updatedAt: post.updated_at,
@@ -283,10 +316,31 @@ function mapTrip(trip: DirectusTrip): Trip {
     longitude: trip.longitude,
     coverImageId: trip.cover_image_id,
     coverImage: mapMediaAsset(trip.cover_image),
+    journeyId: trip.journey_id,
+    journeyOrder: trip.journey_order,
     transportationTo: normalizeMultiSelect(trip.transportation_to),
     transportationOnSite: normalizeMultiSelect(trip.transportation_on_site),
     createdAt: trip.created_at,
     updatedAt: trip.updated_at,
+  };
+}
+
+function mapJourney(journey: DirectusJourney): Journey {
+  return {
+    id: journey.id,
+    name: journey.name,
+    slug: journey.slug,
+    startDate: journey.start_date,
+    endDate: journey.end_date,
+    originMode: journey.origin_mode,
+    originLatitude: journey.origin_latitude,
+    originLongitude: journey.origin_longitude,
+    destinationMode: journey.destination_mode,
+    destinationLatitude: journey.destination_latitude,
+    destinationLongitude: journey.destination_longitude,
+    notes: journey.notes,
+    createdAt: journey.created_at,
+    updatedAt: journey.updated_at,
   };
 }
 
@@ -298,6 +352,8 @@ function mapPhoto(photo: DirectusPhoto): Photo {
     mediaAsset: mapMediaAsset(photo.media_asset),
     caption: photo.caption,
     link: photo.link,
+    tripId: photo.trip_id,
+    countryCode: photo.country_code,
     displayOrder: photo.display_order,
     createdAt: photo.created_at,
     updatedAt: photo.updated_at,
@@ -356,6 +412,7 @@ function mapCreatePostInput(data: CreatePostBody | UpdatePostBody) {
     longitude: data.longitude,
     location: data.location,
     trip_id: data.tripId,
+    country_code: data.countryCode,
     published_at: data.publishedAt,
   };
 }
@@ -374,8 +431,26 @@ function mapCreateTripInput(data: CreateTripBody | UpdateTripBody) {
     latitude: data.latitude,
     longitude: data.longitude,
     cover_image_id: data.coverImageId,
+    journey_id: data.journeyId,
+    journey_order: data.journeyOrder,
     transportation_to: normalizeMultiSelect(data.transportationTo),
     transportation_on_site: normalizeMultiSelect(data.transportationOnSite),
+  };
+}
+
+function mapCreateJourneyInput(data: CreateJourneyBody | UpdateJourneyBody) {
+  return {
+    name: data.name,
+    slug: data.slug,
+    start_date: data.startDate,
+    end_date: data.endDate,
+    origin_mode: data.originMode,
+    origin_latitude: data.originLatitude,
+    origin_longitude: data.originLongitude,
+    destination_mode: data.destinationMode,
+    destination_latitude: data.destinationLatitude,
+    destination_longitude: data.destinationLongitude,
+    notes: data.notes,
   };
 }
 
@@ -385,6 +460,8 @@ function mapCreatePhotoInput(data: CreatePhotoBody | UpdatePhotoBody) {
     media_asset_id: data.mediaAssetId,
     caption: data.caption,
     link: data.link,
+    trip_id: data.tripId,
+    country_code: data.countryCode,
     display_order: data.displayOrder,
   };
 }
@@ -428,6 +505,33 @@ export async function fetchTrips(): Promise<Trip[]> {
   );
 
   return trips.map(mapTrip);
+}
+
+export async function fetchJourneys(): Promise<Journey[]> {
+  const journeys = await directus.request(
+    readItems("journeys", {
+      sort: ["start_date", "created_at"],
+      fields: [
+        "id",
+        "name",
+        "slug",
+        "start_date",
+        "end_date",
+        "origin_mode",
+        "origin_latitude",
+        "origin_longitude",
+        "destination_mode",
+        "destination_latitude",
+        "destination_longitude",
+        "notes",
+        "created_at",
+        "updated_at",
+      ],
+      limit: -1,
+    }),
+  );
+
+  return journeys.map(mapJourney);
 }
 
 export async function fetchPhotos(): Promise<Photo[]> {
@@ -558,6 +662,70 @@ export async function deleteTripWithToken(token: string, id: number): Promise<vo
   await directus.request(withToken(token, deleteItem("trips", id)));
 }
 
+export async function createJourneyWithToken(token: string, data: CreateJourneyBody): Promise<Journey> {
+  const journey = await directus.request(
+    withToken(
+      token,
+      createItem("journeys", mapCreateJourneyInput(data), {
+        fields: [
+          "id",
+          "name",
+          "slug",
+          "start_date",
+          "end_date",
+          "origin_mode",
+          "origin_latitude",
+          "origin_longitude",
+          "destination_mode",
+          "destination_latitude",
+          "destination_longitude",
+          "notes",
+          "created_at",
+          "updated_at",
+        ],
+      }),
+    ),
+  );
+
+  return mapJourney(journey);
+}
+
+export async function updateJourneyWithToken(
+  token: string,
+  id: number,
+  data: UpdateJourneyBody,
+): Promise<Journey> {
+  const journey = await directus.request(
+    withToken(
+      token,
+      updateItem("journeys", id, mapCreateJourneyInput(data), {
+        fields: [
+          "id",
+          "name",
+          "slug",
+          "start_date",
+          "end_date",
+          "origin_mode",
+          "origin_latitude",
+          "origin_longitude",
+          "destination_mode",
+          "destination_latitude",
+          "destination_longitude",
+          "notes",
+          "created_at",
+          "updated_at",
+        ],
+      }),
+    ),
+  );
+
+  return mapJourney(journey);
+}
+
+export async function deleteJourneyWithToken(token: string, id: number): Promise<void> {
+  await directus.request(withToken(token, deleteItem("journeys", id)));
+}
+
 export async function createPhotoWithToken(token: string, data: CreatePhotoBody): Promise<Photo> {
   const photo = await directus.request(
     withToken(
@@ -643,6 +811,13 @@ export function useTripsQuery(): UseQueryResult<Trip[]> {
   });
 }
 
+export function useJourneysQuery(): UseQueryResult<Journey[]> {
+  return useQuery({
+    queryKey: directusQueryKeys.journeys,
+    queryFn: fetchJourneys,
+  });
+}
+
 export function usePhotosQuery(): UseQueryResult<Photo[]> {
   return useQuery({
     queryKey: directusQueryKeys.photos,
@@ -711,6 +886,28 @@ export function useDeletePostMutation(): UseMutationResult<void, Error, { token:
 export function useCreateTripMutation(): UseMutationResult<Trip, Error, { token: string; data: CreateTripBody }> {
   return useMutation({
     mutationFn: ({ token, data }) => createTripWithToken(token, data),
+  });
+}
+
+export function useCreateJourneyMutation(): UseMutationResult<Journey, Error, { token: string; data: CreateJourneyBody }> {
+  return useMutation({
+    mutationFn: ({ token, data }) => createJourneyWithToken(token, data),
+  });
+}
+
+export function useUpdateJourneyMutation(): UseMutationResult<
+  Journey,
+  Error,
+  { token: string; id: number; data: UpdateJourneyBody }
+> {
+  return useMutation({
+    mutationFn: ({ token, id, data }) => updateJourneyWithToken(token, id, data),
+  });
+}
+
+export function useDeleteJourneyMutation(): UseMutationResult<void, Error, { token: string; id: number }> {
+  return useMutation({
+    mutationFn: ({ token, id }) => deleteJourneyWithToken(token, id),
   });
 }
 

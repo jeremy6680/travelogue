@@ -39,6 +39,7 @@ export interface Post {
   longitude: number | null;
   location: string | null;
   tripId: number | null;
+  countryCode: string | null;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -56,6 +57,7 @@ export interface CreatePostBody {
   longitude?: number | null;
   location?: string | null;
   tripId?: number | null;
+  countryCode?: string | null;
   publishedAt?: string | null;
 }
 
@@ -71,6 +73,7 @@ export interface UpdatePostBody {
   longitude?: number | null;
   location?: string | null;
   tripId?: number | null;
+  countryCode?: string | null;
   publishedAt?: string | null;
 }
 
@@ -89,6 +92,8 @@ export interface Trip {
   longitude?: number | null;
   coverImageId: number | null;
   coverImage: MediaAsset | null;
+  journeyId: number | null;
+  journeyOrder: number | null;
   transportationTo: string[];
   transportationOnSite: string[];
   createdAt: string;
@@ -108,6 +113,8 @@ export interface CreateTripBody {
   latitude?: number | null;
   longitude?: number | null;
   coverImageId?: number | null;
+  journeyId?: number | null;
+  journeyOrder?: number | null;
   transportationTo?: string[] | string | null;
   transportationOnSite?: string[] | string | null;
 }
@@ -125,8 +132,55 @@ export interface UpdateTripBody {
   latitude?: number | null;
   longitude?: number | null;
   coverImageId?: number | null;
+  journeyId?: number | null;
+  journeyOrder?: number | null;
   transportationTo?: string[] | string | null;
   transportationOnSite?: string[] | string | null;
+}
+
+export interface Journey {
+  id: number;
+  name: string;
+  slug: string;
+  startDate: string | null;
+  endDate: string | null;
+  originMode: "default_nice" | "custom";
+  originLatitude: number | null;
+  originLongitude: number | null;
+  destinationMode: "default_nice" | "custom";
+  destinationLatitude: number | null;
+  destinationLongitude: number | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateJourneyBody {
+  name: string;
+  slug: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  originMode?: "default_nice" | "custom";
+  originLatitude?: number | null;
+  originLongitude?: number | null;
+  destinationMode?: "default_nice" | "custom";
+  destinationLatitude?: number | null;
+  destinationLongitude?: number | null;
+  notes?: string | null;
+}
+
+export interface UpdateJourneyBody {
+  name?: string;
+  slug?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  originMode?: "default_nice" | "custom";
+  originLatitude?: number | null;
+  originLongitude?: number | null;
+  destinationMode?: "default_nice" | "custom";
+  destinationLatitude?: number | null;
+  destinationLongitude?: number | null;
+  notes?: string | null;
 }
 
 export interface Photo {
@@ -136,6 +190,8 @@ export interface Photo {
   mediaAsset: MediaAsset | null;
   caption: string | null;
   link: string | null;
+  tripId: number | null;
+  countryCode: string | null;
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -146,6 +202,8 @@ export interface CreatePhotoBody {
   mediaAssetId?: number | null;
   caption?: string | null;
   link?: string | null;
+  tripId?: number | null;
+  countryCode?: string | null;
   displayOrder?: number;
 }
 
@@ -154,6 +212,8 @@ export interface UpdatePhotoBody {
   mediaAssetId?: number | null;
   caption?: string | null;
   link?: string | null;
+  tripId?: number | null;
+  countryCode?: string | null;
   displayOrder?: number;
 }
 

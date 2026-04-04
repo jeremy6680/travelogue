@@ -5,13 +5,15 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Load .env from workspace root before importing db (imports are hoisted in ESM)
-try {
-  const envContent = readFileSync(resolve(__dirname, "../../.env"), "utf-8");
-  for (const line of envContent.split("\n")) {
-    const match = line.match(/^([^=#][^=]*)=(.*)$/);
-    if (match) process.env[match[1].trim()] = match[2].trim();
-  }
-} catch {}
+if (!process.env.DATABASE_URL) {
+  try {
+    const envContent = readFileSync(resolve(__dirname, "../../.env"), "utf-8");
+    for (const line of envContent.split("\n")) {
+      const match = line.match(/^([^=#][^=]*)=(.*)$/);
+      if (match) process.env[match[1].trim()] = match[2].trim();
+    }
+  } catch {}
+}
 
 const { db, pool, tripsTable, postsTable } = await import("@workspace/db");
 

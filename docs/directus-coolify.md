@@ -18,6 +18,8 @@ Create a new **Application** in Coolify from this repository and configure:
 
 This Dockerfile installs Directus as a standalone app with Node 22 and intentionally avoids the monorepo root `pnpm` overrides, because they can exclude Linux ARM native packages required on some Coolify hosts.
 
+This project also ships local Directus extensions from [`artifacts/directus/extensions`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/extensions). Their built `dist` entrypoints must be committed to Git so the Docker build can copy them into the image.
+
 ## Environment Variables
 
 Start from:
@@ -71,6 +73,13 @@ After the first successful boot, normal restarts skip bootstrap automatically.
 ## Applying the Saved Schema
 
 On a fresh database, the container also applies the repository schema snapshot automatically during first startup. That creates the collections, fields, relations, and permissions stored in [`artifacts/directus/schema.yaml`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/schema.yaml).
+
+For later changes:
+
+- redeploy the Directus app first if code changed
+- then run `schema apply`
+
+If you changed only `schema.yaml`, redeploy is usually not required. If you changed extensions under `artifacts/directus/extensions`, redeploy is required.
 
 ## Suggested Order
 

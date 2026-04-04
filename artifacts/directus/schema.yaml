@@ -2,6 +2,54 @@ version: 1
 directus: 11.17.1
 vendor: postgres
 collections:
+  - collection: countries
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: countries
+      color: null
+      display_template: '{{code}} - {{name}}'
+      group: null
+      hidden: false
+      icon: flag
+      item_duplication_fields: null
+      note: ISO country taxonomy shared by trips, posts, and photos.
+      preview_url: null
+      singleton: false
+      sort: 5
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: countries
+  - collection: journeys
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: journeys
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: null
+      item_duplication_fields: null
+      note: null
+      preview_url: null
+      singleton: false
+      sort: 2
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: journeys
   - collection: photos
     meta:
       accountability: all
@@ -19,7 +67,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 3
+      sort: 4
       sort_field: null
       translations: null
       unarchive_value: null
@@ -67,7 +115,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 2
+      sort: 3
       sort_field: null
       translations: null
       unarchive_value: null
@@ -75,11 +123,91 @@ collections:
     schema:
       name: trips
 fields:
-  - collection: photos
+  - collection: countries
+    field: code
+    type: string
+    meta:
+      collection: countries
+      conditions: null
+      display: null
+      display_options: null
+      field: code
+      group: null
+      hidden: false
+      interface: input
+      note: Two-letter ISO country code.
+      options: null
+      readonly: false
+      required: true
+      searchable: true
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: code
+      table: countries
+      data_type: character varying
+      default_value: null
+      max_length: 2
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: countries
+    field: name
+    type: string
+    meta:
+      collection: countries
+      conditions: null
+      display: null
+      display_options: null
+      field: name
+      group: null
+      hidden: false
+      interface: input
+      note: Country display name.
+      options: null
+      readonly: false
+      required: true
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: name
+      table: countries
+      data_type: character varying
+      default_value: null
+      max_length: 120
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
     field: id
     type: integer
     meta:
-      collection: photos
+      collection: journeys
       conditions: null
       display: null
       display_options: null
@@ -90,6 +218,566 @@ fields:
       note: null
       options: null
       readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: journeys
+      data_type: integer
+      default_value: nextval('journeys_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: name
+    type: string
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: name
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: name
+      table: journeys
+      data_type: character varying
+      default_value: null
+      max_length: 160
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: slug
+    type: string
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: slug
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: slug
+      table: journeys
+      data_type: character varying
+      default_value: null
+      max_length: 200
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: start_date
+    type: date
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: start_date
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: start_date
+      table: journeys
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: end_date
+    type: date
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: end_date
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: end_date
+      table: journeys
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: origin_mode
+    type: string
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: origin_mode
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: origin_mode
+      table: journeys
+      data_type: character varying
+      default_value: default_nice
+      max_length: 20
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: origin_latitude
+    type: float
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: origin_latitude
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: origin_latitude
+      table: journeys
+      data_type: real
+      default_value: null
+      max_length: null
+      numeric_precision: 24
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: origin_longitude
+    type: float
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: origin_longitude
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: origin_longitude
+      table: journeys
+      data_type: real
+      default_value: null
+      max_length: null
+      numeric_precision: 24
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: destination_mode
+    type: string
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: destination_mode
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: destination_mode
+      table: journeys
+      data_type: character varying
+      default_value: default_nice
+      max_length: 20
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: destination_latitude
+    type: float
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: destination_latitude
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: destination_latitude
+      table: journeys
+      data_type: real
+      default_value: null
+      max_length: null
+      numeric_precision: 24
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: destination_longitude
+    type: float
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: destination_longitude
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: destination_longitude
+      table: journeys
+      data_type: real
+      default_value: null
+      max_length: null
+      numeric_precision: 24
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: notes
+    type: text
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: notes
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: notes
+      table: journeys
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: created_at
+    type: timestamp
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: created_at
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: created_at
+      table: journeys
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: journeys
+    field: updated_at
+    type: timestamp
+    meta:
+      collection: journeys
+      conditions: null
+      display: null
+      display_options: null
+      field: updated_at
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: updated_at
+      table: journeys
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: photos
+    field: id
+    type: integer
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: Auto-generated primary key.
+      options: null
+      readonly: true
       required: false
       searchable: true
       sort: null
@@ -117,7 +805,7 @@ fields:
       foreign_key_column: null
   - collection: photos
     field: url
-    type: text
+    type: string
     meta:
       collection: photos
       conditions: null
@@ -126,7 +814,7 @@ fields:
       field: url
       group: null
       hidden: false
-      interface: null
+      interface: input
       note: null
       options: null
       readonly: false
@@ -141,9 +829,9 @@ fields:
     schema:
       name: url
       table: photos
-      data_type: text
+      data_type: character varying
       default_value: null
-      max_length: null
+      max_length: 2048
       numeric_precision: null
       numeric_scale: null
       is_nullable: false
@@ -157,7 +845,7 @@ fields:
       foreign_key_column: null
   - collection: photos
     field: link
-    type: text
+    type: string
     meta:
       collection: photos
       conditions: null
@@ -166,7 +854,7 @@ fields:
       field: link
       group: null
       hidden: false
-      interface: null
+      interface: input
       note: null
       options: null
       readonly: false
@@ -181,12 +869,254 @@ fields:
     schema:
       name: link
       table: photos
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: photos
+    field: caption
+    type: text
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: caption
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: caption
+      table: photos
       data_type: text
       default_value: null
       max_length: null
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: photos
+    field: trip_id
+    type: integer
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: trip_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Optional related trip.
+      options:
+        enableLink: true
+      readonly: false
+      required: false
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: trip_id
+      table: photos
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: trips
+      foreign_key_column: id
+  - collection: photos
+    field: country_code
+    type: string
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: country_code
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Select a country from the shared taxonomy.
+      options:
+        enableLink: true
+      readonly: false
+      required: false
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: country_code
+      table: photos
+      data_type: character varying
+      default_value: null
+      max_length: 2
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: countries
+      foreign_key_column: code
+  - collection: photos
+    field: display_order
+    type: integer
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: display_order
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: display_order
+      table: photos
+      data_type: integer
+      default_value: 0
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: photos
+    field: created_at
+    type: timestamp
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: created_at
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: created_at
+      table: photos
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: photos
+    field: updated_at
+    type: timestamp
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: updated_at
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: updated_at
+      table: photos
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
       is_unique: false
       is_indexed: false
       is_primary_key: false
@@ -212,7 +1142,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 2
+      sort: 6
       special: null
       translations: null
       validation: null
@@ -253,7 +1183,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 1
+      sort: 2
       special: null
       translations: null
       validation: null
@@ -286,14 +1216,14 @@ fields:
       display_options: null
       field: id
       group: null
-      hidden: false
+      hidden: true
       interface: null
-      note: null
+      note: Auto-generated primary key.
       options: null
-      readonly: false
+      readonly: true
       required: false
       searchable: true
-      sort: 3
+      sort: 1
       special: null
       translations: null
       validation: null
@@ -318,7 +1248,7 @@ fields:
       foreign_key_column: null
   - collection: posts
     field: title
-    type: text
+    type: string
     meta:
       collection: posts
       conditions: null
@@ -327,13 +1257,13 @@ fields:
       field: title
       group: null
       hidden: false
-      interface: null
+      interface: input
       note: null
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 4
+      sort: 3
       special: null
       translations: null
       validation: null
@@ -342,9 +1272,9 @@ fields:
     schema:
       name: title
       table: posts
-      data_type: text
+      data_type: character varying
       default_value: null
-      max_length: null
+      max_length: 200
       numeric_precision: null
       numeric_scale: null
       is_nullable: false
@@ -358,7 +1288,7 @@ fields:
       foreign_key_column: null
   - collection: posts
     field: slug
-    type: text
+    type: string
     meta:
       collection: posts
       conditions: null
@@ -367,13 +1297,13 @@ fields:
       field: slug
       group: null
       hidden: false
-      interface: null
+      interface: input
       note: null
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 5
+      sort: 4
       special: null
       translations: null
       validation: null
@@ -382,9 +1312,9 @@ fields:
     schema:
       name: slug
       table: posts
-      data_type: text
+      data_type: character varying
       default_value: null
-      max_length: null
+      max_length: 200
       numeric_precision: null
       numeric_scale: null
       is_nullable: false
@@ -413,7 +1343,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 6
+      sort: 5
       special: null
       translations: null
       validation: null
@@ -438,7 +1368,7 @@ fields:
       foreign_key_column: null
   - collection: posts
     field: cover_image_url
-    type: text
+    type: string
     meta:
       collection: posts
       conditions: null
@@ -447,7 +1377,7 @@ fields:
       field: cover_image_url
       group: null
       hidden: false
-      interface: null
+      interface: input
       note: null
       options: null
       readonly: false
@@ -462,9 +1392,9 @@ fields:
     schema:
       name: cover_image_url
       table: posts
-      data_type: text
+      data_type: character varying
       default_value: null
-      max_length: null
+      max_length: 2048
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
@@ -527,18 +1457,20 @@ fields:
       field: latitude
       group: null
       hidden: false
-      interface: null
-      note: null
+      interface: input
+      note: >-
+        Optional coordinate value. Auto-filled from the post location when left
+        empty, and still editable manually.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 9
+      sort: 11
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: latitude
       table: posts
@@ -567,18 +1499,20 @@ fields:
       field: longitude
       group: null
       hidden: false
-      interface: null
-      note: null
+      interface: input
+      note: >-
+        Optional coordinate value. Auto-filled from the post location when left
+        empty, and still editable manually.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 10
+      sort: 12
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: longitude
       table: posts
@@ -598,7 +1532,7 @@ fields:
       foreign_key_column: null
   - collection: posts
     field: location
-    type: text
+    type: string
     meta:
       collection: posts
       conditions: null
@@ -607,24 +1541,26 @@ fields:
       field: location
       group: null
       hidden: false
-      interface: null
-      note: null
+      interface: travelogue-location-geocode
+      note: >-
+        Geocode the location live in Studio and keep latitude/longitude
+        editable.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 11
+      sort: 9
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: location
       table: posts
-      data_type: text
+      data_type: character varying
       default_value: null
-      max_length: null
+      max_length: 255
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
@@ -637,48 +1573,8 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: posts
-    field: country_id
-    type: integer
-    meta:
-      collection: posts
-      conditions: null
-      display: null
-      display_options: null
-      field: country_id
-      group: null
-      hidden: false
-      interface: null
-      note: null
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 12
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: country_id
-      table: posts
-      data_type: integer
-      default_value: null
-      max_length: null
-      numeric_precision: 32
-      numeric_scale: 0
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: posts
     field: published_at
-    type: text
+    type: date
     meta:
       collection: posts
       conditions: null
@@ -687,7 +1583,7 @@ fields:
       field: published_at
       group: null
       hidden: false
-      interface: null
+      interface: datetime
       note: null
       options: null
       readonly: false
@@ -702,7 +1598,7 @@ fields:
     schema:
       name: published_at
       table: posts
-      data_type: text
+      data_type: date
       default_value: null
       max_length: null
       numeric_precision: null
@@ -738,7 +1634,7 @@ fields:
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: created_at
       table: posts
@@ -778,7 +1674,7 @@ fields:
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: updated_at
       table: posts
@@ -796,6 +1692,47 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: posts
+    field: country_code
+    type: string
+    meta:
+      collection: posts
+      conditions: null
+      display: null
+      display_options: null
+      field: country_code
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Select a country from the shared taxonomy.
+      options:
+        enableLink: true
+      readonly: false
+      required: false
+      searchable: true
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: country_code
+      table: posts
+      data_type: character varying
+      default_value: null
+      max_length: 2
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: countries
+      foreign_key_column: code
   - collection: trips
     field: id
     type: integer
@@ -806,11 +1743,11 @@ fields:
       display_options: null
       field: id
       group: null
-      hidden: false
+      hidden: true
       interface: null
-      note: null
+      note: Auto-generated primary key.
       options: null
-      readonly: false
+      readonly: true
       required: false
       searchable: true
       sort: 1
@@ -838,7 +1775,7 @@ fields:
       foreign_key_column: null
   - collection: trips
     field: name
-    type: text
+    type: string
     meta:
       collection: trips
       conditions: null
@@ -847,7 +1784,7 @@ fields:
       field: name
       group: null
       hidden: false
-      interface: null
+      interface: input
       note: null
       options: null
       readonly: false
@@ -858,13 +1795,13 @@ fields:
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: name
       table: trips
-      data_type: text
+      data_type: character varying
       default_value: null
-      max_length: null
+      max_length: 160
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
@@ -878,7 +1815,7 @@ fields:
       foreign_key_column: null
   - collection: trips
     field: country_code
-    type: text
+    type: string
     meta:
       collection: trips
       conditions: null
@@ -887,8 +1824,8 @@ fields:
       field: country_code
       group: null
       hidden: false
-      interface: null
-      note: null
+      interface: select-dropdown-m2o
+      note: Select a country from the shared taxonomy.
       options: null
       readonly: false
       required: false
@@ -898,13 +1835,13 @@ fields:
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: country_code
       table: trips
-      data_type: text
+      data_type: character varying
       default_value: null
-      max_length: null
+      max_length: 2
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
@@ -914,11 +1851,11 @@ fields:
       is_generated: false
       generation_expression: null
       has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
+      foreign_key_table: countries
+      foreign_key_column: code
   - collection: trips
     field: visited_cities
-    type: text
+    type: string
     meta:
       collection: trips
       conditions: null
@@ -927,13 +1864,15 @@ fields:
       field: visited_cities
       group: null
       hidden: false
-      interface: null
-      note: null
+      interface: travelogue-trip-location-geocode
+      note: >-
+        Enter visited cities as comma-separated values. The first city updates
+        latitude/longitude live and still allows manual overrides.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 4
+      sort: 6
       special: null
       translations: null
       validation: null
@@ -942,9 +1881,9 @@ fields:
     schema:
       name: visited_cities
       table: trips
-      data_type: text
+      data_type: character varying
       default_value: null
-      max_length: null
+      max_length: 500
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
@@ -958,7 +1897,7 @@ fields:
       foreign_key_column: null
   - collection: trips
     field: reason_for_visit
-    type: text
+    type: string
     meta:
       collection: trips
       conditions: null
@@ -967,13 +1906,13 @@ fields:
       field: reason_for_visit
       group: null
       hidden: false
-      interface: null
-      note: null
+      interface: input
+      note: Comma-separated values are supported.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 5
+      sort: 9
       special: null
       translations: null
       validation: null
@@ -982,9 +1921,9 @@ fields:
     schema:
       name: reason_for_visit
       table: trips
-      data_type: text
+      data_type: character varying
       default_value: null
-      max_length: null
+      max_length: 255
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
@@ -998,7 +1937,7 @@ fields:
       foreign_key_column: null
   - collection: trips
     field: travel_companions
-    type: text
+    type: string
     meta:
       collection: trips
       conditions: null
@@ -1007,24 +1946,24 @@ fields:
       field: travel_companions
       group: null
       hidden: false
-      interface: null
-      note: null
+      interface: input
+      note: Comma-separated values are supported.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 6
+      sort: 10
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: travel_companions
       table: trips
-      data_type: text
+      data_type: character varying
       default_value: null
-      max_length: null
+      max_length: 255
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
@@ -1038,7 +1977,7 @@ fields:
       foreign_key_column: null
   - collection: trips
     field: friends_family_met
-    type: text
+    type: string
     meta:
       collection: trips
       conditions: null
@@ -1047,24 +1986,24 @@ fields:
       field: friends_family_met
       group: null
       hidden: false
-      interface: null
-      note: null
+      interface: input
+      note: Comma-separated values are supported.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 7
+      sort: 11
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: friends_family_met
       table: trips
-      data_type: text
+      data_type: character varying
       default_value: null
-      max_length: null
+      max_length: 255
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
@@ -1087,18 +2026,18 @@ fields:
       field: visited_at
       group: null
       hidden: false
-      interface: null
+      interface: datetime
       note: null
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 8
+      sort: 14
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: visited_at
       table: trips
@@ -1127,18 +2066,20 @@ fields:
       field: latitude
       group: null
       hidden: false
-      interface: null
-      note: null
+      interface: input
+      note: >-
+        Optional coordinate value. Auto-filled from the first visited city when
+        left empty, and still editable manually.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 13
+      sort: 7
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: latitude
       table: trips
@@ -1167,18 +2108,20 @@ fields:
       field: longitude
       group: null
       hidden: false
-      interface: null
-      note: null
+      interface: input
+      note: >-
+        Optional coordinate value. Auto-filled from the first visited city when
+        left empty, and still editable manually.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 14
+      sort: 8
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: longitude
       table: trips
@@ -1213,12 +2156,12 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 15
+      sort: 17
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: created_at
       table: trips
@@ -1253,12 +2196,12 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 16
+      sort: 18
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: updated_at
       table: trips
@@ -1293,12 +2236,12 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 9
+      sort: 15
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: visited_until
       table: trips
@@ -1351,7 +2294,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 12
+      sort: 16
       special:
         - cast-json
       translations: null
@@ -1410,13 +2353,13 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 10
+      sort: 12
       special:
         - cast-json
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: transportation_to
       table: trips
@@ -1469,13 +2412,13 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 11
+      sort: 13
       special:
         - cast-json
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: transportation_on_site
       table: trips
@@ -1484,6 +2427,87 @@ fields:
       max_length: null
       numeric_precision: null
       numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips
+    field: journey_id
+    type: integer
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: journey_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{name}}'
+      readonly: false
+      required: false
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: journey_id
+      table: trips
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: journeys
+      foreign_key_column: id
+  - collection: trips
+    field: journey_order
+    type: integer
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: journey_order
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: journey_order
+      table: trips
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
       is_nullable: true
       is_unique: false
       is_indexed: false
@@ -1506,4 +2530,130 @@ systemFields:
     field: parent
     schema:
       is_indexed: true
-relations: []
+relations:
+  - collection: photos
+    field: trip_id
+    related_collection: trips
+    meta:
+      junction_field: null
+      many_collection: photos
+      many_field: trip_id
+      one_allowed_collections: null
+      one_collection: trips
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: photos
+      column: trip_id
+      foreign_key_table: trips
+      foreign_key_column: id
+      constraint_name: photos_trip_id_trips_id_fk
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: photos
+    field: country_code
+    related_collection: countries
+    meta:
+      junction_field: null
+      many_collection: photos
+      many_field: country_code
+      one_allowed_collections: null
+      one_collection: countries
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: photos
+      column: country_code
+      foreign_key_table: countries
+      foreign_key_column: code
+      constraint_name: photos_country_code_countries_code_fk
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: posts
+    field: trip_id
+    related_collection: trips
+    meta:
+      junction_field: null
+      many_collection: posts
+      many_field: trip_id
+      one_allowed_collections: null
+      one_collection: trips
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: posts
+      column: trip_id
+      foreign_key_table: trips
+      foreign_key_column: id
+      constraint_name: posts_trip_id_fkey
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: posts
+    field: trip_id
+    related_collection: trips
+    meta:
+      junction_field: null
+      many_collection: posts
+      many_field: trip_id
+      one_allowed_collections: null
+      one_collection: trips
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: posts
+      column: trip_id
+      foreign_key_table: trips
+      foreign_key_column: id
+      constraint_name: posts_trip_id_trips_id_fk
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: posts
+    field: country_code
+    related_collection: countries
+    meta:
+      junction_field: null
+      many_collection: posts
+      many_field: country_code
+      one_allowed_collections: null
+      one_collection: countries
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: posts
+      column: country_code
+      foreign_key_table: countries
+      foreign_key_column: code
+      constraint_name: posts_country_code_countries_code_fk
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: trips
+    field: country_code
+    related_collection: countries
+    meta:
+      junction_field: null
+      many_collection: trips
+      many_field: country_code
+      one_allowed_collections: null
+      one_collection: countries
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: trips
+      column: country_code
+      foreign_key_table: countries
+      foreign_key_column: code
+      constraint_name: trips_country_code_countries_code_fk
+      on_update: CASCADE
+      on_delete: NO ACTION

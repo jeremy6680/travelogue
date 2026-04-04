@@ -12,15 +12,29 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1775051119169,
+      "when": 1775050119170,
       "tag": "0001_trip_coordinates_nullable",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
+      "when": 1775050119171,
+      "tag": "0002_country_taxonomy_and_input_cleanup",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775050119172,
+      "tag": "0003_journeys",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
       "when": 1775052119169,
-      "tag": "0002_cloudinary_media_assets",
+      "tag": "0004_cloudinary_media_assets",
       "breakpoints": true
     }
   ]

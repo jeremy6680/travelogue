@@ -2,14 +2,23 @@
   "name": "@workspace/directus",
   "version": "0.0.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
+    "predev": "node ./scripts/check-node-version.mjs",
     "dev": "directus start",
+    "prestart": "node ./scripts/check-node-version.mjs",
     "start": "directus start",
     "start:container": "node ./scripts/container-start.mjs",
+    "prebootstrap": "node ./scripts/check-node-version.mjs",
     "bootstrap": "directus bootstrap",
+    "preschema:snapshot:local": "node ./scripts/check-node-version.mjs",
     "schema:snapshot:local": "directus schema snapshot schema.yaml",
+    "preschema:apply:local": "node ./scripts/check-node-version.mjs",
     "schema:apply:local": "directus schema apply schema.yaml --yes",
-    "schema:apply:prod": "node --env-file=.env.production ./node_modules/.bin/directus schema apply schema.yaml --yes"
+    "preschema:apply:prod": "node ./scripts/check-node-version.mjs",
+    "schema:apply:prod": "node --env-file=.env.production ./node_modules/directus/cli.js schema apply schema.yaml --yes"
   },
   "dependencies": {
     "directus": "^11.17.1",

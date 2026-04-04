@@ -1,22 +1,26 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { Layout } from "@/components/layout";
 import {
   directusQueryKeys,
+  useCreateJourneyMutation,
   useCreateMediaAssetMutation,
   useCreatePhotoMutation,
   useCreatePostMutation,
   useCreateTripMutation,
+  useDeleteJourneyMutation,
   useDeleteMediaAssetMutation,
   useDeletePhotoMutation,
   useDeletePostMutation,
   useDeleteTripMutation,
   useDirectusHealthQuery,
+  useJourneysQuery,
   useMediaAssetsQuery,
   usePhotosQuery,
   usePostsQuery,
   useTripsQuery,
+  useUpdateJourneyMutation,
   useUpdateMediaAssetMutation,
   useUpdatePhotoMutation,
   useUpdatePostMutation,
@@ -29,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2, Edit2, CheckCircle2, XCircle } from "lucide-react";
 import type {
+  Journey,
   MediaAsset,
   Photo,
   Post,
@@ -145,12 +150,18 @@ export default function AdminPage() {
   );
 
   const { data: posts = [] } = usePostsQuery();
+  const { data: journeys = [] } = useJourneysQuery();
   const { data: trips = [] } = useTripsQuery();
   const { data: photos = [] } = usePhotosQuery();
   const { data: mediaAssets = [] } = useMediaAssetsQuery();
   const { data: health } = useDirectusHealthQuery();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const invalidation = useAdminInvalidation();
+
+  const createJourney = useCreateJourneyMutation();
+  const updateJourney = useUpdateJourneyMutation();
+  const deleteJourney = useDeleteJourneyMutation();
 
   const createPost = useCreatePostMutation();
   const updatePost = useUpdatePostMutation();
@@ -168,13 +179,26 @@ export default function AdminPage() {
   const updateMediaAsset = useUpdateMediaAssetMutation();
   const deleteMediaAsset = useDeleteMediaAssetMutation();
 
+  const [editingJourney, setEditingJourney] = useState<Journey | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
   const [editingMediaAsset, setEditingMediaAsset] = useState<MediaAsset | null>(null);
-
+  const [postTripId, setPostTripId] = useState("");
+  const [postCountryCode, setPostCountryCode] = useState("");
+  const [postLatitude, setPostLatitude] = useState("");
+  const [postLongitude, setPostLongitude] = useState("");
   const isUnlocked = adminToken.trim().length > 0;
-
+  const journeyOptions = useMemo(
+    () =>
+      [...journeys]
+        .sort((a, b) => a.name.localeCompare(b.name, "en"))
+        .map((journey) => ({
+          id: journey.id,
+          label: journey.name,
+        })),
+    [journeys],
+  );
   const tripOptions = useMemo(
     () =>
       [...trips].sort((a, b) => a.name.localeCompare(b.name, "en")).map((trip) => ({
@@ -183,6 +207,44 @@ export default function AdminPage() {
       })),
     [trips],
   );
+  const findTripById = (value: FormDataEntryValue | null) => {
+    const tripId = value ? Number(value) : null;
+    return tripId != null ? trips.find((trip) => trip.id === tripId) ?? null : null;
+  };
+  const resetPostFormState = () => {
+    setPostTripId("");
+    setPostCountryCode("");
+    setPostLatitude("");
+    setPostLongitude("");
+  };
+  const syncPostCoordinatesFromTrip = (tripIdValue: string) => {
+    setPostTripId(tripIdValue);
+
+    if (!tripIdValue) {
+      return;
+    }
+
+    const linkedTrip = trips.find((trip) => trip.id === Number(tripIdValue)) ?? null;
+    if (!linkedTrip) {
+      return;
+    }
+
+    setPostLatitude(linkedTrip.latitude != null ? String(linkedTrip.latitude) : "");
+    setPostLongitude(linkedTrip.longitude != null ? String(linkedTrip.longitude) : "");
+    setPostCountryCode(linkedTrip.countryCode ?? "");
+  };
+
+  useEffect(() => {
+    if (!editingPost) {
+      resetPostFormState();
+      return;
+    }
+
+    setPostTripId(editingPost.tripId != null ? String(editingPost.tripId) : "");
+    setPostCountryCode(editingPost.countryCode ?? "");
+    setPostLatitude(editingPost.latitude != null ? String(editingPost.latitude) : "");
+    setPostLongitude(editingPost.longitude != null ? String(editingPost.longitude) : "");
+  }, [editingPost]);
 
   const mediaAssetOptions = useMemo(
     () =>
@@ -243,6 +305,9 @@ export default function AdminPage() {
   const handlePostSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const linkedTrip = findTripById(formData.get("tripId"));
+    const latitudeInput = formData.get("latitude") as string;
+    const longitudeInput = formData.get("longitude") as string;
     const data = {
       title: formData.get("title") as string,
       slug: formData.get("slug") as string,
@@ -252,8 +317,9 @@ export default function AdminPage() {
       coverImageUrl: (formData.get("coverImageUrl") as string) || null,
       location: (formData.get("location") as string) || null,
       tripId: formData.get("tripId") ? Number(formData.get("tripId")) : null,
-      latitude: formData.get("latitude") ? Number(formData.get("latitude")) : null,
-      longitude: formData.get("longitude") ? Number(formData.get("longitude")) : null,
+      countryCode: (formData.get("countryCode") as string) || linkedTrip?.countryCode || null,
+      latitude: latitudeInput ? Number(latitudeInput) : (linkedTrip?.latitude ?? null),
+      longitude: longitudeInput ? Number(longitudeInput) : (linkedTrip?.longitude ?? null),
       publishedAt: (formData.get("publishedAt") as string) || null,
     };
 
@@ -262,6 +328,7 @@ export default function AdminPage() {
         onSuccess: () => {
           invalidation.invalidatePosts();
           setEditingPost(null);
+          resetPostFormState();
           toast({ title: "Post updated successfully" });
         },
       });
@@ -270,6 +337,50 @@ export default function AdminPage() {
         onSuccess: () => {
           invalidation.invalidatePosts();
           toast({ title: "Post created successfully" });
+          resetPostFormState();
+          (e.target as HTMLFormElement).reset();
+        }
+      });
+    }
+  };
+
+  const handleJourneySubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const originMode = (formData.get("originMode") as "default_nice" | "custom") || "default_nice";
+    const destinationMode = (formData.get("destinationMode") as "default_nice" | "custom") || "default_nice";
+    const originLatitude = formData.get("originLatitude") as string;
+    const originLongitude = formData.get("originLongitude") as string;
+    const destinationLatitude = formData.get("destinationLatitude") as string;
+    const destinationLongitude = formData.get("destinationLongitude") as string;
+    const data = {
+      name: formData.get("name") as string,
+      slug: formData.get("slug") as string,
+      startDate: (formData.get("startDate") as string) || null,
+      endDate: (formData.get("endDate") as string) || null,
+      originMode,
+      originLatitude: originMode === "custom" && originLatitude ? Number(originLatitude) : null,
+      originLongitude: originMode === "custom" && originLongitude ? Number(originLongitude) : null,
+      destinationMode,
+      destinationLatitude: destinationMode === "custom" && destinationLatitude ? Number(destinationLatitude) : null,
+      destinationLongitude: destinationMode === "custom" && destinationLongitude ? Number(destinationLongitude) : null,
+      notes: (formData.get("notes") as string) || null,
+    };
+
+    if (editingJourney) {
+      updateJourney.mutate({ token: adminToken, id: editingJourney.id, data }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
+          setEditingJourney(null);
+          toast({ title: "Journey updated successfully" });
+        }
+      });
+    } else {
+      createJourney.mutate({ token: adminToken, data }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
+          toast({ title: "Journey created successfully" });
           (e.target as HTMLFormElement).reset();
         },
       });
@@ -279,6 +390,10 @@ export default function AdminPage() {
   const handleTripSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const latitudeInput = formData.get("latitude") as string;
+    const longitudeInput = formData.get("longitude") as string;
+    const journeyIdInput = formData.get("journeyId") as string;
+    const journeyOrderInput = formData.get("journeyOrder") as string;
     const data = {
       name: formData.get("name") as string,
       countryCode: formData.get("countryCode") as string,
@@ -287,9 +402,11 @@ export default function AdminPage() {
       travelCompanions: formData.get("travelCompanions") as string,
       friendsFamilyMet: formData.get("friendsFamilyMet") as string,
       visitedAt: formData.get("visitedAt") as string,
-      latitude: formData.get("latitude") ? Number(formData.get("latitude")) : undefined,
-      longitude: formData.get("longitude") ? Number(formData.get("longitude")) : undefined,
       coverImageId: formData.get("coverImageId") ? Number(formData.get("coverImageId")) : null,
+      latitude: latitudeInput ? Number(latitudeInput) : undefined,
+      longitude: longitudeInput ? Number(longitudeInput) : undefined,
+      journeyId: journeyIdInput ? Number(journeyIdInput) : null,
+      journeyOrder: journeyOrderInput ? Number(journeyOrderInput) : null,
       transportationTo: (formData.get("transportationTo") as string) || undefined,
       transportationOnSite: (formData.get("transportationOnSite") as string) || undefined,
     };
@@ -316,11 +433,14 @@ export default function AdminPage() {
   const handlePhotoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const linkedTrip = findTripById(formData.get("tripId"));
     const data = {
       mediaAssetId: formData.get("mediaAssetId") ? Number(formData.get("mediaAssetId")) : null,
       url: (formData.get("url") as string) || null,
       caption: (formData.get("caption") as string) || null,
       link: (formData.get("link") as string) || null,
+      tripId: formData.get("tripId") ? Number(formData.get("tripId")) : null,
+      countryCode: (formData.get("countryCode") as string) || linkedTrip?.countryCode || null,
       displayOrder: formData.get("displayOrder") ? Number(formData.get("displayOrder")) : 0,
     };
 
@@ -434,7 +554,8 @@ export default function AdminPage() {
                   <Input name="location" placeholder="Location string" defaultValue={editingPost?.location || ""} />
                   <select
                     name="tripId"
-                    defaultValue={editingPost?.tripId != null ? String(editingPost.tripId) : ""}
+                    value={postTripId}
+                    onChange={(event) => syncPostCoordinatesFromTrip(event.target.value)}
                     className={selectClassName}
                   >
                     <option value="">No linked trip</option>
@@ -444,15 +565,40 @@ export default function AdminPage() {
                       </option>
                     ))}
                   </select>
-                  <Input name="latitude" type="number" step="any" placeholder="Latitude" defaultValue={editingPost?.latitude || ""} />
-                  <Input name="longitude" type="number" step="any" placeholder="Longitude" defaultValue={editingPost?.longitude || ""} />
+                  <select
+                    name="countryCode"
+                    value={postCountryCode}
+                    onChange={(event) => setPostCountryCode(event.target.value)}
+                    className={selectClassName}
+                  >
+                    <option value="">Country from linked trip if possible</option>
+                    {COUNTRY_CODES.map(c => (
+                      <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                    ))}
+                  </select>
                 </div>
-                <Input
-                  name="publishedAt"
-                  type="datetime-local"
-                  placeholder="Published At"
-                  defaultValue={editingPost?.publishedAt ? new Date(editingPost.publishedAt).toISOString().slice(0, 16) : ""}
-                />
+                <p className="text-sm text-muted-foreground">
+                  Latitude et longitude se préremplissent depuis le voyage lié quand il est sélectionné, puis restent modifiables manuellement.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    name="latitude"
+                    type="number"
+                    step="any"
+                    placeholder="Latitude"
+                    value={postLatitude}
+                    onChange={(event) => setPostLatitude(event.target.value)}
+                  />
+                  <Input
+                    name="longitude"
+                    type="number"
+                    step="any"
+                    placeholder="Longitude"
+                    value={postLongitude}
+                    onChange={(event) => setPostLongitude(event.target.value)}
+                  />
+                </div>
+                <Input name="publishedAt" type="date" placeholder="Published At" defaultValue={editingPost?.publishedAt ?? ''} />
               </div>
 
               <div className="flex gap-3 pt-4">
@@ -498,11 +644,103 @@ export default function AdminPage() {
 
           <section className="space-y-6">
             <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
+              Journeys <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{journeys.length}</span>
+            </h2>
+
+            <form key={editingJourney?.id ?? "new-journey"} onSubmit={handleJourneySubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
+              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingJourney ? 'Edit Journey' : 'Create Journey'}</h3>
+
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Input name="name" placeholder="Journey Name" defaultValue={editingJourney?.name} required />
+                  <Input name="slug" placeholder="journey-slug" defaultValue={editingJourney?.slug} required />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input name="startDate" type="date" defaultValue={editingJourney?.startDate ?? ""} />
+                  <Input name="endDate" type="date" defaultValue={editingJourney?.endDate ?? ""} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    name="originMode"
+                    defaultValue={editingJourney?.originMode ?? "default_nice"}
+                    className={cn(
+                      "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                    )}
+                  >
+                    <option value="default_nice">Departure: Nice by default</option>
+                    <option value="custom">Departure: custom coordinates</option>
+                  </select>
+                  <select
+                    name="destinationMode"
+                    defaultValue={editingJourney?.destinationMode ?? "default_nice"}
+                    className={cn(
+                      "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                    )}
+                  >
+                    <option value="default_nice">Return: Nice by default</option>
+                    <option value="custom">Return: custom coordinates</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input name="originLatitude" type="number" step="any" placeholder="Origin latitude" defaultValue={editingJourney?.originLatitude ?? ""} />
+                  <Input name="originLongitude" type="number" step="any" placeholder="Origin longitude" defaultValue={editingJourney?.originLongitude ?? ""} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input name="destinationLatitude" type="number" step="any" placeholder="Destination latitude" defaultValue={editingJourney?.destinationLatitude ?? ""} />
+                  <Input name="destinationLongitude" type="number" step="any" placeholder="Destination longitude" defaultValue={editingJourney?.destinationLongitude ?? ""} />
+                </div>
+                <Textarea name="notes" placeholder="Optional notes about this multi-country journey" defaultValue={editingJourney?.notes ?? ""} className="h-24" />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" className="flex-1">
+                  {editingJourney ? 'Update Journey' : 'Create Journey'}
+                </Button>
+                {editingJourney && (
+                  <Button type="button" variant="outline" onClick={() => setEditingJourney(null)}>Cancel</Button>
+                )}
+              </div>
+            </form>
+
+            <div className="space-y-3">
+              {journeys.map(journey => (
+                <div key={journey.id} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors">
+                  <div>
+                    <h4 className="font-serif font-bold">{journey.name}</h4>
+                    <p className="text-xs text-muted-foreground font-mono">{journey.slug} · Journey ID {journey.id}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {journey.startDate || "Unknown start"} · {journey.endDate || "Unknown end"}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="icon" variant="ghost" className={actionButtonClass} onClick={() => setEditingJourney(journey)}>
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
+                      if(confirm("Delete this journey? Trips will simply become standalone again.")) {
+                        deleteJourney.mutate({ token: adminToken, id: journey.id }, {
+                          onSuccess: () => {
+                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
+                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
+                          }
+                        });
+                      }
+                    }}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
               Trips <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{trips.length}</span>
             </h2>
 
-            <form onSubmit={handleTripSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingTrip ? "Edit Trip" : "Log New Trip"}</h3>
+            <form key={editingTrip?.id ?? "new-trip"} onSubmit={handleTripSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
+              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingTrip ? 'Edit Trip' : 'Log New Trip'}</h3>
 
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -515,6 +753,30 @@ export default function AdminPage() {
                   </select>
                 </div>
                 <Input name="visitedCities" placeholder="Visited Cities" defaultValue={editingTrip?.visitedCities} required />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
+                      Journey
+                    </label>
+                    <select
+                      name="journeyId"
+                      defaultValue={editingTrip?.journeyId != null ? String(editingTrip.journeyId) : ""}
+                      className={cn(
+                        "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
+                        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                        "disabled:cursor-not-allowed disabled:opacity-50"
+                      )}
+                    >
+                      <option value="">Standalone trip</option>
+                      {journeyOptions.map((journey) => (
+                        <option key={journey.id} value={String(journey.id)}>
+                          {journey.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Input name="journeyOrder" type="number" min="1" placeholder="Order inside journey" defaultValue={editingTrip?.journeyOrder ?? ""} />
+                </div>
                 <Input name="reasonForVisit" placeholder="Reason for Visit" defaultValue={editingTrip?.reasonForVisit} required />
                 <Input name="travelCompanions" placeholder="Travel Companions" defaultValue={editingTrip?.travelCompanions} required />
                 <Input name="friendsFamilyMet" placeholder="Friends/Family Met" defaultValue={editingTrip?.friendsFamilyMet} required />
@@ -538,13 +800,17 @@ export default function AdminPage() {
                   <Input name="latitude" type="number" step="any" placeholder="Latitude (optional)" defaultValue={editingTrip?.latitude ?? ""} />
                   <Input name="longitude" type="number" step="any" placeholder="Longitude (optional)" defaultValue={editingTrip?.longitude ?? ""} />
                 </div>
-                <Input
-                  name="visitedAt"
-                  type="datetime-local"
-                  placeholder="Visited At"
-                  defaultValue={editingTrip?.visitedAt ? new Date(editingTrip.visitedAt).toISOString().slice(0, 16) : ""}
-                  required
-                />
+                <details className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
+                  <summary className="cursor-pointer font-medium text-foreground">Advanced coordinates override</summary>
+                  <p className="mt-2">
+                    Latitude and longitude are now auto-calculated by default from the first listed city, with the trip country as context. These fields remain optional manual overrides.
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <Input name="latitude" type="number" step="any" placeholder="Latitude override" defaultValue={editingTrip?.latitude ?? ''} />
+                    <Input name="longitude" type="number" step="any" placeholder="Longitude override" defaultValue={editingTrip?.longitude ?? ''} />
+                  </div>
+                </details>
+                <Input name="visitedAt" type="date" placeholder="Visited At" defaultValue={editingTrip?.visitedAt ?? ''} required />
               </div>
 
               <div className="flex gap-3 pt-4">
@@ -569,6 +835,19 @@ export default function AdminPage() {
                     <p className="text-xs text-muted-foreground">Trip ID {trip.id} · {trip.visitedCities}</p>
                     {trip.coverImage && (
                       <p className="text-xs text-muted-foreground">Cover Asset ID {trip.coverImage.id} · {trip.coverImage.publicId}</p>
+                    )}
+                    {trip.journeyId != null && (
+                      <p className="text-xs text-muted-foreground">
+                        Journey: {journeys.find((journey) => journey.id === trip.journeyId)?.name ?? `#${trip.journeyId}`}
+                        {trip.journeyOrder != null ? ` · Step ${trip.journeyOrder}` : ""}
+                      </p>
+                    )}
+                    {(trip.transportationTo || trip.transportationOnSite) && (
+                      <p className="text-xs text-muted-foreground">
+                        {trip.transportationTo ? `Getting There: ${trip.transportationTo}` : "Getting There: -"}
+                        {" · "}
+                        {trip.transportationOnSite ? `Getting Around: ${trip.transportationOnSite}` : "Getting Around: -"}
+                      </p>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -690,6 +969,30 @@ export default function AdminPage() {
               <Input name="url" placeholder="Legacy / fallback image URL (optional)" defaultValue={editingPhoto?.url || ""} />
               <Input name="caption" placeholder="Caption (optional)" defaultValue={editingPhoto?.caption || ""} />
               <Input name="link" placeholder="Link URL (optional — e.g. /posts/my-post)" defaultValue={editingPhoto?.link || ""} />
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  name="tripId"
+                  defaultValue={editingPhoto?.tripId != null ? String(editingPhoto.tripId) : ""}
+                  className={selectClassName}
+                >
+                  <option value="">No linked trip</option>
+                  {tripOptions.map((trip) => (
+                    <option key={trip.id} value={String(trip.id)}>
+                      {trip.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  name="countryCode"
+                  defaultValue={editingPhoto?.countryCode ?? ""}
+                  className={selectClassName}
+                >
+                  <option value="">Country from linked trip if possible</option>
+                  {COUNTRY_CODES.map(c => (
+                    <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                  ))}
+                </select>
+              </div>
               <Input name="displayOrder" type="number" placeholder="Display order (0 = first)" defaultValue={editingPhoto?.displayOrder ?? 0} />
             </div>
             <div className="flex gap-3 pt-4">
