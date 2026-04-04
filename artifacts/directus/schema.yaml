@@ -558,7 +558,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 2
+      sort: 6
       special: null
       translations: null
       validation: null
@@ -599,7 +599,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 1
+      sort: 2
       special: null
       translations: null
       validation: null
@@ -639,7 +639,7 @@ fields:
       readonly: true
       required: false
       searchable: true
-      sort: 3
+      sort: 1
       special: null
       translations: null
       validation: null
@@ -679,7 +679,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 4
+      sort: 3
       special: null
       translations: null
       validation: null
@@ -719,7 +719,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 5
+      sort: 4
       special: null
       translations: null
       validation: null
@@ -759,7 +759,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 6
+      sort: 5
       special: null
       translations: null
       validation: null
@@ -874,17 +874,19 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: Optional coordinate value. Auto-filled from the post location when left empty, and still editable manually.
+      note: >-
+        Optional coordinate value. Auto-filled from the post location when left
+        empty, and still editable manually.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 9
+      sort: 11
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: latitude
       table: posts
@@ -914,17 +916,19 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: Optional coordinate value. Auto-filled from the post location when left empty, and still editable manually.
+      note: >-
+        Optional coordinate value. Auto-filled from the post location when left
+        empty, and still editable manually.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 10
+      sort: 12
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: longitude
       table: posts
@@ -954,17 +958,19 @@ fields:
       group: null
       hidden: false
       interface: travelogue-location-geocode
-      note: Geocode the location live in Studio and keep latitude/longitude editable.
+      note: >-
+        Geocode the location live in Studio and keep latitude/longitude
+        editable.
       options: null
       readonly: false
       required: false
       searchable: true
-      sort: 11
+      sort: 9
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: location
       table: posts
@@ -1044,7 +1050,7 @@ fields:
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: created_at
       table: posts
@@ -1084,7 +1090,7 @@ fields:
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: updated_at
       table: posts
@@ -1120,12 +1126,12 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 12
+      sort: 10
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: country_code
       table: posts
@@ -1915,6 +1921,27 @@ relations:
       foreign_key_table: trips
       foreign_key_column: id
       constraint_name: posts_trip_id_trips_id_fk
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: posts
+    field: trip_id
+    related_collection: trips
+    meta:
+      junction_field: null
+      many_collection: posts
+      many_field: trip_id
+      one_allowed_collections: null
+      one_collection: trips
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: posts
+      column: trip_id
+      foreign_key_table: trips
+      foreign_key_column: id
+      constraint_name: posts_trip_id_fkey
       on_update: CASCADE
       on_delete: SET NULL
   - collection: posts
