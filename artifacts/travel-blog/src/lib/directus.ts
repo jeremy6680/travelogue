@@ -17,13 +17,16 @@ import {
 import type {
   CreatePhotoBody,
   CreatePostBody,
+  CreateJourneyBody,
   CreateTripBody,
   GalleryImage,
+  Journey,
   MapPin,
   Photo,
   Post,
   TravelStats,
   Trip,
+  UpdateJourneyBody,
   UpdatePhotoBody,
   UpdatePostBody,
   UpdateTripBody,
@@ -62,8 +65,27 @@ type DirectusTrip = {
   visited_until: string | null;
   latitude: number | null;
   longitude: number | null;
+  journey_id: number | null;
+  journey_order: number | null;
   transportation_to: string[] | string | null;
   transportation_on_site: string[] | string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type DirectusJourney = {
+  id: number;
+  name: string;
+  slug: string;
+  start_date: string | null;
+  end_date: string | null;
+  origin_mode: "default_nice" | "custom";
+  origin_latitude: number | null;
+  origin_longitude: number | null;
+  destination_mode: "default_nice" | "custom";
+  destination_latitude: number | null;
+  destination_longitude: number | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -81,6 +103,7 @@ type DirectusPhoto = {
 };
 
 type DirectusSchema = {
+  journeys: DirectusJourney[];
   posts: DirectusPost[];
   trips: DirectusTrip[];
   photos: DirectusPhoto[];
@@ -103,6 +126,7 @@ export const directusQueryKeys = {
   posts: ["directus", "posts"] as const,
   postBySlug: (slug: string | undefined) => ["directus", "posts", slug] as const,
   trips: ["directus", "trips"] as const,
+  journeys: ["directus", "journeys"] as const,
   photos: ["directus", "photos"] as const,
   mapPins: ["directus", "map-pins"] as const,
   stats: ["directus", "stats"] as const,
@@ -151,10 +175,31 @@ function mapTrip(trip: DirectusTrip): Trip {
     visitedUntil: trip.visited_until,
     latitude: trip.latitude,
     longitude: trip.longitude,
+    journeyId: trip.journey_id,
+    journeyOrder: trip.journey_order,
     transportationTo: normalizeMultiSelect(trip.transportation_to),
     transportationOnSite: normalizeMultiSelect(trip.transportation_on_site),
     createdAt: trip.created_at,
     updatedAt: trip.updated_at,
+  };
+}
+
+function mapJourney(journey: DirectusJourney): Journey {
+  return {
+    id: journey.id,
+    name: journey.name,
+    slug: journey.slug,
+    startDate: journey.start_date,
+    endDate: journey.end_date,
+    originMode: journey.origin_mode,
+    originLatitude: journey.origin_latitude,
+    originLongitude: journey.origin_longitude,
+    destinationMode: journey.destination_mode,
+    destinationLatitude: journey.destination_latitude,
+    destinationLongitude: journey.destination_longitude,
+    notes: journey.notes,
+    createdAt: journey.created_at,
+    updatedAt: journey.updated_at,
   };
 }
 
@@ -240,8 +285,26 @@ function mapCreateTripInput(data: CreateTripBody | UpdateTripBody) {
     visited_until: data.visitedUntil,
     latitude: data.latitude,
     longitude: data.longitude,
+    journey_id: data.journeyId,
+    journey_order: data.journeyOrder,
     transportation_to: normalizeMultiSelect(data.transportationTo),
     transportation_on_site: normalizeMultiSelect(data.transportationOnSite),
+  };
+}
+
+function mapCreateJourneyInput(data: CreateJourneyBody | UpdateJourneyBody) {
+  return {
+    name: data.name,
+    slug: data.slug,
+    start_date: data.startDate,
+    end_date: data.endDate,
+    origin_mode: data.originMode,
+    origin_latitude: data.originLatitude,
+    origin_longitude: data.originLongitude,
+    destination_mode: data.destinationMode,
+    destination_latitude: data.destinationLatitude,
+    destination_longitude: data.destinationLongitude,
+    notes: data.notes,
   };
 }
 
@@ -301,6 +364,8 @@ export async function fetchTrips(): Promise<Trip[]> {
         "visited_until",
         "latitude",
         "longitude",
+        "journey_id",
+        "journey_order",
         "transportation_to",
         "transportation_on_site",
         "created_at",
@@ -311,6 +376,33 @@ export async function fetchTrips(): Promise<Trip[]> {
   );
 
   return trips.map(mapTrip);
+}
+
+export async function fetchJourneys(): Promise<Journey[]> {
+  const journeys = await directus.request(
+    readItems("journeys", {
+      sort: ["start_date", "created_at"],
+      fields: [
+        "id",
+        "name",
+        "slug",
+        "start_date",
+        "end_date",
+        "origin_mode",
+        "origin_latitude",
+        "origin_longitude",
+        "destination_mode",
+        "destination_latitude",
+        "destination_longitude",
+        "notes",
+        "created_at",
+        "updated_at",
+      ],
+      limit: -1,
+    }),
+  );
+
+  return journeys.map(mapJourney);
 }
 
 export async function fetchPhotos(): Promise<Photo[]> {
@@ -474,6 +566,8 @@ export async function createTripWithToken(token: string, data: CreateTripBody): 
           "visited_until",
           "latitude",
           "longitude",
+          "journey_id",
+          "journey_order",
           "transportation_to",
           "transportation_on_site",
           "created_at",
@@ -508,6 +602,8 @@ export async function updateTripWithToken(
           "visited_until",
           "latitude",
           "longitude",
+          "journey_id",
+          "journey_order",
           "transportation_to",
           "transportation_on_site",
           "created_at",
@@ -522,6 +618,70 @@ export async function updateTripWithToken(
 
 export async function deleteTripWithToken(token: string, id: number): Promise<void> {
   await directus.request(withToken(token, deleteItem("trips", id)));
+}
+
+export async function createJourneyWithToken(token: string, data: CreateJourneyBody): Promise<Journey> {
+  const journey = await directus.request(
+    withToken(
+      token,
+      createItem("journeys", mapCreateJourneyInput(data), {
+        fields: [
+          "id",
+          "name",
+          "slug",
+          "start_date",
+          "end_date",
+          "origin_mode",
+          "origin_latitude",
+          "origin_longitude",
+          "destination_mode",
+          "destination_latitude",
+          "destination_longitude",
+          "notes",
+          "created_at",
+          "updated_at",
+        ],
+      }),
+    ),
+  );
+
+  return mapJourney(journey);
+}
+
+export async function updateJourneyWithToken(
+  token: string,
+  id: number,
+  data: UpdateJourneyBody,
+): Promise<Journey> {
+  const journey = await directus.request(
+    withToken(
+      token,
+      updateItem("journeys", id, mapCreateJourneyInput(data), {
+        fields: [
+          "id",
+          "name",
+          "slug",
+          "start_date",
+          "end_date",
+          "origin_mode",
+          "origin_latitude",
+          "origin_longitude",
+          "destination_mode",
+          "destination_latitude",
+          "destination_longitude",
+          "notes",
+          "created_at",
+          "updated_at",
+        ],
+      }),
+    ),
+  );
+
+  return mapJourney(journey);
+}
+
+export async function deleteJourneyWithToken(token: string, id: number): Promise<void> {
+  await directus.request(withToken(token, deleteItem("journeys", id)));
 }
 
 export async function createPhotoWithToken(token: string, data: CreatePhotoBody): Promise<Photo> {
@@ -569,6 +729,13 @@ export function useTripsQuery(): UseQueryResult<Trip[]> {
   return useQuery({
     queryKey: directusQueryKeys.trips,
     queryFn: fetchTrips,
+  });
+}
+
+export function useJourneysQuery(): UseQueryResult<Journey[]> {
+  return useQuery({
+    queryKey: directusQueryKeys.journeys,
+    queryFn: fetchJourneys,
   });
 }
 
@@ -633,6 +800,28 @@ export function useDeletePostMutation(): UseMutationResult<void, Error, { token:
 export function useCreateTripMutation(): UseMutationResult<Trip, Error, { token: string; data: CreateTripBody }> {
   return useMutation({
     mutationFn: ({ token, data }) => createTripWithToken(token, data),
+  });
+}
+
+export function useCreateJourneyMutation(): UseMutationResult<Journey, Error, { token: string; data: CreateJourneyBody }> {
+  return useMutation({
+    mutationFn: ({ token, data }) => createJourneyWithToken(token, data),
+  });
+}
+
+export function useUpdateJourneyMutation(): UseMutationResult<
+  Journey,
+  Error,
+  { token: string; id: number; data: UpdateJourneyBody }
+> {
+  return useMutation({
+    mutationFn: ({ token, id, data }) => updateJourneyWithToken(token, id, data),
+  });
+}
+
+export function useDeleteJourneyMutation(): UseMutationResult<void, Error, { token: string; id: number }> {
+  return useMutation({
+    mutationFn: ({ token, id }) => deleteJourneyWithToken(token, id),
   });
 }
 
