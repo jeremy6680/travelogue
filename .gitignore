@@ -60,6 +60,10 @@ Thumbs.db
 **/.env.test
 **/.env.production
 
+# Keep built Directus extension entrypoints versioned for deployment.
+!artifacts/directus/extensions/**/dist/
+!artifacts/directus/extensions/**/dist/**
+
 # Netlify local state / deployment scratch
 .netlify/
 **/.netlify/
