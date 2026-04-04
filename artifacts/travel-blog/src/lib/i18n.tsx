@@ -5,6 +5,7 @@ import { enUS, fr } from "date-fns/locale";
 export type Locale = "fr" | "en";
 
 const STORAGE_KEY = "travelogue_locale";
+const AVAILABLE_LOCALES = getAvailableLocales();
 
 const messages = {
   fr: {
@@ -192,6 +193,8 @@ type MessageKey = keyof typeof messages.fr;
 type I18nContextValue = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
+  availableLocales: Locale[];
+  isLocaleSwitcherEnabled: boolean;
   t: (key: MessageKey) => string;
   dateFnsLocale: typeof fr;
   numberLocale: string;
@@ -204,29 +207,59 @@ type I18nContextValue = {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
+function getAvailableLocales(): Locale[] {
+  const rawValue = String(import.meta.env.VITE_SITE_LANGUAGES ?? "both").trim().toLowerCase();
+
+  if (rawValue === "fr") return ["fr"];
+  if (rawValue === "en") return ["en"];
+  if (rawValue === "2" || rawValue === "both" || rawValue === "all" || rawValue === "fr,en") {
+    return ["fr", "en"];
+  }
+
+  return ["fr", "en"];
+}
+
 function getInitialLocale(): Locale {
   if (typeof window === "undefined") return "fr";
+  if (AVAILABLE_LOCALES.length === 1) {
+    return AVAILABLE_LOCALES[0];
+  }
   const saved = window.localStorage.getItem(STORAGE_KEY);
-  return saved === "en" || saved === "fr" ? saved : "fr";
+  return saved && AVAILABLE_LOCALES.includes(saved as Locale)
+    ? (saved as Locale)
+    : AVAILABLE_LOCALES[0];
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, locale);
-    document.documentElement.lang = locale;
+    const effectiveLocale = AVAILABLE_LOCALES.length === 1 ? AVAILABLE_LOCALES[0] : locale;
+
+    if (AVAILABLE_LOCALES.length > 1) {
+      window.localStorage.setItem(STORAGE_KEY, effectiveLocale);
+    }
+
+    document.documentElement.lang = effectiveLocale;
   }, [locale]);
 
   const value = useMemo<I18nContextValue>(() => {
-    const catalog = messages[locale];
-    const dateFnsLocale = locale === "fr" ? fr : enUS;
-    const numberLocale = locale === "fr" ? "fr-FR" : "en-US";
+    const effectiveLocale = AVAILABLE_LOCALES.length === 1 ? AVAILABLE_LOCALES[0] : locale;
+    const catalog = messages[effectiveLocale];
+    const dateFnsLocale = effectiveLocale === "fr" ? fr : enUS;
+    const numberLocale = effectiveLocale === "fr" ? "fr-FR" : "en-US";
     const regionNames = new Intl.DisplayNames([numberLocale], { type: "region" });
 
     return {
-      locale,
-      setLocale: setLocaleState,
+      locale: effectiveLocale,
+      availableLocales: AVAILABLE_LOCALES,
+      setLocale: (nextLocale) => {
+        if (!AVAILABLE_LOCALES.includes(nextLocale)) {
+          return;
+        }
+        setLocaleState(nextLocale);
+      },
+      isLocaleSwitcherEnabled: AVAILABLE_LOCALES.length > 1,
       t: (key) => catalog[key],
       dateFnsLocale,
       numberLocale,

@@ -13,7 +13,7 @@ import {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { locale, setLocale, t } = useI18n();
+  const { locale, setLocale, t, isLocaleSwitcherEnabled } = useI18n();
 
   const navItems = [
     { href: "/", label: t("navHome"), icon: Compass, exact: true },
@@ -61,23 +61,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
-            <div className="ml-2 hidden md:flex items-center gap-1 rounded-md border border-border/70 bg-card/70 p-1">
-              {(["fr", "en"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setLocale(value)}
-                  className={`rounded px-2 py-1 text-xs font-semibold uppercase tracking-wider transition-colors ${
-                    locale === value
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  aria-label={`${t("languageLabel")} ${value.toUpperCase()}`}
-                >
-                  {value.toUpperCase()}
-                </button>
-              ))}
-            </div>
+            {isLocaleSwitcherEnabled && (
+              <div className="ml-2 hidden md:flex items-center gap-1 rounded-md border border-border/70 bg-card/70 p-1">
+                {(["fr", "en"] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setLocale(value)}
+                    className={`rounded px-2 py-1 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                      locale === value
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    aria-label={`${t("languageLabel")} ${value.toUpperCase()}`}
+                  >
+                    {value.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            )}
           </nav>
         </div>
       </header>
