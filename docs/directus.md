@@ -38,6 +38,7 @@ If something fails:
 ## Where Directus Lives
 
 - Directus app: [`artifacts/directus`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus)
+- Directus local extensions: [`artifacts/directus/extensions`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/extensions)
 - Directus env example: [`artifacts/directus/.env.example`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/.env.example)
 - Coolify env example: [`artifacts/directus/.env.coolify.example`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/.env.coolify.example)
 - Directus package scripts: [`artifacts/directus/package.json`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/package.json)
@@ -62,6 +63,15 @@ nvm use 22
 ```
 
 If you run Directus with another Node version, Directus may reject the runtime or native modules may fail.
+
+If `directus start` fails with an `isolated-vm` native module error, rebuild it under Node 22:
+
+```sh
+cd /Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus
+nvm use 22
+npm rebuild isolated-vm
+corepack pnpm run dev
+```
 
 ## Environment Files
 
@@ -183,6 +193,14 @@ Example:
 - if you add a field to `trips`, make sure it is requested in `fetchTrips()`
 - if the field needs mapping, update `mapTrip()`
 
+If the Directus admin behavior changes through local extensions, update the extension code in [`artifacts/directus/extensions`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/extensions) too.
+
+Important:
+
+- this project keeps built Directus extension entrypoints in Git
+- commit the `dist/index.js` files inside `artifacts/directus/extensions/**/dist/`
+- production will not load the extension if those built files are missing from the deployed image
+
 ### 5. Test Locally
 
 Before pushing:
@@ -198,11 +216,13 @@ The reliable production flow is:
 
 1. make the structural change locally in Directus
 2. export `schema.yaml`
-3. commit and push the schema change
+3. commit and push the schema change and any Directus extension changes
 4. deploy Directus
 5. apply the schema to production
 6. restart Directus if the admin UI still shows stale metadata
 7. verify the Data Model and API in production
+
+If the feature depends on Directus local extensions, step 4 must finish successfully before step 5. `schema apply` alone cannot copy extension files into the running container.
 
 ### Apply the Saved Schema to Production
 
@@ -300,6 +320,27 @@ SSH_HOST=root@example.com DIRECTUS_CONTAINER_PREFIX=my-directus- bash /Users/jer
 
 5. If the admin UI still looks stale after a successful apply, restart the Directus application in Coolify and reload the admin.
 
+### Production Extensions Checklist
+
+When a production change includes Directus extensions:
+
+1. commit and push the extension folder and its built `dist` entrypoints
+2. redeploy the Directus app in Coolify
+3. confirm the running container contains the files under `/app/extensions`
+4. only then run `schema apply`
+
+Quick verification on the server:
+
+```sh
+docker exec -it <directus-container-name> sh -lc 'find /app/extensions -maxdepth 3 -type f | sort'
+```
+
+You should see each extension entrypoint, for example:
+
+```txt
+/app/extensions/directus-extension-post-coordinate-sync/dist/index.js
+```
+
 ### Production Pitfalls We Hit
 
 These are the failure modes already seen on this project.
@@ -348,6 +389,23 @@ either:
 - or it exists but the reference data has not been inserted yet
 
 In that case, create or backfill the reference table in PostgreSQL first, then rerun `schema apply`.
+
+5. `schema apply` succeeds, but Directus warns that extension files cannot be found.
+
+If you see errors like:
+
+```txt
+Cannot find module '/app/extensions/<extension-name>/dist/index.js'
+```
+
+the production container does not contain the built extension files yet.
+
+Usually this means one of these happened:
+
+- the latest Directus deploy has not completed yet
+- the extension `dist` files were not committed to Git
+
+Fix the repo or redeploy first, then rerun `schema apply`.
 
 ### Important Production Note
 

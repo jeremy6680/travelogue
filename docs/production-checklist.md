@@ -49,7 +49,9 @@ All should return JSON, not `403`.
 ## Schema Deployment
 
 - [`artifacts/directus/schema.yaml`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/schema.yaml) is committed
+- if Directus extensions changed, their `dist` files under [`artifacts/directus/extensions`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/extensions) are committed
 - schema changes were tested locally first
+- if Directus extensions changed, Directus was redeployed before running `schema apply`
 - production schema was applied after deploy
 - if the admin looked stale after apply, Directus was restarted
 
