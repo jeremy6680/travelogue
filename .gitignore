@@ -50,7 +50,15 @@ Thumbs.db
 
 # Local environment variables
 .env
+.env.local
+.env.development
+.env.test
+.env.production
 **/.env
+**/.env.local
+**/.env.development
+**/.env.test
+**/.env.production
 
 # Netlify local state / deployment scratch
 .netlify/

@@ -12,7 +12,7 @@ Use this right after deploying a Directus schema change to production.
 
 ```sh
 cd /app
-node ./node_modules/.bin/directus schema apply schema.yaml --yes
+node ./node_modules/directus/cli.js schema apply schema.yaml --yes
 ```
 
 2. Restart Directus if the admin still looks stale.
@@ -218,15 +218,136 @@ pnpm run schema:apply:prod
 That uses:
 
 ```sh
-node --env-file=.env.production ./node_modules/.bin/directus schema apply schema.yaml --yes
+node --env-file=.env.production ./node_modules/directus/cli.js schema apply schema.yaml --yes
 ```
 
 If you prefer to run it inside the Coolify container:
 
 ```sh
 cd /app
-node ./node_modules/.bin/directus schema apply schema.yaml --yes
+node ./node_modules/directus/cli.js schema apply schema.yaml --yes
 ```
+
+### Recommended Remote Flow From Your Local Terminal
+
+The most reliable production flow is to SSH into the server, find the current Directus container by name, then run `schema apply` inside that container.
+
+1. Connect to the server:
+
+```sh
+ssh -i ~/.ssh/id_ed25519 root@46.224.175.91
+```
+
+2. Find the current Directus container:
+
+```sh
+docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}'
+```
+
+Look for the container whose name starts with the Directus resource UUID. In this project it looks like:
+
+```txt
+yrkr6fhj921q8cjoilazkjce-...
+```
+
+Important:
+
+- use the container name, not the container ID
+- Coolify may recreate the container between deploys, so IDs are not stable
+
+3. Apply the schema inside the running Directus container:
+
+```sh
+docker exec -it <directus-container-name> sh -lc 'cd /app && node ./node_modules/directus/cli.js schema apply schema.yaml --yes'
+```
+
+Example:
+
+```sh
+docker exec -it yrkr6fhj921q8cjoilazkjce-064216412101 sh -lc 'cd /app && node ./node_modules/directus/cli.js schema apply schema.yaml --yes'
+```
+
+4. If you updated `schema.yaml` locally first, copy it to the server and then into the container before running `schema apply`:
+
+```sh
+scp -i ~/.ssh/id_ed25519 /Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/schema.yaml root@46.224.175.91:/root/schema.yaml
+```
+
+Then on the server:
+
+```sh
+docker cp /root/schema.yaml <directus-container-name>:/app/schema.yaml
+```
+
+If you want to automate the whole SSH and Docker flow from your Mac, use:
+
+```sh
+bash /Users/jeremymarchandeau/Code/personal/projects/travelogue/scripts/directus-prod-apply.sh
+```
+
+Defaults built into this script:
+
+- SSH host: `root@46.224.175.91`
+- SSH key: `~/.ssh/id_ed25519`
+- schema file: `artifacts/directus/schema.yaml`
+- Directus container prefix: `yrkr6fhj921q8cjoilazkjce-`
+
+You can override them when needed:
+
+```sh
+SSH_HOST=root@example.com DIRECTUS_CONTAINER_PREFIX=my-directus- bash /Users/jeremymarchandeau/Code/personal/projects/travelogue/scripts/directus-prod-apply.sh
+```
+
+5. If the admin UI still looks stale after a successful apply, restart the Directus application in Coolify and reload the admin.
+
+### Production Pitfalls We Hit
+
+These are the failure modes already seen on this project.
+
+1. Calling `node ./node_modules/.bin/directus ...` fails.
+
+Use:
+
+```sh
+node ./node_modules/directus/cli.js schema apply schema.yaml --yes
+```
+
+Do not call the shell wrapper in `node_modules/.bin` with `node`.
+
+2. `psql` is not available in the Directus container.
+
+Use the Postgres container for SQL inspection or fixes:
+
+```sh
+docker exec -it <postgres-container-name> psql -U travelogue -d postgres
+```
+
+3. `schema.yaml` can contain duplicate relations.
+
+We hit a duplicated `posts.trip_id` relation in `artifacts/directus/schema.yaml`, which caused Directus to try creating two foreign keys for the same field during one `schema apply`.
+
+If `schema apply` says a relation already exists but PostgreSQL does not show that constraint, inspect the schema file inside the running container:
+
+```sh
+docker exec -it <directus-container-name> sh -lc "grep -n 'posts_trip_id' /app/schema.yaml"
+```
+
+If the old and new relation blocks both exist, fix the local `schema.yaml`, copy it to the server again, and retry.
+
+4. A relation can fail because the referenced lookup table exists locally but not in production.
+
+We hit this with `countries`. If `schema apply` fails on a foreign key with a message like:
+
+```txt
+Key (country_code)=(FR) is not present in table "countries"
+```
+
+either:
+
+- the `countries` table does not exist yet in production
+- or it exists but the reference data has not been inserted yet
+
+In that case, create or backfill the reference table in PostgreSQL first, then rerun `schema apply`.
 
 ### Important Production Note
 
