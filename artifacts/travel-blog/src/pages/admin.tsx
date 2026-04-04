@@ -35,7 +35,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Edit2, CheckCircle2, XCircle, LoaderCircle, UploadCloud } from "lucide-react";
+import {
+  Trash2,
+  Edit2,
+  CheckCircle2,
+  XCircle,
+  LoaderCircle,
+  UploadCloud,
+} from "lucide-react";
 import type {
   Journey,
   MediaAsset,
@@ -45,71 +52,199 @@ import type {
 } from "@/lib/travel-types";
 
 const COUNTRY_CODES: { code: string; name: string }[] = [
-  { code: "AF", name: "Afghanistan" }, { code: "AL", name: "Albania" }, { code: "DZ", name: "Algeria" },
-  { code: "AD", name: "Andorra" }, { code: "AO", name: "Angola" }, { code: "AG", name: "Antigua and Barbuda" },
-  { code: "AR", name: "Argentina" }, { code: "AM", name: "Armenia" }, { code: "AU", name: "Australia" },
-  { code: "AT", name: "Austria" }, { code: "AZ", name: "Azerbaijan" }, { code: "BS", name: "Bahamas" },
-  { code: "BH", name: "Bahrain" }, { code: "BD", name: "Bangladesh" }, { code: "BB", name: "Barbados" },
-  { code: "BY", name: "Belarus" }, { code: "BE", name: "Belgium" }, { code: "BZ", name: "Belize" },
-  { code: "BJ", name: "Benin" }, { code: "BT", name: "Bhutan" }, { code: "BO", name: "Bolivia" },
-  { code: "BA", name: "Bosnia and Herzegovina" }, { code: "BW", name: "Botswana" }, { code: "BR", name: "Brazil" },
-  { code: "BN", name: "Brunei" }, { code: "BG", name: "Bulgaria" }, { code: "BF", name: "Burkina Faso" },
-  { code: "BI", name: "Burundi" }, { code: "CV", name: "Cabo Verde" }, { code: "KH", name: "Cambodia" },
-  { code: "CM", name: "Cameroon" }, { code: "CA", name: "Canada" }, { code: "CF", name: "Central African Republic" },
-  { code: "TD", name: "Chad" }, { code: "CL", name: "Chile" }, { code: "CN", name: "China" },
-  { code: "CO", name: "Colombia" }, { code: "KM", name: "Comoros" }, { code: "CG", name: "Congo" },
-  { code: "CD", name: "Congo (DRC)" }, { code: "CR", name: "Costa Rica" }, { code: "HR", name: "Croatia" },
-  { code: "CU", name: "Cuba" }, { code: "CY", name: "Cyprus" }, { code: "CZ", name: "Czech Republic" },
-  { code: "DK", name: "Denmark" }, { code: "DJ", name: "Djibouti" }, { code: "DM", name: "Dominica" },
-  { code: "DO", name: "Dominican Republic" }, { code: "EC", name: "Ecuador" }, { code: "EG", name: "Egypt" },
-  { code: "SV", name: "El Salvador" }, { code: "GQ", name: "Equatorial Guinea" }, { code: "ER", name: "Eritrea" },
-  { code: "EE", name: "Estonia" }, { code: "SZ", name: "Eswatini" }, { code: "ET", name: "Ethiopia" },
-  { code: "FJ", name: "Fiji" }, { code: "FI", name: "Finland" }, { code: "FR", name: "France" },
-  { code: "GA", name: "Gabon" }, { code: "GM", name: "Gambia" }, { code: "GE", name: "Georgia" },
-  { code: "DE", name: "Germany" }, { code: "GH", name: "Ghana" }, { code: "GR", name: "Greece" },
-  { code: "GD", name: "Grenada" }, { code: "GT", name: "Guatemala" }, { code: "GN", name: "Guinea" },
-  { code: "GW", name: "Guinea-Bissau" }, { code: "GY", name: "Guyana" }, { code: "HT", name: "Haiti" },
-  { code: "HN", name: "Honduras" }, { code: "HU", name: "Hungary" }, { code: "IS", name: "Iceland" },
-  { code: "IN", name: "India" }, { code: "ID", name: "Indonesia" }, { code: "IR", name: "Iran" },
-  { code: "IQ", name: "Iraq" }, { code: "IE", name: "Ireland" }, { code: "IL", name: "Israel" },
-  { code: "IT", name: "Italy" }, { code: "JM", name: "Jamaica" }, { code: "JP", name: "Japan" },
-  { code: "JO", name: "Jordan" }, { code: "KZ", name: "Kazakhstan" }, { code: "KE", name: "Kenya" },
-  { code: "KI", name: "Kiribati" }, { code: "KP", name: "Korea (North)" }, { code: "KR", name: "Korea (South)" },
-  { code: "KW", name: "Kuwait" }, { code: "KG", name: "Kyrgyzstan" }, { code: "LA", name: "Laos" },
-  { code: "LV", name: "Latvia" }, { code: "LB", name: "Lebanon" }, { code: "LS", name: "Lesotho" },
-  { code: "LR", name: "Liberia" }, { code: "LY", name: "Libya" }, { code: "LI", name: "Liechtenstein" },
-  { code: "LT", name: "Lithuania" }, { code: "LU", name: "Luxembourg" }, { code: "MG", name: "Madagascar" },
-  { code: "MW", name: "Malawi" }, { code: "MY", name: "Malaysia" }, { code: "MV", name: "Maldives" },
-  { code: "ML", name: "Mali" }, { code: "MT", name: "Malta" }, { code: "MH", name: "Marshall Islands" },
-  { code: "MR", name: "Mauritania" }, { code: "MU", name: "Mauritius" }, { code: "MX", name: "Mexico" },
-  { code: "FM", name: "Micronesia" }, { code: "MD", name: "Moldova" }, { code: "MC", name: "Monaco" },
-  { code: "MN", name: "Mongolia" }, { code: "ME", name: "Montenegro" }, { code: "MA", name: "Morocco" },
-  { code: "MZ", name: "Mozambique" }, { code: "MM", name: "Myanmar" }, { code: "NA", name: "Namibia" },
-  { code: "NR", name: "Nauru" }, { code: "NP", name: "Nepal" }, { code: "NL", name: "Netherlands" },
-  { code: "NZ", name: "New Zealand" }, { code: "NI", name: "Nicaragua" }, { code: "NE", name: "Niger" },
-  { code: "NG", name: "Nigeria" }, { code: "MK", name: "North Macedonia" }, { code: "NO", name: "Norway" },
-  { code: "OM", name: "Oman" }, { code: "PK", name: "Pakistan" }, { code: "PW", name: "Palau" },
-  { code: "PA", name: "Panama" }, { code: "PG", name: "Papua New Guinea" }, { code: "PY", name: "Paraguay" },
-  { code: "PE", name: "Peru" }, { code: "PH", name: "Philippines" }, { code: "PL", name: "Poland" },
-  { code: "PT", name: "Portugal" }, { code: "QA", name: "Qatar" }, { code: "RO", name: "Romania" },
-  { code: "RU", name: "Russia" }, { code: "RW", name: "Rwanda" }, { code: "KN", name: "Saint Kitts and Nevis" },
-  { code: "LC", name: "Saint Lucia" }, { code: "VC", name: "Saint Vincent and the Grenadines" },
-  { code: "WS", name: "Samoa" }, { code: "SM", name: "San Marino" }, { code: "ST", name: "São Tomé and Príncipe" },
-  { code: "SA", name: "Saudi Arabia" }, { code: "SN", name: "Senegal" }, { code: "RS", name: "Serbia" },
-  { code: "SC", name: "Seychelles" }, { code: "SL", name: "Sierra Leone" }, { code: "SG", name: "Singapore" },
-  { code: "SK", name: "Slovakia" }, { code: "SI", name: "Slovenia" }, { code: "SB", name: "Solomon Islands" },
-  { code: "SO", name: "Somalia" }, { code: "ZA", name: "South Africa" }, { code: "SS", name: "South Sudan" },
-  { code: "ES", name: "Spain" }, { code: "LK", name: "Sri Lanka" }, { code: "SD", name: "Sudan" },
-  { code: "SR", name: "Suriname" }, { code: "SE", name: "Sweden" }, { code: "CH", name: "Switzerland" },
-  { code: "SY", name: "Syria" }, { code: "TW", name: "Taiwan" }, { code: "TJ", name: "Tajikistan" },
-  { code: "TZ", name: "Tanzania" }, { code: "TH", name: "Thailand" }, { code: "TL", name: "Timor-Leste" },
-  { code: "TG", name: "Togo" }, { code: "TO", name: "Tonga" }, { code: "TT", name: "Trinidad and Tobago" },
-  { code: "TN", name: "Tunisia" }, { code: "TR", name: "Turkey" }, { code: "TM", name: "Turkmenistan" },
-  { code: "TV", name: "Tuvalu" }, { code: "UG", name: "Uganda" }, { code: "UA", name: "Ukraine" },
-  { code: "AE", name: "United Arab Emirates" }, { code: "GB", name: "United Kingdom" },
-  { code: "US", name: "United States" }, { code: "UY", name: "Uruguay" }, { code: "UZ", name: "Uzbekistan" },
-  { code: "VU", name: "Vanuatu" }, { code: "VE", name: "Venezuela" }, { code: "VN", name: "Vietnam" },
-  { code: "YE", name: "Yemen" }, { code: "ZM", name: "Zambia" }, { code: "ZW", name: "Zimbabwe" },
+  { code: "AF", name: "Afghanistan" },
+  { code: "AL", name: "Albania" },
+  { code: "DZ", name: "Algeria" },
+  { code: "AD", name: "Andorra" },
+  { code: "AO", name: "Angola" },
+  { code: "AG", name: "Antigua and Barbuda" },
+  { code: "AR", name: "Argentina" },
+  { code: "AM", name: "Armenia" },
+  { code: "AU", name: "Australia" },
+  { code: "AT", name: "Austria" },
+  { code: "AZ", name: "Azerbaijan" },
+  { code: "BS", name: "Bahamas" },
+  { code: "BH", name: "Bahrain" },
+  { code: "BD", name: "Bangladesh" },
+  { code: "BB", name: "Barbados" },
+  { code: "BY", name: "Belarus" },
+  { code: "BE", name: "Belgium" },
+  { code: "BZ", name: "Belize" },
+  { code: "BJ", name: "Benin" },
+  { code: "BT", name: "Bhutan" },
+  { code: "BO", name: "Bolivia" },
+  { code: "BA", name: "Bosnia and Herzegovina" },
+  { code: "BW", name: "Botswana" },
+  { code: "BR", name: "Brazil" },
+  { code: "BN", name: "Brunei" },
+  { code: "BG", name: "Bulgaria" },
+  { code: "BF", name: "Burkina Faso" },
+  { code: "BI", name: "Burundi" },
+  { code: "CV", name: "Cabo Verde" },
+  { code: "KH", name: "Cambodia" },
+  { code: "CM", name: "Cameroon" },
+  { code: "CA", name: "Canada" },
+  { code: "CF", name: "Central African Republic" },
+  { code: "TD", name: "Chad" },
+  { code: "CL", name: "Chile" },
+  { code: "CN", name: "China" },
+  { code: "CO", name: "Colombia" },
+  { code: "KM", name: "Comoros" },
+  { code: "CG", name: "Congo" },
+  { code: "CD", name: "Congo (DRC)" },
+  { code: "CR", name: "Costa Rica" },
+  { code: "HR", name: "Croatia" },
+  { code: "CU", name: "Cuba" },
+  { code: "CY", name: "Cyprus" },
+  { code: "CZ", name: "Czech Republic" },
+  { code: "DK", name: "Denmark" },
+  { code: "DJ", name: "Djibouti" },
+  { code: "DM", name: "Dominica" },
+  { code: "DO", name: "Dominican Republic" },
+  { code: "EC", name: "Ecuador" },
+  { code: "EG", name: "Egypt" },
+  { code: "SV", name: "El Salvador" },
+  { code: "GQ", name: "Equatorial Guinea" },
+  { code: "ER", name: "Eritrea" },
+  { code: "EE", name: "Estonia" },
+  { code: "SZ", name: "Eswatini" },
+  { code: "ET", name: "Ethiopia" },
+  { code: "FJ", name: "Fiji" },
+  { code: "FI", name: "Finland" },
+  { code: "FR", name: "France" },
+  { code: "GA", name: "Gabon" },
+  { code: "GM", name: "Gambia" },
+  { code: "GE", name: "Georgia" },
+  { code: "DE", name: "Germany" },
+  { code: "GH", name: "Ghana" },
+  { code: "GR", name: "Greece" },
+  { code: "GD", name: "Grenada" },
+  { code: "GT", name: "Guatemala" },
+  { code: "GN", name: "Guinea" },
+  { code: "GW", name: "Guinea-Bissau" },
+  { code: "GY", name: "Guyana" },
+  { code: "HT", name: "Haiti" },
+  { code: "HN", name: "Honduras" },
+  { code: "HU", name: "Hungary" },
+  { code: "IS", name: "Iceland" },
+  { code: "IN", name: "India" },
+  { code: "ID", name: "Indonesia" },
+  { code: "IR", name: "Iran" },
+  { code: "IQ", name: "Iraq" },
+  { code: "IE", name: "Ireland" },
+  { code: "IL", name: "Israel" },
+  { code: "IT", name: "Italy" },
+  { code: "JM", name: "Jamaica" },
+  { code: "JP", name: "Japan" },
+  { code: "JO", name: "Jordan" },
+  { code: "KZ", name: "Kazakhstan" },
+  { code: "KE", name: "Kenya" },
+  { code: "KI", name: "Kiribati" },
+  { code: "KP", name: "Korea (North)" },
+  { code: "KR", name: "Korea (South)" },
+  { code: "KW", name: "Kuwait" },
+  { code: "KG", name: "Kyrgyzstan" },
+  { code: "LA", name: "Laos" },
+  { code: "LV", name: "Latvia" },
+  { code: "LB", name: "Lebanon" },
+  { code: "LS", name: "Lesotho" },
+  { code: "LR", name: "Liberia" },
+  { code: "LY", name: "Libya" },
+  { code: "LI", name: "Liechtenstein" },
+  { code: "LT", name: "Lithuania" },
+  { code: "LU", name: "Luxembourg" },
+  { code: "MG", name: "Madagascar" },
+  { code: "MW", name: "Malawi" },
+  { code: "MY", name: "Malaysia" },
+  { code: "MV", name: "Maldives" },
+  { code: "ML", name: "Mali" },
+  { code: "MT", name: "Malta" },
+  { code: "MH", name: "Marshall Islands" },
+  { code: "MR", name: "Mauritania" },
+  { code: "MU", name: "Mauritius" },
+  { code: "MX", name: "Mexico" },
+  { code: "FM", name: "Micronesia" },
+  { code: "MD", name: "Moldova" },
+  { code: "MC", name: "Monaco" },
+  { code: "MN", name: "Mongolia" },
+  { code: "ME", name: "Montenegro" },
+  { code: "MA", name: "Morocco" },
+  { code: "MZ", name: "Mozambique" },
+  { code: "MM", name: "Myanmar" },
+  { code: "NA", name: "Namibia" },
+  { code: "NR", name: "Nauru" },
+  { code: "NP", name: "Nepal" },
+  { code: "NL", name: "Netherlands" },
+  { code: "NZ", name: "New Zealand" },
+  { code: "NI", name: "Nicaragua" },
+  { code: "NE", name: "Niger" },
+  { code: "NG", name: "Nigeria" },
+  { code: "MK", name: "North Macedonia" },
+  { code: "NO", name: "Norway" },
+  { code: "OM", name: "Oman" },
+  { code: "PK", name: "Pakistan" },
+  { code: "PW", name: "Palau" },
+  { code: "PA", name: "Panama" },
+  { code: "PG", name: "Papua New Guinea" },
+  { code: "PY", name: "Paraguay" },
+  { code: "PE", name: "Peru" },
+  { code: "PH", name: "Philippines" },
+  { code: "PL", name: "Poland" },
+  { code: "PT", name: "Portugal" },
+  { code: "QA", name: "Qatar" },
+  { code: "RO", name: "Romania" },
+  { code: "RU", name: "Russia" },
+  { code: "RW", name: "Rwanda" },
+  { code: "KN", name: "Saint Kitts and Nevis" },
+  { code: "LC", name: "Saint Lucia" },
+  { code: "VC", name: "Saint Vincent and the Grenadines" },
+  { code: "WS", name: "Samoa" },
+  { code: "SM", name: "San Marino" },
+  { code: "ST", name: "São Tomé and Príncipe" },
+  { code: "SA", name: "Saudi Arabia" },
+  { code: "SN", name: "Senegal" },
+  { code: "RS", name: "Serbia" },
+  { code: "SC", name: "Seychelles" },
+  { code: "SL", name: "Sierra Leone" },
+  { code: "SG", name: "Singapore" },
+  { code: "SK", name: "Slovakia" },
+  { code: "SI", name: "Slovenia" },
+  { code: "SB", name: "Solomon Islands" },
+  { code: "SO", name: "Somalia" },
+  { code: "ZA", name: "South Africa" },
+  { code: "SS", name: "South Sudan" },
+  { code: "ES", name: "Spain" },
+  { code: "LK", name: "Sri Lanka" },
+  { code: "SD", name: "Sudan" },
+  { code: "SR", name: "Suriname" },
+  { code: "SE", name: "Sweden" },
+  { code: "CH", name: "Switzerland" },
+  { code: "SY", name: "Syria" },
+  { code: "TW", name: "Taiwan" },
+  { code: "TJ", name: "Tajikistan" },
+  { code: "TZ", name: "Tanzania" },
+  { code: "TH", name: "Thailand" },
+  { code: "TL", name: "Timor-Leste" },
+  { code: "TG", name: "Togo" },
+  { code: "TO", name: "Tonga" },
+  { code: "TT", name: "Trinidad and Tobago" },
+  { code: "TN", name: "Tunisia" },
+  { code: "TR", name: "Turkey" },
+  { code: "TM", name: "Turkmenistan" },
+  { code: "TV", name: "Tuvalu" },
+  { code: "UG", name: "Uganda" },
+  { code: "UA", name: "Ukraine" },
+  { code: "AE", name: "United Arab Emirates" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "US", name: "United States" },
+  { code: "UY", name: "Uruguay" },
+  { code: "UZ", name: "Uzbekistan" },
+  { code: "VU", name: "Vanuatu" },
+  { code: "VE", name: "Venezuela" },
+  { code: "VN", name: "Vietnam" },
+  { code: "YE", name: "Yemen" },
+  { code: "ZM", name: "Zambia" },
+  { code: "ZW", name: "Zimbabwe" },
 ];
 
 const frenchRegionNames = new Intl.DisplayNames(["fr-FR"], { type: "region" });
@@ -144,7 +279,9 @@ function useAdminInvalidation() {
       queryClient.invalidateQueries({ queryKey: directusQueryKeys.photos });
     },
     invalidateMedia() {
-      queryClient.invalidateQueries({ queryKey: directusQueryKeys.mediaAssets });
+      queryClient.invalidateQueries({
+        queryKey: directusQueryKeys.mediaAssets,
+      });
       queryClient.invalidateQueries({ queryKey: directusQueryKeys.posts });
       queryClient.invalidateQueries({ queryKey: directusQueryKeys.photos });
       queryClient.invalidateQueries({ queryKey: directusQueryKeys.mapPins });
@@ -156,7 +293,7 @@ export default function AdminPage() {
   const [adminToken, setAdminToken] = useState(() =>
     typeof window === "undefined"
       ? ""
-      : window.sessionStorage.getItem("travelogue_admin_api_token") ?? "",
+      : (window.sessionStorage.getItem("travelogue_admin_api_token") ?? ""),
   );
 
   const { data: posts = [] } = usePostsQuery();
@@ -193,7 +330,9 @@ export default function AdminPage() {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
-  const [editingMediaAsset, setEditingMediaAsset] = useState<MediaAsset | null>(null);
+  const [editingMediaAsset, setEditingMediaAsset] = useState<MediaAsset | null>(
+    null,
+  );
   const [postTripId, setPostTripId] = useState("");
   const [postCountryCode, setPostCountryCode] = useState("");
   const [postLatitude, setPostLatitude] = useState("");
@@ -212,15 +351,19 @@ export default function AdminPage() {
   );
   const tripOptions = useMemo(
     () =>
-      [...trips].sort((a, b) => a.name.localeCompare(b.name, "en")).map((trip) => ({
-        id: trip.id,
-        label: `${trip.name}, ${trip.countryCode}, ID voyage ${trip.id}`,
-      })),
+      [...trips]
+        .sort((a, b) => a.name.localeCompare(b.name, "en"))
+        .map((trip) => ({
+          id: trip.id,
+          label: `${trip.name}, ${trip.countryCode}, ID voyage ${trip.id}`,
+        })),
     [trips],
   );
   const findTripById = (value: FormDataEntryValue | null) => {
     const tripId = value ? Number(value) : null;
-    return tripId != null ? trips.find((trip) => trip.id === tripId) ?? null : null;
+    return tripId != null
+      ? (trips.find((trip) => trip.id === tripId) ?? null)
+      : null;
   };
   const resetPostFormState = () => {
     setPostTripId("");
@@ -235,13 +378,18 @@ export default function AdminPage() {
       return;
     }
 
-    const linkedTrip = trips.find((trip) => trip.id === Number(tripIdValue)) ?? null;
+    const linkedTrip =
+      trips.find((trip) => trip.id === Number(tripIdValue)) ?? null;
     if (!linkedTrip) {
       return;
     }
 
-    setPostLatitude(linkedTrip.latitude != null ? String(linkedTrip.latitude) : "");
-    setPostLongitude(linkedTrip.longitude != null ? String(linkedTrip.longitude) : "");
+    setPostLatitude(
+      linkedTrip.latitude != null ? String(linkedTrip.latitude) : "",
+    );
+    setPostLongitude(
+      linkedTrip.longitude != null ? String(linkedTrip.longitude) : "",
+    );
     setPostCountryCode(linkedTrip.countryCode ?? "");
   };
 
@@ -253,8 +401,12 @@ export default function AdminPage() {
 
     setPostTripId(editingPost.tripId != null ? String(editingPost.tripId) : "");
     setPostCountryCode(editingPost.countryCode ?? "");
-    setPostLatitude(editingPost.latitude != null ? String(editingPost.latitude) : "");
-    setPostLongitude(editingPost.longitude != null ? String(editingPost.longitude) : "");
+    setPostLatitude(
+      editingPost.latitude != null ? String(editingPost.latitude) : "",
+    );
+    setPostLongitude(
+      editingPost.longitude != null ? String(editingPost.longitude) : "",
+    );
   }, [editingPost]);
 
   const mediaAssetOptions = useMemo(
@@ -290,9 +442,12 @@ export default function AdminPage() {
         <div className="max-w-md mx-auto pt-16">
           <div className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
             <div className="space-y-2">
-              <h1 className="text-3xl font-serif font-bold text-foreground">Déverrouiller l'admin</h1>
+              <h1 className="text-3xl font-serif font-bold text-foreground">
+                Déverrouiller l'admin
+              </h1>
               <p className="text-sm text-muted-foreground">
-                Saisis ton token API admin. Il sera stocké uniquement dans cette session du navigateur.
+                Saisis ton token API admin. Il sera stocké uniquement dans cette
+                session du navigateur.
               </p>
             </div>
             <form onSubmit={handleUnlock} className="space-y-4">
@@ -324,42 +479,61 @@ export default function AdminPage() {
       slug: formData.get("slug") as string,
       content: formData.get("content") as string,
       excerpt: formData.get("excerpt") as string,
-      coverImageId: formData.get("coverImageId") ? Number(formData.get("coverImageId")) : null,
+      coverImageId: formData.get("coverImageId")
+        ? Number(formData.get("coverImageId"))
+        : null,
       coverImageUrl: (formData.get("coverImageUrl") as string) || null,
       location: (formData.get("location") as string) || null,
       tripId: formData.get("tripId") ? Number(formData.get("tripId")) : null,
-      countryCode: (formData.get("countryCode") as string) || linkedTrip?.countryCode || null,
-      latitude: latitudeInput ? Number(latitudeInput) : (linkedTrip?.latitude ?? null),
-      longitude: longitudeInput ? Number(longitudeInput) : (linkedTrip?.longitude ?? null),
+      countryCode:
+        (formData.get("countryCode") as string) ||
+        linkedTrip?.countryCode ||
+        null,
+      latitude: latitudeInput
+        ? Number(latitudeInput)
+        : (linkedTrip?.latitude ?? null),
+      longitude: longitudeInput
+        ? Number(longitudeInput)
+        : (linkedTrip?.longitude ?? null),
       publishedAt: (formData.get("publishedAt") as string) || null,
     };
 
     if (editingPost) {
-      updatePost.mutate({ token: adminToken, id: editingPost.id, data }, {
-        onSuccess: () => {
-          invalidation.invalidatePosts();
-          setEditingPost(null);
-          resetPostFormState();
-          toast({ title: "Article mis à jour" });
+      updatePost.mutate(
+        { token: adminToken, id: editingPost.id, data },
+        {
+          onSuccess: () => {
+            invalidation.invalidatePosts();
+            setEditingPost(null);
+            resetPostFormState();
+            toast({ title: "Article mis à jour" });
+          },
         },
-      });
+      );
     } else {
-      createPost.mutate({ token: adminToken, data }, {
-        onSuccess: () => {
-          invalidation.invalidatePosts();
-          toast({ title: "Article créé" });
-          resetPostFormState();
-          (e.target as HTMLFormElement).reset();
-        }
-      });
+      createPost.mutate(
+        { token: adminToken, data },
+        {
+          onSuccess: () => {
+            invalidation.invalidatePosts();
+            toast({ title: "Article créé" });
+            resetPostFormState();
+            (e.target as HTMLFormElement).reset();
+          },
+        },
+      );
     }
   };
 
   const handleJourneySubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const originMode = (formData.get("originMode") as "default_nice" | "custom") || "default_nice";
-    const destinationMode = (formData.get("destinationMode") as "default_nice" | "custom") || "default_nice";
+    const originMode =
+      (formData.get("originMode") as "default_nice" | "custom") ||
+      "default_nice";
+    const destinationMode =
+      (formData.get("destinationMode") as "default_nice" | "custom") ||
+      "default_nice";
     const originLatitude = formData.get("originLatitude") as string;
     const originLongitude = formData.get("originLongitude") as string;
     const destinationLatitude = formData.get("destinationLatitude") as string;
@@ -370,31 +544,55 @@ export default function AdminPage() {
       startDate: (formData.get("startDate") as string) || null,
       endDate: (formData.get("endDate") as string) || null,
       originMode,
-      originLatitude: originMode === "custom" && originLatitude ? Number(originLatitude) : null,
-      originLongitude: originMode === "custom" && originLongitude ? Number(originLongitude) : null,
+      originLatitude:
+        originMode === "custom" && originLatitude
+          ? Number(originLatitude)
+          : null,
+      originLongitude:
+        originMode === "custom" && originLongitude
+          ? Number(originLongitude)
+          : null,
       destinationMode,
-      destinationLatitude: destinationMode === "custom" && destinationLatitude ? Number(destinationLatitude) : null,
-      destinationLongitude: destinationMode === "custom" && destinationLongitude ? Number(destinationLongitude) : null,
+      destinationLatitude:
+        destinationMode === "custom" && destinationLatitude
+          ? Number(destinationLatitude)
+          : null,
+      destinationLongitude:
+        destinationMode === "custom" && destinationLongitude
+          ? Number(destinationLongitude)
+          : null,
       notes: (formData.get("notes") as string) || null,
     };
 
     if (editingJourney) {
-      updateJourney.mutate({ token: adminToken, id: editingJourney.id, data }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
-          setEditingJourney(null);
-          toast({ title: "Parcours mis à jour" });
-        }
-      });
-    } else {
-      createJourney.mutate({ token: adminToken, data }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
-          toast({ title: "Parcours créé" });
-          (e.target as HTMLFormElement).reset();
+      updateJourney.mutate(
+        { token: adminToken, id: editingJourney.id, data },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: directusQueryKeys.journeys,
+            });
+            queryClient.invalidateQueries({
+              queryKey: directusQueryKeys.trips,
+            });
+            setEditingJourney(null);
+            toast({ title: "Périple mis à jour" });
+          },
         },
-      });
+      );
+    } else {
+      createJourney.mutate(
+        { token: adminToken, data },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: directusQueryKeys.journeys,
+            });
+            toast({ title: "Périple créé" });
+            (e.target as HTMLFormElement).reset();
+          },
+        },
+      );
     }
   };
 
@@ -413,31 +611,41 @@ export default function AdminPage() {
       travelCompanions: formData.get("travelCompanions") as string,
       friendsFamilyMet: formData.get("friendsFamilyMet") as string,
       visitedAt: formData.get("visitedAt") as string,
-      coverImageId: formData.get("coverImageId") ? Number(formData.get("coverImageId")) : null,
+      coverImageId: formData.get("coverImageId")
+        ? Number(formData.get("coverImageId"))
+        : null,
       latitude: latitudeInput ? Number(latitudeInput) : undefined,
       longitude: longitudeInput ? Number(longitudeInput) : undefined,
       journeyId: journeyIdInput ? Number(journeyIdInput) : null,
       journeyOrder: journeyOrderInput ? Number(journeyOrderInput) : null,
-      transportationTo: (formData.get("transportationTo") as string) || undefined,
-      transportationOnSite: (formData.get("transportationOnSite") as string) || undefined,
+      transportationTo:
+        (formData.get("transportationTo") as string) || undefined,
+      transportationOnSite:
+        (formData.get("transportationOnSite") as string) || undefined,
     };
 
     if (editingTrip) {
-      updateTrip.mutate({ token: adminToken, id: editingTrip.id, data }, {
-        onSuccess: () => {
-          invalidation.invalidateTrips();
-          setEditingTrip(null);
-          toast({ title: "Voyage mis à jour" });
+      updateTrip.mutate(
+        { token: adminToken, id: editingTrip.id, data },
+        {
+          onSuccess: () => {
+            invalidation.invalidateTrips();
+            setEditingTrip(null);
+            toast({ title: "Voyage mis à jour" });
+          },
         },
-      });
+      );
     } else {
-      createTrip.mutate({ token: adminToken, data }, {
-        onSuccess: () => {
-          invalidation.invalidateTrips();
-          toast({ title: "Voyage ajouté" });
-          (e.target as HTMLFormElement).reset();
+      createTrip.mutate(
+        { token: adminToken, data },
+        {
+          onSuccess: () => {
+            invalidation.invalidateTrips();
+            toast({ title: "Voyage ajouté" });
+            (e.target as HTMLFormElement).reset();
+          },
         },
-      });
+      );
     }
   };
 
@@ -446,31 +654,44 @@ export default function AdminPage() {
     const formData = new FormData(e.currentTarget);
     const linkedTrip = findTripById(formData.get("tripId"));
     const data = {
-      mediaAssetId: formData.get("mediaAssetId") ? Number(formData.get("mediaAssetId")) : null,
+      mediaAssetId: formData.get("mediaAssetId")
+        ? Number(formData.get("mediaAssetId"))
+        : null,
       url: (formData.get("url") as string) || null,
       caption: (formData.get("caption") as string) || null,
       link: (formData.get("link") as string) || null,
       tripId: formData.get("tripId") ? Number(formData.get("tripId")) : null,
-      countryCode: (formData.get("countryCode") as string) || linkedTrip?.countryCode || null,
-      displayOrder: formData.get("displayOrder") ? Number(formData.get("displayOrder")) : 0,
+      countryCode:
+        (formData.get("countryCode") as string) ||
+        linkedTrip?.countryCode ||
+        null,
+      displayOrder: formData.get("displayOrder")
+        ? Number(formData.get("displayOrder"))
+        : 0,
     };
 
     if (editingPhoto) {
-      updatePhoto.mutate({ token: adminToken, id: editingPhoto.id, data }, {
-        onSuccess: () => {
-          invalidation.invalidatePhotos();
-          setEditingPhoto(null);
-          toast({ title: "Photo mise à jour" });
+      updatePhoto.mutate(
+        { token: adminToken, id: editingPhoto.id, data },
+        {
+          onSuccess: () => {
+            invalidation.invalidatePhotos();
+            setEditingPhoto(null);
+            toast({ title: "Photo mise à jour" });
+          },
         },
-      });
+      );
     } else {
-      createPhoto.mutate({ token: adminToken, data }, {
-        onSuccess: () => {
-          invalidation.invalidatePhotos();
-          toast({ title: "Photo ajoutée" });
-          (e.target as HTMLFormElement).reset();
+      createPhoto.mutate(
+        { token: adminToken, data },
+        {
+          onSuccess: () => {
+            invalidation.invalidatePhotos();
+            toast({ title: "Photo ajoutée" });
+            (e.target as HTMLFormElement).reset();
+          },
         },
-      });
+      );
     }
   };
 
@@ -493,25 +714,33 @@ export default function AdminPage() {
     };
 
     if (editingMediaAsset) {
-      updateMediaAsset.mutate({ token: adminToken, id: editingMediaAsset.id, data }, {
-        onSuccess: () => {
-          invalidation.invalidateMedia();
-          setEditingMediaAsset(null);
-          toast({ title: "Asset média mis à jour" });
+      updateMediaAsset.mutate(
+        { token: adminToken, id: editingMediaAsset.id, data },
+        {
+          onSuccess: () => {
+            invalidation.invalidateMedia();
+            setEditingMediaAsset(null);
+            toast({ title: "Asset média mis à jour" });
+          },
         },
-      });
+      );
     } else {
-      createMediaAsset.mutate({ token: adminToken, data }, {
-        onSuccess: () => {
-          invalidation.invalidateMedia();
-          toast({ title: "Asset média ajouté" });
-          (e.target as HTMLFormElement).reset();
+      createMediaAsset.mutate(
+        { token: adminToken, data },
+        {
+          onSuccess: () => {
+            invalidation.invalidateMedia();
+            toast({ title: "Asset média ajouté" });
+            (e.target as HTMLFormElement).reset();
+          },
         },
-      });
+      );
     }
   };
 
-  const handleCloudinaryUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCloudinaryUpload = async (
+    e: React.FormEvent<HTMLFormElement>,
+  ) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const selectedFile = formData.get("file");
@@ -530,7 +759,9 @@ export default function AdminPage() {
       const uploaded = await uploadImageToCloudinary({
         adminToken,
         alt: (formData.get("alt") as string) || null,
-        assetFolder: formData.get("assetFolder") as (typeof CLOUDINARY_UPLOAD_FOLDERS)[number],
+        assetFolder: formData.get(
+          "assetFolder",
+        ) as (typeof CLOUDINARY_UPLOAD_FOLDERS)[number],
         caption: (formData.get("caption") as string) || null,
         file: selectedFile,
         publicId: (formData.get("publicId") as string) || null,
@@ -567,7 +798,8 @@ export default function AdminPage() {
       setIsUploadingAsset(false);
       toast({
         title: "Échec de l'upload",
-        description: error instanceof Error ? error.message : "Erreur Cloudinary inconnue",
+        description:
+          error instanceof Error ? error.message : "Erreur Cloudinary inconnue",
         variant: "destructive",
       });
     }
@@ -578,8 +810,12 @@ export default function AdminPage() {
       <div className="space-y-12 max-w-5xl mx-auto">
         <header className="border-b pb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-serif font-bold text-foreground">Administration</h1>
-            <p className="text-muted-foreground mt-2 font-serif italic">Gère tes articles, voyages et médias Cloudinary.</p>
+            <h1 className="text-4xl font-serif font-bold text-foreground">
+              Administration
+            </h1>
+            <p className="text-muted-foreground mt-2 font-serif italic">
+              Gère tes articles, voyages et médias Cloudinary.
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm font-mono border rounded-full px-4 py-1.5 bg-card">
@@ -590,7 +826,12 @@ export default function AdminPage() {
                 <XCircle className="w-4 h-4 text-red-500" />
               )}
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={handleLock}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleLock}
+            >
               Verrouiller
             </Button>
           </div>
@@ -599,20 +840,54 @@ export default function AdminPage() {
         <div className="grid md:grid-cols-2 gap-12">
           <section className="space-y-6">
             <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-              Articles <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{posts.length}</span>
+              Articles{" "}
+              <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {posts.length}
+              </span>
             </h2>
 
-            <form onSubmit={handlePostSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingPost ? "Modifier l'article" : "Nouvel article"}</h3>
+            <form
+              onSubmit={handlePostSubmit}
+              className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm"
+            >
+              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">
+                {editingPost ? "Modifier l'article" : "Nouvel article"}
+              </h3>
 
               <div className="space-y-3">
-                <Input name="title" placeholder="Titre" defaultValue={editingPost?.title} required />
-                <Input name="slug" placeholder="Slug (ex. tokyo-nights)" defaultValue={editingPost?.slug} required />
-                <Textarea name="excerpt" placeholder="Court extrait..." defaultValue={editingPost?.excerpt} required className="h-20" />
-                <Textarea name="content" placeholder="Contenu complet..." defaultValue={editingPost?.content} required className="h-40" />
+                <Input
+                  name="title"
+                  placeholder="Titre"
+                  defaultValue={editingPost?.title}
+                  required
+                />
+                <Input
+                  name="slug"
+                  placeholder="Slug (ex. tokyo-nights)"
+                  defaultValue={editingPost?.slug}
+                  required
+                />
+                <Textarea
+                  name="excerpt"
+                  placeholder="Court extrait..."
+                  defaultValue={editingPost?.excerpt}
+                  required
+                  className="h-20"
+                />
+                <Textarea
+                  name="content"
+                  placeholder="Contenu complet..."
+                  defaultValue={editingPost?.content}
+                  required
+                  className="h-40"
+                />
                 <select
                   name="coverImageId"
-                  defaultValue={editingPost?.coverImage?.id != null ? String(editingPost.coverImage.id) : ""}
+                  defaultValue={
+                    editingPost?.coverImage?.id != null
+                      ? String(editingPost.coverImage.id)
+                      : ""
+                  }
                   className={selectClassName}
                 >
                   <option value="">Aucun asset Cloudinary lié</option>
@@ -622,13 +897,23 @@ export default function AdminPage() {
                     </option>
                   ))}
                 </select>
-                <Input name="coverImageUrl" placeholder="URL d'image de couverture legacy (optionnel)" defaultValue={editingPost?.coverImageUrl || ""} />
+                <Input
+                  name="coverImageUrl"
+                  placeholder="URL d'image de couverture legacy (optionnel)"
+                  defaultValue={editingPost?.coverImageUrl || ""}
+                />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="location" placeholder="Lieu" defaultValue={editingPost?.location || ""} />
+                  <Input
+                    name="location"
+                    placeholder="Lieu"
+                    defaultValue={editingPost?.location || ""}
+                  />
                   <select
                     name="tripId"
                     value={postTripId}
-                    onChange={(event) => syncPostCoordinatesFromTrip(event.target.value)}
+                    onChange={(event) =>
+                      syncPostCoordinatesFromTrip(event.target.value)
+                    }
                     className={selectClassName}
                   >
                     <option value="">Aucun voyage lié</option>
@@ -645,13 +930,17 @@ export default function AdminPage() {
                     className={selectClassName}
                   >
                     <option value="">Pays du voyage lié si possible</option>
-                    {COUNTRY_CODES.map(c => (
-                      <option key={c.code} value={c.code}>{c.code} — {getCountryDisplayName(c.code, c.name)}</option>
+                    {COUNTRY_CODES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.code} — {getCountryDisplayName(c.code, c.name)}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Latitude et longitude se préremplissent depuis le voyage lié quand il est sélectionné, puis restent modifiables manuellement.
+                  Latitude et longitude se préremplissent depuis le voyage lié
+                  quand il est sélectionné, puis restent modifiables
+                  manuellement.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <Input
@@ -671,15 +960,26 @@ export default function AdminPage() {
                     onChange={(event) => setPostLongitude(event.target.value)}
                   />
                 </div>
-                <Input name="publishedAt" type="date" placeholder="Date de publication" defaultValue={editingPost?.publishedAt ?? ''} />
+                <Input
+                  name="publishedAt"
+                  type="date"
+                  placeholder="Date de publication"
+                  defaultValue={editingPost?.publishedAt ?? ""}
+                />
               </div>
 
               <div className="flex gap-3 pt-4">
                 <Button type="submit" className="flex-1">
-                  {editingPost ? "Mettre à jour l'article" : "Publier l'article"}
+                  {editingPost
+                    ? "Mettre à jour l'article"
+                    : "Publier l'article"}
                 </Button>
                 {editingPost && (
-                  <Button type="button" variant="outline" onClick={() => setEditingPost(null)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingPost(null)}
+                  >
                     Annuler
                   </Button>
                 )}
@@ -688,25 +988,46 @@ export default function AdminPage() {
 
             <div className="space-y-3">
               {posts.map((post) => (
-                <div key={post.id} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors">
+                <div
+                  key={post.id}
+                  className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors"
+                >
                   <div>
                     <h4 className="font-serif font-bold">{post.title}</h4>
-                    <p className="text-xs text-muted-foreground font-mono">{post.slug}</p>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {post.slug}
+                    </p>
                     {post.coverImage && (
-                      <p className="text-xs text-muted-foreground">Asset ID {post.coverImage.id} · {post.coverImage.publicId}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Asset ID {post.coverImage.id} ·{" "}
+                        {post.coverImage.publicId}
+                      </p>
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="ghost" className={actionButtonClass} onClick={() => setEditingPost(post)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className={actionButtonClass}
+                      onClick={() => setEditingPost(post)}
+                    >
                       <Edit2 className="w-4 h-4" />
                     </Button>
-                    <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
-                      if (confirm("Supprimer cet article ?")) {
-                        deletePost.mutate({ token: adminToken, id: post.id }, {
-                          onSuccess: () => invalidation.invalidatePosts(),
-                        });
-                      }
-                    }}>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className={actionButtonClass}
+                      onClick={() => {
+                        if (confirm("Supprimer cet article ?")) {
+                          deletePost.mutate(
+                            { token: adminToken, id: post.id },
+                            {
+                              onSuccess: () => invalidation.invalidatePosts(),
+                            },
+                          );
+                        }
+                      }}
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -717,20 +1038,47 @@ export default function AdminPage() {
 
           <section className="space-y-6">
             <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-              Parcours <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{journeys.length}</span>
+              Périple{" "}
+              <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {journeys.length}
+              </span>
             </h2>
 
-            <form key={editingJourney?.id ?? "new-journey"} onSubmit={handleJourneySubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingJourney ? 'Modifier le parcours' : 'Créer un parcours'}</h3>
+            <form
+              key={editingJourney?.id ?? "new-journey"}
+              onSubmit={handleJourneySubmit}
+              className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm"
+            >
+              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">
+                {editingJourney ? "Modifier le Périple" : "Créer un Périple"}
+              </h3>
 
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="name" placeholder="Nom du parcours" defaultValue={editingJourney?.name} required />
-                  <Input name="slug" placeholder="journey-slug" defaultValue={editingJourney?.slug} required />
+                  <Input
+                    name="name"
+                    placeholder="Nom du Périple"
+                    defaultValue={editingJourney?.name}
+                    required
+                  />
+                  <Input
+                    name="slug"
+                    placeholder="journey-slug"
+                    defaultValue={editingJourney?.slug}
+                    required
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="startDate" type="date" defaultValue={editingJourney?.startDate ?? ""} />
-                  <Input name="endDate" type="date" defaultValue={editingJourney?.endDate ?? ""} />
+                  <Input
+                    name="startDate"
+                    type="date"
+                    defaultValue={editingJourney?.startDate ?? ""}
+                  />
+                  <Input
+                    name="endDate"
+                    type="date"
+                    defaultValue={editingJourney?.endDate ?? ""}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <select
@@ -741,66 +1089,140 @@ export default function AdminPage() {
                       "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                     )}
                   >
-                    <option value="default_nice">Départ : Nice par défaut</option>
-                    <option value="custom">Départ : coordonnées personnalisées</option>
+                    <option value="default_nice">
+                      Départ : Nice par défaut
+                    </option>
+                    <option value="custom">
+                      Départ : coordonnées personnalisées
+                    </option>
                   </select>
                   <select
                     name="destinationMode"
-                    defaultValue={editingJourney?.destinationMode ?? "default_nice"}
+                    defaultValue={
+                      editingJourney?.destinationMode ?? "default_nice"
+                    }
                     className={cn(
                       "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
                       "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                     )}
                   >
-                    <option value="default_nice">Retour : Nice par défaut</option>
-                    <option value="custom">Retour : coordonnées personnalisées</option>
+                    <option value="default_nice">
+                      Retour : Nice par défaut
+                    </option>
+                    <option value="custom">
+                      Retour : coordonnées personnalisées
+                    </option>
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="originLatitude" type="number" step="any" placeholder="Latitude départ" defaultValue={editingJourney?.originLatitude ?? ""} />
-                  <Input name="originLongitude" type="number" step="any" placeholder="Longitude départ" defaultValue={editingJourney?.originLongitude ?? ""} />
+                  <Input
+                    name="originLatitude"
+                    type="number"
+                    step="any"
+                    placeholder="Latitude départ"
+                    defaultValue={editingJourney?.originLatitude ?? ""}
+                  />
+                  <Input
+                    name="originLongitude"
+                    type="number"
+                    step="any"
+                    placeholder="Longitude départ"
+                    defaultValue={editingJourney?.originLongitude ?? ""}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="destinationLatitude" type="number" step="any" placeholder="Latitude arrivée" defaultValue={editingJourney?.destinationLatitude ?? ""} />
-                  <Input name="destinationLongitude" type="number" step="any" placeholder="Longitude arrivée" defaultValue={editingJourney?.destinationLongitude ?? ""} />
+                  <Input
+                    name="destinationLatitude"
+                    type="number"
+                    step="any"
+                    placeholder="Latitude arrivée"
+                    defaultValue={editingJourney?.destinationLatitude ?? ""}
+                  />
+                  <Input
+                    name="destinationLongitude"
+                    type="number"
+                    step="any"
+                    placeholder="Longitude arrivée"
+                    defaultValue={editingJourney?.destinationLongitude ?? ""}
+                  />
                 </div>
-                <Textarea name="notes" placeholder="Notes optionnelles sur ce parcours multi-pays" defaultValue={editingJourney?.notes ?? ""} className="h-24" />
+                <Textarea
+                  name="notes"
+                  placeholder="Notes optionnelles sur ce Périple multi-pays"
+                  defaultValue={editingJourney?.notes ?? ""}
+                  className="h-24"
+                />
               </div>
 
               <div className="flex gap-3 pt-4">
                 <Button type="submit" className="flex-1">
-                  {editingJourney ? 'Mettre à jour le parcours' : 'Créer le parcours'}
+                  {editingJourney
+                    ? "Mettre à jour le Périple"
+                    : "Créer le Périple"}
                 </Button>
                 {editingJourney && (
-                  <Button type="button" variant="outline" onClick={() => setEditingJourney(null)}>Annuler</Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingJourney(null)}
+                  >
+                    Annuler
+                  </Button>
                 )}
               </div>
             </form>
 
             <div className="space-y-3">
-              {journeys.map(journey => (
-                <div key={journey.id} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors">
+              {journeys.map((journey) => (
+                <div
+                  key={journey.id}
+                  className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors"
+                >
                   <div>
                     <h4 className="font-serif font-bold">{journey.name}</h4>
-                    <p className="text-xs text-muted-foreground font-mono">{journey.slug} · ID parcours {journey.id}</p>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {journey.slug} · ID Périple {journey.id}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {journey.startDate || "Début inconnu"} · {journey.endDate || "Fin inconnue"}
+                      {journey.startDate || "Début inconnu"} ·{" "}
+                      {journey.endDate || "Fin inconnue"}
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="ghost" className={actionButtonClass} onClick={() => setEditingJourney(journey)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className={actionButtonClass}
+                      onClick={() => setEditingJourney(journey)}
+                    >
                       <Edit2 className="w-4 h-4" />
                     </Button>
-                    <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
-                      if(confirm("Supprimer ce parcours ? Les voyages redeviendront simplement autonomes.")) {
-                        deleteJourney.mutate({ token: adminToken, id: journey.id }, {
-                          onSuccess: () => {
-                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
-                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
-                          }
-                        });
-                      }
-                    }}>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className={actionButtonClass}
+                      onClick={() => {
+                        if (
+                          confirm(
+                            "Supprimer ce Périple ? Les voyages redeviendront simplement autonomes.",
+                          )
+                        ) {
+                          deleteJourney.mutate(
+                            { token: adminToken, id: journey.id },
+                            {
+                              onSuccess: () => {
+                                queryClient.invalidateQueries({
+                                  queryKey: directusQueryKeys.journeys,
+                                });
+                                queryClient.invalidateQueries({
+                                  queryKey: directusQueryKeys.trips,
+                                });
+                              },
+                            },
+                          );
+                        }
+                      }}
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -809,35 +1231,67 @@ export default function AdminPage() {
             </div>
 
             <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-              Voyages <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{trips.length}</span>
+              Voyages{" "}
+              <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {trips.length}
+              </span>
             </h2>
 
-            <form key={editingTrip?.id ?? "new-trip"} onSubmit={handleTripSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingTrip ? 'Modifier le voyage' : 'Ajouter un voyage'}</h3>
+            <form
+              key={editingTrip?.id ?? "new-trip"}
+              onSubmit={handleTripSubmit}
+              className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm"
+            >
+              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">
+                {editingTrip ? "Modifier le voyage" : "Ajouter un voyage"}
+              </h3>
 
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="name" placeholder="Nom du voyage" defaultValue={editingTrip?.name} required />
-                  <select name="countryCode" defaultValue={editingTrip?.countryCode ?? ""} required className={selectClassName}>
-                    <option value="" disabled>Pays</option>
+                  <Input
+                    name="name"
+                    placeholder="Nom du voyage"
+                    defaultValue={editingTrip?.name}
+                    required
+                  />
+                  <select
+                    name="countryCode"
+                    defaultValue={editingTrip?.countryCode ?? ""}
+                    required
+                    className={selectClassName}
+                  >
+                    <option value="" disabled>
+                      Pays
+                    </option>
                     {COUNTRY_CODES.map((c) => (
-                      <option key={c.code} value={c.code}>{c.code} — {getCountryDisplayName(c.code, c.name)}</option>
+                      <option key={c.code} value={c.code}>
+                        {c.code} — {getCountryDisplayName(c.code, c.name)}
+                      </option>
                     ))}
                   </select>
                 </div>
-                <Input name="visitedCities" placeholder="Villes visitées" defaultValue={editingTrip?.visitedCities} required />
+                <Input
+                  name="visitedCities"
+                  placeholder="Villes visitées"
+                  defaultValue={editingTrip?.visitedCities}
+                  required
+                />
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
-                      Parcours
+                      Périple
                     </label>
                     <select
                       name="journeyId"
-                      defaultValue={editingTrip?.journeyId != null ? String(editingTrip.journeyId) : ""}
+                      defaultValue={
+                        editingTrip?.journeyId != null
+                          ? String(editingTrip.journeyId)
+                          : ""
+                      }
                       className={cn(
                         "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
                         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                        "disabled:cursor-not-allowed disabled:opacity-50"
+                        "disabled:cursor-not-allowed disabled:opacity-50",
                       )}
                     >
                       <option value="">Voyage autonome</option>
@@ -848,18 +1302,55 @@ export default function AdminPage() {
                       ))}
                     </select>
                   </div>
-                  <Input name="journeyOrder" type="number" min="1" placeholder="Ordre dans le parcours" defaultValue={editingTrip?.journeyOrder ?? ""} />
+                  <Input
+                    name="journeyOrder"
+                    type="number"
+                    min="1"
+                    placeholder="Ordre dans le Périple"
+                    defaultValue={editingTrip?.journeyOrder ?? ""}
+                  />
                 </div>
-                <Input name="reasonForVisit" placeholder="Motif du voyage" defaultValue={editingTrip?.reasonForVisit} required />
-                <Input name="travelCompanions" placeholder="Compagnons de voyage" defaultValue={editingTrip?.travelCompanions} required />
-                <Input name="friendsFamilyMet" placeholder="Amis / famille rencontrés" defaultValue={editingTrip?.friendsFamilyMet} required />
+                <Input
+                  name="reasonForVisit"
+                  placeholder="Motif du voyage"
+                  defaultValue={editingTrip?.reasonForVisit}
+                  required
+                />
+                <Input
+                  name="travelCompanions"
+                  placeholder="Compagnons de voyage"
+                  defaultValue={editingTrip?.travelCompanions}
+                  required
+                />
+                <Input
+                  name="friendsFamilyMet"
+                  placeholder="Amis / famille rencontrés"
+                  defaultValue={editingTrip?.friendsFamilyMet}
+                  required
+                />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="transportationTo" placeholder="Transport aller (optionnel)" defaultValue={editingTrip?.transportationTo.join(", ") || ""} />
-                  <Input name="transportationOnSite" placeholder="Transport sur place (optionnel)" defaultValue={editingTrip?.transportationOnSite.join(", ") || ""} />
+                  <Input
+                    name="transportationTo"
+                    placeholder="Transport aller (optionnel)"
+                    defaultValue={
+                      editingTrip?.transportationTo.join(", ") || ""
+                    }
+                  />
+                  <Input
+                    name="transportationOnSite"
+                    placeholder="Transport sur place (optionnel)"
+                    defaultValue={
+                      editingTrip?.transportationOnSite.join(", ") || ""
+                    }
+                  />
                 </div>
                 <select
                   name="coverImageId"
-                  defaultValue={editingTrip?.coverImageId != null ? String(editingTrip.coverImageId) : ""}
+                  defaultValue={
+                    editingTrip?.coverImageId != null
+                      ? String(editingTrip.coverImageId)
+                      : ""
+                  }
                   className={selectClassName}
                 >
                   <option value="">Aucune couverture Cloudinary liée</option>
@@ -870,28 +1361,69 @@ export default function AdminPage() {
                   ))}
                 </select>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="latitude" type="number" step="any" placeholder="Latitude (optionnel)" defaultValue={editingTrip?.latitude ?? ""} />
-                  <Input name="longitude" type="number" step="any" placeholder="Longitude (optionnel)" defaultValue={editingTrip?.longitude ?? ""} />
+                  <Input
+                    name="latitude"
+                    type="number"
+                    step="any"
+                    placeholder="Latitude (optionnel)"
+                    defaultValue={editingTrip?.latitude ?? ""}
+                  />
+                  <Input
+                    name="longitude"
+                    type="number"
+                    step="any"
+                    placeholder="Longitude (optionnel)"
+                    defaultValue={editingTrip?.longitude ?? ""}
+                  />
                 </div>
                 <details className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-                  <summary className="cursor-pointer font-medium text-foreground">Surcharge avancée des coordonnées</summary>
+                  <summary className="cursor-pointer font-medium text-foreground">
+                    Surcharge avancée des coordonnées
+                  </summary>
                   <p className="mt-2">
-                    La latitude et la longitude sont maintenant calculées automatiquement à partir de la première ville listée, avec le pays du voyage comme contexte. Ces champs restent des surcharges manuelles optionnelles.
+                    La latitude et la longitude sont maintenant calculées
+                    automatiquement à partir de la première ville listée, avec
+                    le pays du voyage comme contexte. Ces champs restent des
+                    surcharges manuelles optionnelles.
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-3">
-                    <Input name="latitude" type="number" step="any" placeholder="Surcharge latitude" defaultValue={editingTrip?.latitude ?? ''} />
-                    <Input name="longitude" type="number" step="any" placeholder="Surcharge longitude" defaultValue={editingTrip?.longitude ?? ''} />
+                    <Input
+                      name="latitude"
+                      type="number"
+                      step="any"
+                      placeholder="Surcharge latitude"
+                      defaultValue={editingTrip?.latitude ?? ""}
+                    />
+                    <Input
+                      name="longitude"
+                      type="number"
+                      step="any"
+                      placeholder="Surcharge longitude"
+                      defaultValue={editingTrip?.longitude ?? ""}
+                    />
                   </div>
                 </details>
-                <Input name="visitedAt" type="date" placeholder="Date de visite" defaultValue={editingTrip?.visitedAt ?? ''} required />
+                <Input
+                  name="visitedAt"
+                  type="date"
+                  placeholder="Date de visite"
+                  defaultValue={editingTrip?.visitedAt ?? ""}
+                  required
+                />
               </div>
 
               <div className="flex gap-3 pt-4">
                 <Button type="submit" className="flex-1">
-                  {editingTrip ? "Mettre à jour le voyage" : "Ajouter le voyage"}
+                  {editingTrip
+                    ? "Mettre à jour le voyage"
+                    : "Ajouter le voyage"}
                 </Button>
                 {editingTrip && (
-                  <Button type="button" variant="outline" onClick={() => setEditingTrip(null)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingTrip(null)}
+                  >
                     Annuler
                   </Button>
                 )}
@@ -900,40 +1432,73 @@ export default function AdminPage() {
 
             <div className="space-y-3">
               {trips.map((trip) => (
-                <div key={trip.id} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors">
+                <div
+                  key={trip.id}
+                  className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors"
+                >
                   <div>
                     <h4 className="font-serif font-bold flex items-center gap-2">
-                      {trip.name} <span className="text-xs font-mono font-normal text-muted-foreground">{trip.countryCode}</span>
+                      {trip.name}{" "}
+                      <span className="text-xs font-mono font-normal text-muted-foreground">
+                        {trip.countryCode}
+                      </span>
                     </h4>
-                    <p className="text-xs text-muted-foreground">ID voyage {trip.id} · {trip.visitedCities}</p>
+                    <p className="text-xs text-muted-foreground">
+                      ID voyage {trip.id} · {trip.visitedCities}
+                    </p>
                     {trip.coverImage && (
-                      <p className="text-xs text-muted-foreground">Asset de couverture {trip.coverImage.id} · {trip.coverImage.publicId}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Asset de couverture {trip.coverImage.id} ·{" "}
+                        {trip.coverImage.publicId}
+                      </p>
                     )}
                     {trip.journeyId != null && (
                       <p className="text-xs text-muted-foreground">
-                        Parcours : {journeys.find((journey) => journey.id === trip.journeyId)?.name ?? `#${trip.journeyId}`}
-                        {trip.journeyOrder != null ? ` · Étape ${trip.journeyOrder}` : ""}
+                        Périple :{" "}
+                        {journeys.find(
+                          (journey) => journey.id === trip.journeyId,
+                        )?.name ?? `#${trip.journeyId}`}
+                        {trip.journeyOrder != null
+                          ? ` · Étape ${trip.journeyOrder}`
+                          : ""}
                       </p>
                     )}
                     {(trip.transportationTo || trip.transportationOnSite) && (
                       <p className="text-xs text-muted-foreground">
-                        {trip.transportationTo ? `Transport aller : ${trip.transportationTo}` : "Transport aller : -"}
+                        {trip.transportationTo
+                          ? `Transport aller : ${trip.transportationTo}`
+                          : "Transport aller : -"}
                         {" · "}
-                        {trip.transportationOnSite ? `Transport sur place : ${trip.transportationOnSite}` : "Transport sur place : -"}
+                        {trip.transportationOnSite
+                          ? `Transport sur place : ${trip.transportationOnSite}`
+                          : "Transport sur place : -"}
                       </p>
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="ghost" className={actionButtonClass} onClick={() => setEditingTrip(trip)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className={actionButtonClass}
+                      onClick={() => setEditingTrip(trip)}
+                    >
                       <Edit2 className="w-4 h-4" />
                     </Button>
-                    <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
-                      if (confirm("Supprimer ce voyage du passeport ?")) {
-                        deleteTrip.mutate({ token: adminToken, id: trip.id }, {
-                          onSuccess: () => invalidation.invalidateTrips(),
-                        });
-                      }
-                    }}>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className={actionButtonClass}
+                      onClick={() => {
+                        if (confirm("Supprimer ce voyage du passeport ?")) {
+                          deleteTrip.mutate(
+                            { token: adminToken, id: trip.id },
+                            {
+                              onSuccess: () => invalidation.invalidateTrips(),
+                            },
+                          );
+                        }
+                      }}
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -945,17 +1510,30 @@ export default function AdminPage() {
 
         <section className="space-y-6">
           <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-            Assets média <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{mediaAssets.length}</span>
+            Assets média{" "}
+            <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              {mediaAssets.length}
+            </span>
           </h2>
 
-          <form onSubmit={handleCloudinaryUpload} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">Upload direct vers Cloudinary</h3>
+          <form
+            onSubmit={handleCloudinaryUpload}
+            className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm"
+          >
+            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">
+              Upload direct vers Cloudinary
+            </h3>
             <p className="text-sm text-muted-foreground">
-              Le fichier part directement du navigateur vers Cloudinary. Directus ne stocke ensuite que les métadonnées.
+              Le fichier part directement du navigateur vers Cloudinary.
+              Directus ne stocke ensuite que les métadonnées.
             </p>
             <div className="space-y-3">
               <Input name="file" type="file" accept="image/*" required />
-              <select name="assetFolder" defaultValue={CLOUDINARY_UPLOAD_FOLDERS[0]} className={selectClassName}>
+              <select
+                name="assetFolder"
+                defaultValue={CLOUDINARY_UPLOAD_FOLDERS[0]}
+                className={selectClassName}
+              >
                 {CLOUDINARY_UPLOAD_FOLDERS.map((folder) => (
                   <option key={folder} value={folder}>
                     {folder}
@@ -964,14 +1542,21 @@ export default function AdminPage() {
               </select>
               <div className="grid md:grid-cols-2 gap-3">
                 <Input name="title" placeholder="Titre (optionnel)" />
-                <Input name="publicId" placeholder="public_id personnalisé sans extension (optionnel)" />
+                <Input
+                  name="publicId"
+                  placeholder="public_id personnalisé sans extension (optionnel)"
+                />
               </div>
               <div className="grid md:grid-cols-2 gap-3">
                 <Input name="alt" placeholder="Texte alternatif (optionnel)" />
                 <Input name="caption" placeholder="Légende (optionnel)" />
               </div>
             </div>
-            <Button type="submit" className="w-full" disabled={isUploadingAsset || createMediaAsset.isPending}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isUploadingAsset || createMediaAsset.isPending}
+            >
               {isUploadingAsset || createMediaAsset.isPending ? (
                 <>
                   <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
@@ -986,34 +1571,99 @@ export default function AdminPage() {
             </Button>
           </form>
 
-          <form onSubmit={handleMediaAssetSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingMediaAsset ? "Modifier l'asset média" : "Ajouter un asset Cloudinary"}</h3>
+          <form
+            onSubmit={handleMediaAssetSubmit}
+            className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm"
+          >
+            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">
+              {editingMediaAsset
+                ? "Modifier l'asset média"
+                : "Ajouter un asset Cloudinary"}
+            </h3>
             <div className="space-y-3">
-              <Input name="publicId" placeholder="Cloudinary public_id" defaultValue={editingMediaAsset?.publicId} required />
+              <Input
+                name="publicId"
+                placeholder="Cloudinary public_id"
+                defaultValue={editingMediaAsset?.publicId}
+                required
+              />
               <div className="grid md:grid-cols-2 gap-3">
-                <Input name="title" placeholder="Titre (optionnel)" defaultValue={editingMediaAsset?.title || ""} />
-                <Input name="folder" placeholder="Dossier (optionnel)" defaultValue={editingMediaAsset?.folder || ""} />
+                <Input
+                  name="title"
+                  placeholder="Titre (optionnel)"
+                  defaultValue={editingMediaAsset?.title || ""}
+                />
+                <Input
+                  name="folder"
+                  placeholder="Dossier (optionnel)"
+                  defaultValue={editingMediaAsset?.folder || ""}
+                />
               </div>
               <div className="grid md:grid-cols-2 gap-3">
-                <Input name="alt" placeholder="Texte alternatif (optionnel)" defaultValue={editingMediaAsset?.alt || ""} />
-                <Input name="caption" placeholder="Légende (optionnel)" defaultValue={editingMediaAsset?.caption || ""} />
+                <Input
+                  name="alt"
+                  placeholder="Texte alternatif (optionnel)"
+                  defaultValue={editingMediaAsset?.alt || ""}
+                />
+                <Input
+                  name="caption"
+                  placeholder="Légende (optionnel)"
+                  defaultValue={editingMediaAsset?.caption || ""}
+                />
               </div>
-              <Input name="deliveryUrl" placeholder="Cloudinary secure_url de secours (optionnel)" defaultValue={editingMediaAsset?.deliveryUrl || ""} />
-              <Input name="placeholderUrl" placeholder="URL de placeholder / blur (optionnel)" defaultValue={editingMediaAsset?.placeholderUrl || ""} />
+              <Input
+                name="deliveryUrl"
+                placeholder="Cloudinary secure_url de secours (optionnel)"
+                defaultValue={editingMediaAsset?.deliveryUrl || ""}
+              />
+              <Input
+                name="placeholderUrl"
+                placeholder="URL de placeholder / blur (optionnel)"
+                defaultValue={editingMediaAsset?.placeholderUrl || ""}
+              />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Input name="width" type="number" placeholder="Largeur" defaultValue={editingMediaAsset?.width ?? ""} />
-                <Input name="height" type="number" placeholder="Hauteur" defaultValue={editingMediaAsset?.height ?? ""} />
-                <Input name="format" placeholder="Format" defaultValue={editingMediaAsset?.format || ""} />
-                <Input name="resourceType" placeholder="Type de ressource" defaultValue={editingMediaAsset?.resourceType || ""} />
+                <Input
+                  name="width"
+                  type="number"
+                  placeholder="Largeur"
+                  defaultValue={editingMediaAsset?.width ?? ""}
+                />
+                <Input
+                  name="height"
+                  type="number"
+                  placeholder="Hauteur"
+                  defaultValue={editingMediaAsset?.height ?? ""}
+                />
+                <Input
+                  name="format"
+                  placeholder="Format"
+                  defaultValue={editingMediaAsset?.format || ""}
+                />
+                <Input
+                  name="resourceType"
+                  placeholder="Type de ressource"
+                  defaultValue={editingMediaAsset?.resourceType || ""}
+                />
               </div>
-              <Input name="bytes" type="number" placeholder="Poids en octets (optionnel)" defaultValue={editingMediaAsset?.bytes ?? ""} />
+              <Input
+                name="bytes"
+                type="number"
+                placeholder="Poids en octets (optionnel)"
+                defaultValue={editingMediaAsset?.bytes ?? ""}
+              />
             </div>
             <div className="flex gap-3 pt-4">
               <Button type="submit" className="flex-1">
-                {editingMediaAsset ? "Mettre à jour l'asset" : "Ajouter l'asset"}
+                {editingMediaAsset
+                  ? "Mettre à jour l'asset"
+                  : "Ajouter l'asset"}
               </Button>
               {editingMediaAsset && (
-                <Button type="button" variant="outline" onClick={() => setEditingMediaAsset(null)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditingMediaAsset(null)}
+                >
                   Annuler
                 </Button>
               )}
@@ -1022,33 +1672,74 @@ export default function AdminPage() {
 
           <div className="grid md:grid-cols-2 gap-4">
             {mediaAssets.map((asset) => (
-              <div key={asset.id} className="flex gap-4 p-4 bg-card border rounded-xl">
+              <div
+                key={asset.id}
+                className="flex gap-4 p-4 bg-card border rounded-xl"
+              >
                 <div className="w-24 h-24 rounded-xl overflow-hidden bg-muted shrink-0">
-                  {getMediaAssetImageUrl(asset, { width: 192, height: 192, crop: "fill" }) && (
+                  {getMediaAssetImageUrl(asset, {
+                    width: 192,
+                    height: 192,
+                    crop: "fill",
+                  }) && (
                     <img
-                      src={getMediaAssetImageUrl(asset, { width: 192, height: 192, crop: "fill" }) ?? ""}
+                      src={
+                        getMediaAssetImageUrl(asset, {
+                          width: 192,
+                          height: 192,
+                          crop: "fill",
+                        }) ?? ""
+                      }
                       alt={asset.alt ?? asset.title ?? asset.publicId}
                       className="w-full h-full object-cover"
                     />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-serif font-bold truncate">{asset.title || asset.publicId}</h4>
-                  <p className="text-xs text-muted-foreground font-mono break-all">{asset.publicId}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Asset ID {asset.id}{asset.folder ? ` · ${asset.folder}` : ""}</p>
-                  {asset.alt && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{asset.alt}</p>}
+                  <h4 className="font-serif font-bold truncate">
+                    {asset.title || asset.publicId}
+                  </h4>
+                  <p className="text-xs text-muted-foreground font-mono break-all">
+                    {asset.publicId}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Asset ID {asset.id}
+                    {asset.folder ? ` · ${asset.folder}` : ""}
+                  </p>
+                  {asset.alt && (
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                      {asset.alt}
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="icon" variant="ghost" className={actionButtonClass} onClick={() => setEditingMediaAsset(asset)}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className={actionButtonClass}
+                    onClick={() => setEditingMediaAsset(asset)}
+                  >
                     <Edit2 className="w-4 h-4" />
                   </Button>
-                  <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
-                    if (confirm("Supprimer cet asset média ? Les contenus liés perdront leur référence.")) {
-                      deleteMediaAsset.mutate({ token: adminToken, id: asset.id }, {
-                        onSuccess: () => invalidation.invalidateMedia(),
-                      });
-                    }
-                  }}>
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    className={actionButtonClass}
+                    onClick={() => {
+                      if (
+                        confirm(
+                          "Supprimer cet asset média ? Les contenus liés perdront leur référence.",
+                        )
+                      ) {
+                        deleteMediaAsset.mutate(
+                          { token: adminToken, id: asset.id },
+                          {
+                            onSuccess: () => invalidation.invalidateMedia(),
+                          },
+                        );
+                      }
+                    }}
+                  >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -1059,15 +1750,27 @@ export default function AdminPage() {
 
         <section className="space-y-6">
           <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-            Grille photo <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{photos.length}</span>
+            Grille photo{" "}
+            <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              {photos.length}
+            </span>
           </h2>
 
-          <form onSubmit={handlePhotoSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingPhoto ? "Modifier la photo" : "Ajouter une photo"}</h3>
+          <form
+            onSubmit={handlePhotoSubmit}
+            className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm"
+          >
+            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">
+              {editingPhoto ? "Modifier la photo" : "Ajouter une photo"}
+            </h3>
             <div className="space-y-3">
               <select
                 name="mediaAssetId"
-                defaultValue={editingPhoto?.mediaAssetId != null ? String(editingPhoto.mediaAssetId) : ""}
+                defaultValue={
+                  editingPhoto?.mediaAssetId != null
+                    ? String(editingPhoto.mediaAssetId)
+                    : ""
+                }
                 className={selectClassName}
               >
                 <option value="">Aucun asset Cloudinary lié</option>
@@ -1077,13 +1780,29 @@ export default function AdminPage() {
                   </option>
                 ))}
               </select>
-              <Input name="url" placeholder="URL d'image legacy / de secours (optionnel)" defaultValue={editingPhoto?.url || ""} />
-              <Input name="caption" placeholder="Légende (optionnel)" defaultValue={editingPhoto?.caption || ""} />
-              <Input name="link" placeholder="URL du lien (optionnel — ex. /posts/mon-article)" defaultValue={editingPhoto?.link || ""} />
+              <Input
+                name="url"
+                placeholder="URL d'image legacy / de secours (optionnel)"
+                defaultValue={editingPhoto?.url || ""}
+              />
+              <Input
+                name="caption"
+                placeholder="Légende (optionnel)"
+                defaultValue={editingPhoto?.caption || ""}
+              />
+              <Input
+                name="link"
+                placeholder="URL du lien (optionnel — ex. /posts/mon-article)"
+                defaultValue={editingPhoto?.link || ""}
+              />
               <div className="grid grid-cols-2 gap-3">
                 <select
                   name="tripId"
-                  defaultValue={editingPhoto?.tripId != null ? String(editingPhoto.tripId) : ""}
+                  defaultValue={
+                    editingPhoto?.tripId != null
+                      ? String(editingPhoto.tripId)
+                      : ""
+                  }
                   className={selectClassName}
                 >
                   <option value="">Aucun voyage lié</option>
@@ -1099,17 +1818,30 @@ export default function AdminPage() {
                   className={selectClassName}
                 >
                   <option value="">Pays du voyage lié si possible</option>
-                  {COUNTRY_CODES.map(c => (
-                    <option key={c.code} value={c.code}>{c.code} — {getCountryDisplayName(c.code, c.name)}</option>
+                  {COUNTRY_CODES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.code} — {getCountryDisplayName(c.code, c.name)}
+                    </option>
                   ))}
                 </select>
               </div>
-              <Input name="displayOrder" type="number" placeholder="Ordre d'affichage (0 = premier)" defaultValue={editingPhoto?.displayOrder ?? 0} />
+              <Input
+                name="displayOrder"
+                type="number"
+                placeholder="Ordre d'affichage (0 = premier)"
+                defaultValue={editingPhoto?.displayOrder ?? 0}
+              />
             </div>
             <div className="flex gap-3 pt-4">
-              <Button type="submit" className="flex-1">{editingPhoto ? "Mettre à jour la photo" : "Ajouter la photo"}</Button>
+              <Button type="submit" className="flex-1">
+                {editingPhoto ? "Mettre à jour la photo" : "Ajouter la photo"}
+              </Button>
               {editingPhoto && (
-                <Button type="button" variant="outline" onClick={() => setEditingPhoto(null)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditingPhoto(null)}
+                >
                   Annuler
                 </Button>
               )}
@@ -1118,25 +1850,51 @@ export default function AdminPage() {
 
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             {photos.map((photo) => (
-              <div key={photo.id} className="group relative aspect-square rounded-xl overflow-hidden bg-muted border">
+              <div
+                key={photo.id}
+                className="group relative aspect-square rounded-xl overflow-hidden bg-muted border"
+              >
                 <img
-                  src={getMediaAssetImageUrl(photo.mediaAsset, { width: 400, height: 400, crop: "fill" }) ?? photo.url ?? ""}
+                  src={
+                    getMediaAssetImageUrl(photo.mediaAsset, {
+                      width: 400,
+                      height: 400,
+                      crop: "fill",
+                    }) ??
+                    photo.url ??
+                    ""
+                  }
                   alt={photo.mediaAsset?.alt ?? photo.caption ?? ""}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
-                  <p className="text-white text-xs text-center line-clamp-2">{photo.caption}</p>
+                  <p className="text-white text-xs text-center line-clamp-2">
+                    {photo.caption}
+                  </p>
                   <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-white hover:text-white hover:bg-white/20 active:scale-95 transition-all" onClick={() => setEditingPhoto(photo)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-white hover:text-white hover:bg-white/20 active:scale-95 transition-all"
+                      onClick={() => setEditingPhoto(photo)}
+                    >
                       <Edit2 className="w-3 h-3" />
                     </Button>
-                    <Button size="icon" variant="destructive" className="h-7 w-7 active:scale-95 transition-all" onClick={() => {
-                      if (confirm("Supprimer cette photo ?")) {
-                        deletePhoto.mutate({ token: adminToken, id: photo.id }, {
-                          onSuccess: () => invalidation.invalidatePhotos(),
-                        });
-                      }
-                    }}>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="h-7 w-7 active:scale-95 transition-all"
+                      onClick={() => {
+                        if (confirm("Supprimer cette photo ?")) {
+                          deletePhoto.mutate(
+                            { token: adminToken, id: photo.id },
+                            {
+                              onSuccess: () => invalidation.invalidatePhotos(),
+                            },
+                          );
+                        }
+                      }}
+                    >
                       <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>

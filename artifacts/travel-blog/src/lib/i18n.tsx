@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { format } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
 
@@ -16,12 +22,12 @@ const messages = {
     navAdmin: "Admin",
     footerTagline: "Carnets de voyage pensés avec soin.",
     languageLabel: "Langue",
-    heroTitle: "Cartographier le monde,",
+    heroTitle: "Parcourir le monde,",
     heroTitleAccent: "une histoire après l'autre",
     heroSubtitle:
       "Une collection de récits venus de routes poussiéreuses, de trains de nuit et de rivages inconnus.",
     readJournal: "Lire le journal",
-    viewAtlas: "Voir l'atlas",
+    viewAtlas: "Voir l'Atlas",
     statTrips: "Voyages",
     statContinents: "Continents",
     statCities: "Villes",
@@ -45,7 +51,7 @@ const messages = {
     entry_other: "entrées",
     retrievingEntries: "Récupération des entrées du journal...",
     noEntries: "Aucune entrée ne correspond à vos filtres.",
-    atlasTitle: "L'atlas",
+    atlasTitle: "L'Atlas",
     atlasSubtitle: "Chaque repère raconte une histoire. Cliquez pour la lire.",
     passportTitle: "Le passeport",
     passportSubtitle:
@@ -73,7 +79,7 @@ const messages = {
     approxKm: "environ",
     estimatedDistance: "Distance estimée",
     estimatedTripDistance: "Distance estimée du voyage",
-    estimatedJourneyDistance: "Distance estimée du parcours",
+    estimatedJourneyDistance: "Distance estimée du Périple",
     citiesVisited: "Villes visitées",
     mission: "Objectif",
     companions: "Compagnons de route",
@@ -87,7 +93,7 @@ const messages = {
     france: "France",
     international: "International",
     loadingMap: "La carte se déplie...",
-    multiCountryJourney: "Parcours multi-pays",
+    multiCountryJourney: "Périple multi-pays",
     stepOf: "Étape",
     unknownStart: "Début inconnu",
     unknownEnd: "Fin inconnue",
@@ -198,7 +204,10 @@ type I18nContextValue = {
   t: (key: MessageKey) => string;
   dateFnsLocale: typeof fr;
   numberLocale: string;
-  formatDate: (value: string | Date, pattern: "short" | "long" | "monthYear") => string;
+  formatDate: (
+    value: string | Date,
+    pattern: "short" | "long" | "monthYear",
+  ) => string;
   formatCountLabel: (count: number) => string;
   formatDaysLabel: (count: number) => string;
   formatDistanceKm: (distanceKm: number | null) => string | null;
@@ -208,11 +217,18 @@ type I18nContextValue = {
 const I18nContext = createContext<I18nContextValue | null>(null);
 
 function getAvailableLocales(): Locale[] {
-  const rawValue = String(import.meta.env.VITE_SITE_LANGUAGES ?? "both").trim().toLowerCase();
+  const rawValue = String(import.meta.env.VITE_SITE_LANGUAGES ?? "both")
+    .trim()
+    .toLowerCase();
 
   if (rawValue === "fr") return ["fr"];
   if (rawValue === "en") return ["en"];
-  if (rawValue === "2" || rawValue === "both" || rawValue === "all" || rawValue === "fr,en") {
+  if (
+    rawValue === "2" ||
+    rawValue === "both" ||
+    rawValue === "all" ||
+    rawValue === "fr,en"
+  ) {
     return ["fr", "en"];
   }
 
@@ -234,7 +250,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
 
   useEffect(() => {
-    const effectiveLocale = AVAILABLE_LOCALES.length === 1 ? AVAILABLE_LOCALES[0] : locale;
+    const effectiveLocale =
+      AVAILABLE_LOCALES.length === 1 ? AVAILABLE_LOCALES[0] : locale;
 
     if (AVAILABLE_LOCALES.length > 1) {
       window.localStorage.setItem(STORAGE_KEY, effectiveLocale);
@@ -244,11 +261,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, [locale]);
 
   const value = useMemo<I18nContextValue>(() => {
-    const effectiveLocale = AVAILABLE_LOCALES.length === 1 ? AVAILABLE_LOCALES[0] : locale;
+    const effectiveLocale =
+      AVAILABLE_LOCALES.length === 1 ? AVAILABLE_LOCALES[0] : locale;
     const catalog = messages[effectiveLocale];
     const dateFnsLocale = effectiveLocale === "fr" ? fr : enUS;
     const numberLocale = effectiveLocale === "fr" ? "fr-FR" : "en-US";
-    const regionNames = new Intl.DisplayNames([numberLocale], { type: "region" });
+    const regionNames = new Intl.DisplayNames([numberLocale], {
+      type: "region",
+    });
 
     return {
       locale: effectiveLocale,
@@ -266,7 +286,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       formatDate: (value, pattern) => {
         const date = value instanceof Date ? value : new Date(value);
         const token =
-          pattern === "long" ? "PPP" : pattern === "monthYear" ? "LLLL yyyy" : "PP";
+          pattern === "long"
+            ? "PPP"
+            : pattern === "monthYear"
+              ? "LLLL yyyy"
+              : "PP";
         return format(date, token, { locale: dateFnsLocale });
       },
       formatCountLabel: (count) =>
@@ -277,7 +301,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         if (distanceKm == null) return null;
         return `${Math.round(distanceKm).toLocaleString(numberLocale)} km ${catalog.approxKm}`;
       },
-      countryName: (code) => regionNames.of(code.toUpperCase()) ?? code.toUpperCase(),
+      countryName: (code) =>
+        regionNames.of(code.toUpperCase()) ?? code.toUpperCase(),
     };
   }, [locale]);
 
