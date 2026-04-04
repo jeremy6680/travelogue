@@ -4,6 +4,20 @@ This project uses Directus from [`artifacts/directus`](/Users/jeremymarchandeau/
 
 Deployment on Coolify is documented in [`docs/directus-coolify.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/directus-coolify.md).
 
+## Fast Production Command
+
+If you want the one command to push the current schema to production, use:
+
+```sh
+bash ./scripts/directus-prod-apply.sh
+```
+
+This is the repo shortcut for:
+
+- copying [`artifacts/directus/schema.yaml`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/schema.yaml) to the server
+- finding the running Directus container
+- running `schema apply` inside that container
+
 ## Quick Post-Deploy Checklist
 
 Use this right after deploying a Directus schema change to production.

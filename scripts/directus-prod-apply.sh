@@ -2,6 +2,15 @@
 
 set -euo pipefail
 
+# Usage:
+#   bash ./scripts/directus-prod-apply.sh
+#
+# Optional overrides:
+#   SSH_HOST=root@example.com \
+#   SSH_KEY_PATH=~/.ssh/id_ed25519 \
+#   DIRECTUS_CONTAINER_PREFIX=my-directus- \
+#   bash ./scripts/directus-prod-apply.sh
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SCHEMA_LOCAL_PATH="${SCHEMA_LOCAL_PATH:-$ROOT_DIR/artifacts/directus/schema.yaml}"
 SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/id_ed25519}"

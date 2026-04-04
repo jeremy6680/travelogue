@@ -17,6 +17,16 @@ Travelogue is a pnpm monorepo for a travel blog frontend backed by Directus and 
 - Cloudinary workflow guide: [`docs/cloudinary.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/cloudinary.md)
 - Production checklist: [`docs/production-checklist.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/production-checklist.md)
 
+## Production Shortcut
+
+To apply the current Directus schema to production through SSH and Docker:
+
+```sh
+bash ./scripts/directus-prod-apply.sh
+```
+
+This script copies [`artifacts/directus/schema.yaml`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/artifacts/directus/schema.yaml) to the server, finds the running Directus container, and runs `schema apply` inside it.
+
 ## Prerequisites
 
 - Node.js 24 for the workspace

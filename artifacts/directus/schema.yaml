@@ -227,731 +227,6 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-  - collection: media_assets
-    field: id
-    type: integer
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: id
-      group: null
-      hidden: false
-      interface: null
-      note: null
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: null
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: id
-      table: media_assets
-      data_type: integer
-      default_value: nextval('media_assets_id_seq'::regclass)
-      max_length: null
-      numeric_precision: 32
-      numeric_scale: 0
-      is_nullable: false
-      is_unique: true
-      is_indexed: false
-      is_primary_key: true
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: true
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: title
-    type: text
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: title
-      group: null
-      hidden: false
-      interface: input
-      note: Human-readable label for the asset.
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 1
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: title
-      table: media_assets
-      data_type: text
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: public_id
-    type: text
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: public_id
-      group: null
-      hidden: false
-      interface: travelogue-cloudinary-media-upload
-      note: Upload directly to Cloudinary from Directus, then save the item.
-      options: null
-      readonly: false
-      required: true
-      searchable: true
-      sort: 2
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: public_id
-      table: media_assets
-      data_type: text
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: true
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: delivery_url
-    type: text
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: delivery_url
-      group: null
-      hidden: false
-      interface: input
-      note: Cloudinary secure_url fallback.
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 3
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: delivery_url
-      table: media_assets
-      data_type: text
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: width
-    type: integer
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: width
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 4
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: quarter
-    schema:
-      name: width
-      table: media_assets
-      data_type: integer
-      default_value: null
-      max_length: null
-      numeric_precision: 32
-      numeric_scale: 0
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: height
-    type: integer
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: height
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 5
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: quarter
-    schema:
-      name: height
-      table: media_assets
-      data_type: integer
-      default_value: null
-      max_length: null
-      numeric_precision: 32
-      numeric_scale: 0
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: format
-    type: text
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: format
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 6
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: quarter
-    schema:
-      name: format
-      table: media_assets
-      data_type: text
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: resource_type
-    type: text
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: resource_type
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 7
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: quarter
-    schema:
-      name: resource_type
-      table: media_assets
-      data_type: text
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: bytes
-    type: integer
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: bytes
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 8
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: quarter
-    schema:
-      name: bytes
-      table: media_assets
-      data_type: integer
-      default_value: null
-      max_length: null
-      numeric_precision: 32
-      numeric_scale: 0
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: alt
-    type: text
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: alt
-      group: null
-      hidden: false
-      interface: input
-      note: Accessibility alt text.
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 9
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: alt
-      table: media_assets
-      data_type: text
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: caption
-    type: text
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: caption
-      group: null
-      hidden: false
-      interface: textarea
-      note: null
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 10
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: caption
-      table: media_assets
-      data_type: text
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: folder
-    type: text
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: folder
-      group: null
-      hidden: false
-      interface: input
-      note: Cloudinary folder.
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 11
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: folder
-      table: media_assets
-      data_type: text
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: placeholder_url
-    type: text
-    meta:
-      collection: media_assets
-      conditions: null
-      display: null
-      display_options: null
-      field: placeholder_url
-      group: null
-      hidden: false
-      interface: input
-      note: Optional placeholder / blur URL.
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 12
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: placeholder_url
-      table: media_assets
-      data_type: text
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: created_at
-    type: timestamp
-    meta:
-      collection: media_assets
-      conditions: null
-      display: datetime
-      display_options:
-        relative: true
-      field: created_at
-      group: null
-      hidden: false
-      interface: datetime
-      note: null
-      options: null
-      readonly: true
-      required: false
-      searchable: true
-      sort: 13
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: created_at
-      table: media_assets
-      data_type: timestamp with time zone
-      default_value: now()
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: media_assets
-    field: updated_at
-    type: timestamp
-    meta:
-      collection: media_assets
-      conditions: null
-      display: datetime
-      display_options:
-        relative: true
-      field: updated_at
-      group: null
-      hidden: false
-      interface: datetime
-      note: null
-      options: null
-      readonly: true
-      required: false
-      searchable: true
-      sort: 14
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: updated_at
-      table: media_assets
-      data_type: timestamp with time zone
-      default_value: now()
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: photos
-    field: media_asset_id
-    type: integer
-    meta:
-      collection: photos
-      conditions: null
-      display: null
-      display_options: null
-      field: media_asset_id
-      group: null
-      hidden: false
-      interface: select-dropdown-m2o
-      note: Linked Cloudinary media asset.
-      options:
-        template: '{{public_id}}'
-      readonly: false
-      required: false
-      searchable: true
-      sort: 2
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: media_asset_id
-      table: photos
-      data_type: integer
-      default_value: null
-      max_length: null
-      numeric_precision: 32
-      numeric_scale: 0
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: media_assets
-      foreign_key_column: id
-  - collection: posts
-    field: featured_image_id
-    type: integer
-    meta:
-      collection: posts
-      conditions: null
-      display: null
-      display_options: null
-      field: featured_image_id
-      group: null
-      hidden: false
-      interface: select-dropdown-m2o
-      note: Featured Cloudinary media asset.
-      options:
-        template: '{{public_id}}'
-      readonly: false
-      required: false
-      searchable: true
-      sort: 6
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: featured_image_id
-      table: posts
-      data_type: integer
-      default_value: null
-      max_length: null
-      numeric_precision: 32
-      numeric_scale: 0
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: media_assets
-      foreign_key_column: id
-  - collection: trips
-    field: cover_image_id
-    type: integer
-    meta:
-      collection: trips
-      conditions: null
-      display: null
-      display_options: null
-      field: cover_image_id
-      group: null
-      hidden: false
-      interface: select-dropdown-m2o
-      note: Cover Cloudinary media asset.
-      options:
-        template: '{{public_id}}'
-      readonly: false
-      required: false
-      searchable: true
-      sort: 6
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: cover_image_id
-      table: trips
-      data_type: integer
-      default_value: null
-      max_length: null
-      numeric_precision: 32
-      numeric_scale: 0
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: media_assets
-      foreign_key_column: id
   - collection: journeys
     field: id
     type: integer
@@ -962,7 +237,7 @@ fields:
       display_options: null
       field: id
       group: null
-      hidden: false
+      hidden: true
       interface: null
       note: null
       options: null
@@ -1512,6 +787,608 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: media_assets
+    field: id
+    type: integer
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: false
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: media_assets
+      data_type: integer
+      default_value: nextval('media_assets_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: title
+    type: text
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: title
+      group: null
+      hidden: false
+      interface: input
+      note: Human-readable label for the asset.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: title
+      table: media_assets
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: public_id
+    type: text
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: public_id
+      group: null
+      hidden: false
+      interface: travelogue-cloudinary-media-upload
+      note: Upload directly to Cloudinary from Directus, then save the item.
+      options: null
+      readonly: false
+      required: true
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: public_id
+      table: media_assets
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: delivery_url
+    type: text
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: delivery_url
+      group: null
+      hidden: false
+      interface: input
+      note: Cloudinary secure_url fallback.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: delivery_url
+      table: media_assets
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: width
+    type: integer
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: width
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: quarter
+    schema:
+      name: width
+      table: media_assets
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: height
+    type: integer
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: height
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: quarter
+    schema:
+      name: height
+      table: media_assets
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: format
+    type: text
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: format
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: quarter
+    schema:
+      name: format
+      table: media_assets
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: resource_type
+    type: text
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: resource_type
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: quarter
+    schema:
+      name: resource_type
+      table: media_assets
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: bytes
+    type: integer
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: bytes
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 8
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: quarter
+    schema:
+      name: bytes
+      table: media_assets
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: alt
+    type: text
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: alt
+      group: null
+      hidden: false
+      interface: input
+      note: Accessibility alt text.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: alt
+      table: media_assets
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: caption
+    type: text
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: caption
+      group: null
+      hidden: false
+      interface: textarea
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: caption
+      table: media_assets
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: folder
+    type: text
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: folder
+      group: null
+      hidden: false
+      interface: input
+      note: Cloudinary folder.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 11
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: folder
+      table: media_assets
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: placeholder_url
+    type: text
+    meta:
+      collection: media_assets
+      conditions: null
+      display: null
+      display_options: null
+      field: placeholder_url
+      group: null
+      hidden: false
+      interface: input
+      note: Optional placeholder / blur URL.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 12
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: placeholder_url
+      table: media_assets
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: created_at
+    type: timestamp
+    meta:
+      collection: media_assets
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: created_at
+      group: null
+      hidden: false
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 13
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: created_at
+      table: media_assets
+      data_type: timestamp with time zone
+      default_value: CURRENT_TIMESTAMP
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: media_assets
+    field: updated_at
+    type: timestamp
+    meta:
+      collection: media_assets
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: updated_at
+      group: null
+      hidden: false
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 14
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: updated_at
+      table: media_assets
+      data_type: timestamp with time zone
+      default_value: CURRENT_TIMESTAMP
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: photos
     field: id
     type: integer
@@ -1874,6 +1751,47 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: photos
+    field: media_asset_id
+    type: integer
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: media_asset_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Linked Cloudinary media asset.
+      options:
+        template: '{{public_id}}'
+      readonly: false
+      required: false
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: media_asset_id
+      table: photos
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: media_assets
+      foreign_key_column: id
   - collection: posts
     field: content
     type: text
@@ -2482,6 +2400,47 @@ fields:
       has_auto_increment: false
       foreign_key_table: countries
       foreign_key_column: code
+  - collection: posts
+    field: featured_image_id
+    type: integer
+    meta:
+      collection: posts
+      conditions: null
+      display: null
+      display_options: null
+      field: featured_image_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Featured Cloudinary media asset.
+      options:
+        template: '{{public_id}}'
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: featured_image_id
+      table: posts
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: media_assets
+      foreign_key_column: id
   - collection: trips
     field: id
     type: integer
@@ -3266,6 +3225,47 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: trips
+    field: cover_image_id
+    type: integer
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: cover_image_id
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: Cover Cloudinary media asset.
+      options:
+        template: '{{public_id}}'
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: cover_image_id
+      table: trips
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: media_assets
+      foreign_key_column: id
 systemFields:
   - collection: directus_activity
     field: timestamp
@@ -3280,27 +3280,6 @@ systemFields:
     schema:
       is_indexed: true
 relations:
-  - collection: photos
-    field: media_asset_id
-    related_collection: media_assets
-    meta:
-      junction_field: null
-      many_collection: photos
-      many_field: media_asset_id
-      one_allowed_collections: null
-      one_collection: media_assets
-      one_collection_field: null
-      one_deselect_action: nullify
-      one_field: null
-      sort_field: null
-    schema:
-      table: photos
-      column: media_asset_id
-      foreign_key_table: media_assets
-      foreign_key_column: id
-      constraint_name: photos_media_asset_id_media_assets_id_fk
-      on_update: NO ACTION
-      on_delete: SET NULL
   - collection: photos
     field: trip_id
     related_collection: trips
@@ -3343,13 +3322,13 @@ relations:
       constraint_name: photos_country_code_countries_code_fk
       on_update: CASCADE
       on_delete: SET NULL
-  - collection: posts
-    field: featured_image_id
+  - collection: photos
+    field: media_asset_id
     related_collection: media_assets
     meta:
       junction_field: null
-      many_collection: posts
-      many_field: featured_image_id
+      many_collection: photos
+      many_field: media_asset_id
       one_allowed_collections: null
       one_collection: media_assets
       one_collection_field: null
@@ -3357,11 +3336,11 @@ relations:
       one_field: null
       sort_field: null
     schema:
-      table: posts
-      column: featured_image_id
+      table: photos
+      column: media_asset_id
       foreign_key_table: media_assets
       foreign_key_column: id
-      constraint_name: posts_featured_image_id_media_assets_id_fk
+      constraint_name: photos_media_asset_id_foreign
       on_update: NO ACTION
       on_delete: SET NULL
   - collection: posts
@@ -3427,13 +3406,13 @@ relations:
       constraint_name: posts_country_code_countries_code_fk
       on_update: CASCADE
       on_delete: SET NULL
-  - collection: trips
-    field: cover_image_id
+  - collection: posts
+    field: featured_image_id
     related_collection: media_assets
     meta:
       junction_field: null
-      many_collection: trips
-      many_field: cover_image_id
+      many_collection: posts
+      many_field: featured_image_id
       one_allowed_collections: null
       one_collection: media_assets
       one_collection_field: null
@@ -3441,11 +3420,11 @@ relations:
       one_field: null
       sort_field: null
     schema:
-      table: trips
-      column: cover_image_id
+      table: posts
+      column: featured_image_id
       foreign_key_table: media_assets
       foreign_key_column: id
-      constraint_name: trips_cover_image_id_media_assets_id_fk
+      constraint_name: posts_featured_image_id_foreign
       on_update: NO ACTION
       on_delete: SET NULL
   - collection: trips
@@ -3469,3 +3448,24 @@ relations:
       constraint_name: trips_country_code_countries_code_fk
       on_update: CASCADE
       on_delete: NO ACTION
+  - collection: trips
+    field: cover_image_id
+    related_collection: media_assets
+    meta:
+      junction_field: null
+      many_collection: trips
+      many_field: cover_image_id
+      one_allowed_collections: null
+      one_collection: media_assets
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: trips
+      column: cover_image_id
+      foreign_key_table: media_assets
+      foreign_key_column: id
+      constraint_name: trips_cover_image_id_foreign
+      on_update: NO ACTION
+      on_delete: SET NULL
