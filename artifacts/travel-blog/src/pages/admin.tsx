@@ -36,6 +36,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
+  COMPANION_OPTIONS,
+  TRANSPORT_OPTIONS,
+  formatTransportLabels,
+} from "@/lib/trip-options";
+import {
   Trash2,
   Edit2,
   CheckCircle2,
@@ -261,6 +266,43 @@ const selectClassName = cn(
   "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
   "disabled:cursor-not-allowed disabled:opacity-50",
 );
+
+type CheckboxOption = {
+  value: string;
+  label: string;
+};
+
+function CheckboxGroup({
+  name,
+  options,
+  defaultValues = [],
+}: {
+  name: string;
+  options: readonly CheckboxOption[];
+  defaultValues?: readonly string[];
+}) {
+  const selectedValues = new Set(defaultValues);
+
+  return (
+    <div className="grid grid-cols-2 gap-2 rounded-xl border border-input/60 bg-background/60 p-3">
+      {options.map((option) => (
+        <label
+          key={option.value}
+          className="flex items-center gap-2 rounded-lg border border-border/60 bg-card px-3 py-2 text-sm text-foreground"
+        >
+          <input
+            type="checkbox"
+            name={name}
+            value={option.value}
+            defaultChecked={selectedValues.has(option.value)}
+            className="h-4 w-4"
+          />
+          <span>{option.label}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
 
 function useAdminInvalidation() {
   const queryClient = useQueryClient();
@@ -603,12 +645,34 @@ export default function AdminPage() {
     const longitudeInput = formData.get("longitude") as string;
     const journeyIdInput = formData.get("journeyId") as string;
     const journeyOrderInput = formData.get("journeyOrder") as string;
+    const travelCompanions = formData
+      .getAll("travelCompanions")
+      .map((value) => String(value).trim())
+      .filter(Boolean);
+    const transportationTo = formData
+      .getAll("transportationTo")
+      .map((value) => String(value).trim())
+      .filter(Boolean);
+    const transportationOnSite = formData
+      .getAll("transportationOnSite")
+      .map((value) => String(value).trim())
+      .filter(Boolean);
+
+    if (travelCompanions.length === 0) {
+      toast({
+        title: "Compagnons requis",
+        description: "Selectionne au moins un compagnon de voyage.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const data = {
       name: formData.get("name") as string,
       countryCode: formData.get("countryCode") as string,
       visitedCities: formData.get("visitedCities") as string,
       reasonForVisit: formData.get("reasonForVisit") as string,
-      travelCompanions: formData.get("travelCompanions") as string,
+      travelCompanions: travelCompanions.join(", "),
       friendsFamilyMet: formData.get("friendsFamilyMet") as string,
       visitedAt: formData.get("visitedAt") as string,
       coverImageId: formData.get("coverImageId")
@@ -618,10 +682,8 @@ export default function AdminPage() {
       longitude: longitudeInput ? Number(longitudeInput) : undefined,
       journeyId: journeyIdInput ? Number(journeyIdInput) : null,
       journeyOrder: journeyOrderInput ? Number(journeyOrderInput) : null,
-      transportationTo:
-        (formData.get("transportationTo") as string) || undefined,
-      transportationOnSite:
-        (formData.get("transportationOnSite") as string) || undefined,
+      transportationTo,
+      transportationOnSite,
     };
 
     if (editingTrip) {
@@ -1316,33 +1378,57 @@ export default function AdminPage() {
                   defaultValue={editingTrip?.reasonForVisit}
                   required
                 />
-                <Input
-                  name="travelCompanions"
-                  placeholder="Compagnons de voyage"
-                  defaultValue={editingTrip?.travelCompanions}
-                  required
-                />
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
+                    Compagnons de voyage
+                  </label>
+                  <CheckboxGroup
+                    name="travelCompanions"
+                    options={COMPANION_OPTIONS.map((name) => ({
+                      value: name,
+                      label: name,
+                    }))}
+                    defaultValues={
+                      editingTrip?.travelCompanions
+                        ?.split(",")
+                        .map((value) => value.trim())
+                        .filter(Boolean) ?? []
+                    }
+                  />
+                </div>
                 <Input
                   name="friendsFamilyMet"
                   placeholder="Amis / famille rencontrés"
                   defaultValue={editingTrip?.friendsFamilyMet}
                   required
                 />
-                <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    name="transportationTo"
-                    placeholder="Transport aller (optionnel)"
-                    defaultValue={
-                      editingTrip?.transportationTo.join(", ") || ""
-                    }
-                  />
-                  <Input
-                    name="transportationOnSite"
-                    placeholder="Transport sur place (optionnel)"
-                    defaultValue={
-                      editingTrip?.transportationOnSite.join(", ") || ""
-                    }
-                  />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
+                      Transport aller
+                    </label>
+                    <CheckboxGroup
+                      name="transportationTo"
+                      options={TRANSPORT_OPTIONS.map((option) => ({
+                        value: option.value,
+                        label: option.label.fr,
+                      }))}
+                      defaultValues={editingTrip?.transportationTo ?? []}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
+                      Transport sur place
+                    </label>
+                    <CheckboxGroup
+                      name="transportationOnSite"
+                      options={TRANSPORT_OPTIONS.map((option) => ({
+                        value: option.value,
+                        label: option.label.fr,
+                      }))}
+                      defaultValues={editingTrip?.transportationOnSite ?? []}
+                    />
+                  </div>
                 </div>
                 <select
                   name="coverImageId"
@@ -1465,12 +1551,12 @@ export default function AdminPage() {
                     )}
                     {(trip.transportationTo || trip.transportationOnSite) && (
                       <p className="text-xs text-muted-foreground">
-                        {trip.transportationTo
-                          ? `Transport aller : ${trip.transportationTo}`
+                        {trip.transportationTo.length > 0
+                          ? `Transport aller : ${formatTransportLabels(trip.transportationTo, "fr")}`
                           : "Transport aller : -"}
                         {" · "}
-                        {trip.transportationOnSite
-                          ? `Transport sur place : ${trip.transportationOnSite}`
+                        {trip.transportationOnSite.length > 0
+                          ? `Transport sur place : ${formatTransportLabels(trip.transportationOnSite, "fr")}`
                           : "Transport sur place : -"}
                       </p>
                     )}

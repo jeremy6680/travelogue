@@ -26,6 +26,12 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
+import {
+  formatAccomodationLabels,
+  formatTransportLabel,
+  formatTransportLabels,
+  sortTransportValues,
+} from "@/lib/trip-options";
 
 const NICE_COORDINATES = { latitude: 43.7102, longitude: 7.262 };
 
@@ -194,10 +200,23 @@ function renderTripCard(
   metadata?: string,
   summaryLabel?: string,
 ) {
-  const { countryName, formatDate, formatDistanceKm, formatDaysLabel, t } = i18n;
-  const accomodationLabel = trip.accomodation.join(", ");
-  const transportationToLabel = trip.transportationTo.join(", ");
-  const transportationOnSiteLabel = trip.transportationOnSite.join(", ");
+  const {
+    countryName,
+    formatDate,
+    formatDistanceKm,
+    formatDaysLabel,
+    locale,
+    t,
+  } = i18n;
+  const accomodationLabel = formatAccomodationLabels(trip.accomodation, locale);
+  const transportationToLabel = formatTransportLabels(
+    trip.transportationTo,
+    locale,
+  );
+  const transportationOnSiteLabel = formatTransportLabels(
+    trip.transportationOnSite,
+    locale,
+  );
   const lengthOfStay = formatLengthOfStay(
     trip.visitedAt,
     trip.visitedUntil,
@@ -407,8 +426,8 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
         modes.add(mode);
       }
     }
-    return Array.from(modes).sort();
-  }, [trips]);
+    return sortTransportValues(Array.from(modes), i18n.locale);
+  }, [i18n.locale, trips]);
 
   const yearOptions = useMemo(() => {
     const years = new Set<string>();
@@ -541,7 +560,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                 <SelectItem value="all">{t("allTransport")}</SelectItem>
                 {transportOptions.map((t) => (
                   <SelectItem key={t} value={t}>
-                    {t}
+                    {formatTransportLabel(t, i18n.locale)}
                   </SelectItem>
                 ))}
               </SelectContent>

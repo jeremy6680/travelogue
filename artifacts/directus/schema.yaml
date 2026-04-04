@@ -3051,6 +3051,10 @@ fields:
             value: rental car
           - text: Train
             value: train
+          - text: Tram
+            value: tram
+          - text: Metro
+            value: metro
           - text: Bateau
             value: boat
           - text: Moto
@@ -3110,6 +3114,10 @@ fields:
             value: rental car
           - text: Train
             value: train
+          - text: Tram
+            value: tram
+          - text: Metro
+            value: metro
           - text: Bateau
             value: boat
           - text: Moto

@@ -14,9 +14,13 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
+import {
+  formatTransportLabel,
+  sortTransportValues,
+} from "@/lib/trip-options";
 
 export default function PostsPage() {
-  const { countryName, formatCountLabel, formatDate, t } = useI18n();
+  const { countryName, formatCountLabel, formatDate, locale, t } = useI18n();
   const { data: posts = [], isLoading } = usePostsQuery();
   const { data: trips = [] } = useTripsQuery();
   const [filterTrip, setFilterTrip] = useState<string>("all");
@@ -31,8 +35,8 @@ export default function PostsPage() {
         modes.add(mode);
       }
     }
-    return Array.from(modes).sort();
-  }, [trips]);
+    return sortTransportValues(Array.from(modes), locale);
+  }, [locale, trips]);
 
   const yearOptions = useMemo(() => {
     const years = new Set<string>();
@@ -113,7 +117,9 @@ export default function PostsPage() {
               <SelectContent>
                 <SelectItem value="all">{t("allTransport")}</SelectItem>
                 {transportOptions.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                  <SelectItem key={t} value={t}>
+                    {formatTransportLabel(t, locale)}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
