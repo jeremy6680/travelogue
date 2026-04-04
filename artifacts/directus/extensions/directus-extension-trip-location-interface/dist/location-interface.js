@@ -23,52 +23,6 @@ function getFirstVisitedCity(value) {
     .find(Boolean) ?? "";
 }
 
-function getSiblingInput(fieldName) {
-  if (typeof document === "undefined") return null;
-
-  const selectors = [
-    `input[name="${fieldName}"]`,
-    `select[name="${fieldName}"]`,
-    `[data-field="${fieldName}"] input`,
-    `[data-field="${fieldName}"] textarea`,
-    `[data-field="${fieldName}"] select`,
-  ];
-
-  return selectors
-    .map((selector) => document.querySelector(selector))
-    .find(Boolean) ?? null;
-}
-
-function getSiblingValue(fieldName) {
-  const target = getSiblingInput(fieldName);
-  return String(target?.value ?? "").trim();
-}
-
-function pushValueIntoSiblingInput(fieldName, value) {
-  const target = getSiblingInput(fieldName);
-  if (!target) return;
-
-  const nextValue = String(value ?? "");
-  target.value = nextValue;
-  target.setAttribute("value", nextValue);
-  target.dispatchEvent(new Event("input", { bubbles: true }));
-  target.dispatchEvent(new Event("change", { bubbles: true }));
-  target.dispatchEvent(new Event("blur", { bubbles: true }));
-}
-
-function buildTripGeocodeQuery(visitedCities) {
-  const firstCity = getFirstVisitedCity(visitedCities);
-  const tripName = getSiblingValue("name");
-  const countryCode = getSiblingValue("country_code");
-  const context = tripName || countryCode;
-
-  if (firstCity && context) {
-    return `${firstCity}, ${context}`;
-  }
-
-  return firstCity || context;
-}
-
 export default {
   props: {
     value: {
@@ -79,6 +33,7 @@ export default {
   emits: ["input", "setFieldValue"],
   setup(props, { emit }) {
     const api = useApi();
+    const wrapperRef = ref(null);
     const inputValue = ref(props.value ?? "");
     const status = ref("");
     const statusTone = ref("neutral");
@@ -96,6 +51,76 @@ export default {
       if (statusTone.value === "error") return "color: var(--theme--danger);";
       return "color: var(--theme--foreground-subdued);";
     });
+
+    const findSiblingInput = (fieldName) => {
+      if (typeof document === "undefined") return null;
+
+      const wrapper = wrapperRef.value;
+      const formRoot =
+        wrapper?.closest("form") ??
+        wrapper?.closest("[role='main']") ??
+        wrapper?.parentElement ??
+        document;
+
+      const scopedSelectors = [
+        `[data-field="${fieldName}"] input`,
+        `[data-field="${fieldName}"] textarea`,
+        `[data-field="${fieldName}"] select`,
+        `input[name="${fieldName}"]`,
+        `textarea[name="${fieldName}"]`,
+        `select[name="${fieldName}"]`,
+      ];
+
+      for (const selector of scopedSelectors) {
+        const match = formRoot.querySelector(selector);
+        if (match) {
+          return match;
+        }
+      }
+
+      const globalMatches = document.querySelectorAll(
+        [
+          `[data-field="${fieldName}"] input`,
+          `[data-field="${fieldName}"] textarea`,
+          `[data-field="${fieldName}"] select`,
+          `input[name="${fieldName}"]`,
+          `textarea[name="${fieldName}"]`,
+          `select[name="${fieldName}"]`,
+        ].join(", "),
+      );
+
+      return Array.from(globalMatches).find((element) => element.offsetParent !== null) ?? null;
+    };
+
+    const getSiblingValue = (fieldName) => {
+      const target = findSiblingInput(fieldName);
+      return String(target?.value ?? "").trim();
+    };
+
+    const pushValueIntoSiblingInput = (fieldName, value) => {
+      const target = findSiblingInput(fieldName);
+      if (!target) return;
+
+      const nextValue = String(value ?? "");
+      target.value = nextValue;
+      target.setAttribute("value", nextValue);
+      target.dispatchEvent(new Event("input", { bubbles: true }));
+      target.dispatchEvent(new Event("change", { bubbles: true }));
+      target.dispatchEvent(new Event("blur", { bubbles: true }));
+    };
+
+    const buildTripGeocodeQuery = (visitedCities) => {
+      const firstCity = getFirstVisitedCity(visitedCities);
+      const tripName = getSiblingValue("name");
+      const countryCode = getSiblingValue("country_code");
+      const context = tripName || countryCode;
+
+      if (firstCity && context) {
+        return `${firstCity}, ${context}`;
+      }
+
+      return firstCity || context;
+    };
 
     const geocodeInBackground = debounce(async (rawVisitedCities) => {
       const geocodeQuery = buildTripGeocodeQuery(rawVisitedCities);
@@ -152,7 +177,7 @@ export default {
     };
 
     return () =>
-      h("div", { style: "display:flex; flex-direction:column; gap:8px;" }, [
+      h("div", { ref: wrapperRef, style: "display:flex; flex-direction:column; gap:8px;" }, [
         h("input", {
           value: inputValue.value,
           onInput: handleInput,

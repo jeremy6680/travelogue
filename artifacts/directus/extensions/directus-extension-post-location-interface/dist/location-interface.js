@@ -26,6 +26,7 @@ export default {
   emits: ["input", "setFieldValue"],
   setup(props, { emit }) {
     const api = useApi();
+    const wrapperRef = ref(null);
     const inputValue = ref(props.value ?? "");
     const status = ref("");
     const statusTone = ref("neutral");
@@ -43,6 +44,65 @@ export default {
       if (statusTone.value === "error") return "color: var(--theme--danger);";
       return "color: var(--theme--foreground-subdued);";
     });
+
+    const findSiblingInputs = (fieldName) => {
+      if (typeof document === "undefined") return null;
+
+      const wrapper = wrapperRef.value;
+      const formRoot =
+        wrapper?.closest("form") ??
+        wrapper?.closest("[role='main']") ??
+        wrapper?.parentElement ??
+        document;
+
+      const scopedSelectors = [
+        `[data-field="${fieldName}"] input`,
+        `[data-field="${fieldName}"] textarea`,
+        `[data-field="${fieldName}"] select`,
+        `input[name="${fieldName}"]`,
+        `textarea[name="${fieldName}"]`,
+        `select[name="${fieldName}"]`,
+      ];
+
+      const scopedMatches = scopedSelectors.flatMap((selector) =>
+        Array.from(formRoot.querySelectorAll(selector)),
+      );
+
+      if (scopedMatches.length > 0) {
+        return scopedMatches;
+      }
+
+      const globalMatches = Array.from(document.querySelectorAll(
+        [
+          `[data-field="${fieldName}"] input`,
+          `[data-field="${fieldName}"] textarea`,
+          `[data-field="${fieldName}"] select`,
+          `input[name="${fieldName}"]`,
+          `textarea[name="${fieldName}"]`,
+          `select[name="${fieldName}"]`,
+        ].join(", "),
+      ));
+
+      return globalMatches;
+    };
+
+    const pushValueIntoSiblingInput = (fieldName, value) => {
+      const targets = findSiblingInputs(fieldName) ?? [];
+
+      if (targets.length === 0) {
+        return;
+      }
+
+      const nextValue = String(value ?? "");
+
+      for (const target of targets) {
+        target.value = nextValue;
+        target.setAttribute("value", nextValue);
+        target.dispatchEvent(new Event("input", { bubbles: true }));
+        target.dispatchEvent(new Event("change", { bubbles: true }));
+        target.dispatchEvent(new Event("blur", { bubbles: true }));
+      }
+    };
 
     const geocodeInBackground = debounce(async (rawLocation) => {
       const location = String(rawLocation ?? "").trim();
@@ -99,7 +159,7 @@ export default {
     };
 
     return () =>
-      h("div", { style: "display:flex; flex-direction:column; gap:8px;" }, [
+      h("div", { ref: wrapperRef, style: "display:flex; flex-direction:column; gap:8px;" }, [
         h("input", {
           value: inputValue.value,
           onInput: handleInput,
@@ -120,28 +180,3 @@ export default {
       ]);
   },
 };
-    const pushValueIntoSiblingInput = (fieldName, value) => {
-      if (typeof document === "undefined") return;
-
-      const selectors = [
-        `input[name="${fieldName}"]`,
-        `[data-field="${fieldName}"] input`,
-        `[data-field="${fieldName}"] textarea`,
-      ];
-
-      const target = selectors
-        .map((selector) => document.querySelector(selector))
-        .find(Boolean);
-
-      if (!target) {
-        return;
-      }
-
-      const nextValue = String(value ?? "");
-
-      target.value = nextValue;
-      target.setAttribute("value", nextValue);
-      target.dispatchEvent(new Event("input", { bubbles: true }));
-      target.dispatchEvent(new Event("change", { bubbles: true }));
-      target.dispatchEvent(new Event("blur", { bubbles: true }));
-    };
