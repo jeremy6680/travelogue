@@ -953,8 +953,8 @@ fields:
       field: location
       group: null
       hidden: false
-      interface: input
-      note: null
+      interface: travelogue-location-geocode
+      note: Geocode the location live in Studio and keep latitude/longitude editable.
       options: null
       readonly: false
       required: false
