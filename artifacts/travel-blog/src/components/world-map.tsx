@@ -7,6 +7,19 @@ import { MapPin, ZoomIn, ZoomOut, RotateCcw, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const atlasCountryNameAliases: Record<string, string[]> = {
+  DO: ["Dominican Rep."],
+  CF: ["Central African Rep."],
+  CG: ["Congo"],
+  CD: ["Dem. Rep. Congo"],
+  CZ: ["Czech Rep."],
+  GQ: ["Eq. Guinea"],
+  BA: ["Bosnia and Herz."],
+  PS: ["Palestine"],
+  SB: ["Solomon Is."],
+  TL: ["Timor-Leste"],
+  US: ["United States of America"],
+};
 
 export function WorldMap() {
   const { t } = useI18n();
@@ -20,6 +33,21 @@ export function WorldMap() {
 
   const visitedCountryCodes = useMemo(() => {
     return new Set(trips.map(t => t.countryCode.toUpperCase()));
+  }, [trips]);
+
+  const visitedCountryNames = useMemo(() => {
+    const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+    return new Set(
+      trips.flatMap((trip) => {
+        const code = trip.countryCode.toUpperCase();
+        const names = [regionNames.of(code), ...(atlasCountryNameAliases[code] ?? [])];
+
+        return names
+          .filter((name): name is string => Boolean(name))
+          .map((name) => name.toLowerCase());
+      }),
+    );
   }, [trips]);
 
   const activeData = pins.find(p => p.id === activePin);
@@ -106,11 +134,13 @@ export function WorldMap() {
             <Geographies geography={geoUrl}>
               {({ geographies }) =>
                 geographies.map((geo) => {
+                  const geographyName = geo.properties.name?.toLowerCase();
                   const isVisited =
                     visitedCountryCodes.has(geo.properties.ISO_A2) ||
                     visitedCountryCodes.has(geo.properties.ISO_A3) ||
                     visitedCountryCodes.has(geo.id) ||
-                    trips.some(t => t.name.toLowerCase() === geo.properties.name?.toLowerCase());
+                    visitedCountryNames.has(geographyName) ||
+                    trips.some(t => t.name.toLowerCase() === geographyName);
 
                   return (
                     <Geography
