@@ -94,6 +94,12 @@ Or do both:
 pnpm run db:setup:local
 ```
 
+Open the local database in Drizzle Studio:
+
+```sh
+pnpm --filter @workspace/db exec drizzle-kit studio --config ./drizzle.config.ts
+```
+
 If you change the Drizzle schema, generate and apply a new migration:
 
 ```sh
