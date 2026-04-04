@@ -8,7 +8,10 @@ type Option = {
 export const TRANSPORT_OPTIONS: Option[] = [
   { value: "plane", label: { fr: "Avion", en: "Plane" } },
   { value: "own car", label: { fr: "Voiture personnelle", en: "Own car" } },
-  { value: "rental car", label: { fr: "Voiture de location", en: "Rental car" } },
+  {
+    value: "rental car",
+    label: { fr: "Voiture de location", en: "Rental car" },
+  },
   { value: "train", label: { fr: "Train", en: "Train" } },
   { value: "tram", label: { fr: "Tram", en: "Tram" } },
   { value: "metro", label: { fr: "Metro", en: "Metro" } },
@@ -29,7 +32,7 @@ export const ACCOMODATION_OPTIONS: Option[] = [
   {
     value: "hosted-by-friends-family",
     label: {
-      fr: "Heberge (amis/famille)",
+      fr: "Hébergé (amis/famille)",
       en: "Hosted by friends/family",
     },
   },
