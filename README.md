@@ -6,6 +6,7 @@ Travelogue is a pnpm monorepo for a travel blog frontend backed by Directus and 
 
 - Frontend: React, Vite, Tailwind (`artifacts/travel-blog`)
 - CMS: Directus 11 (`artifacts/directus`)
+- Media CDN: Cloudinary
 - Database: PostgreSQL + Drizzle (`lib/db`)
 - Scripts: migrations and seeders from the workspace root
 
@@ -13,6 +14,7 @@ Travelogue is a pnpm monorepo for a travel blog frontend backed by Directus and 
 
 - Directus operations guide: [`docs/directus.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/directus.md)
 - Directus deployment on Coolify: [`docs/directus-coolify.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/directus-coolify.md)
+- Cloudinary workflow guide: [`docs/cloudinary.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/cloudinary.md)
 - Production checklist: [`docs/production-checklist.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/production-checklist.md)
 
 ## Prerequisites
@@ -54,6 +56,9 @@ At minimum, set these values in `artifacts/directus/.env`:
 SECRET=<random 32-char hex string>
 ADMIN_EMAIL=admin@travelogue.local
 ADMIN_PASSWORD=<strong password>
+CLOUDINARY_CLOUD_NAME=<your-cloudinary-cloud-name>
+CLOUDINARY_API_KEY=<your-cloudinary-api-key>
+CLOUDINARY_API_SECRET=<your-cloudinary-api-secret>
 ```
 
 Create the frontend env file:
@@ -66,6 +71,7 @@ Default local frontend config:
 
 ```sh
 VITE_API_BASE_URL=http://localhost:8055
+VITE_CLOUDINARY_CLOUD_NAME=<your-cloudinary-cloud-name>
 ```
 
 For production, set:
@@ -106,6 +112,12 @@ If you change the Drizzle schema, generate and apply a new migration:
 pnpm --filter @workspace/db generate
 pnpm --filter @workspace/db migrate
 ```
+
+The Cloudinary media integration adds a new `media_assets` table plus foreign keys on `posts`, `trips`, and `photos`. Run the migrations before using the new admin media screens.
+
+The admin also supports direct browser uploads to Cloudinary. The image binary never lands on your VPS; Directus only signs the upload and the frontend stores the returned metadata in `media_assets`.
+
+Directus now also exposes the recommended CMS-native path: create a `media_assets` item, upload from the custom `public_id` field interface, then save the item. That flow keeps uploads inside the Directus admin while still sending the binary straight to Cloudinary.
 
 ## Directus Bootstrap
 
@@ -159,6 +171,7 @@ pnpm run build
 
 - Netlify should build `@workspace/travel-blog` and publish `artifacts/travel-blog/dist/public`
 - Set `VITE_API_BASE_URL` in Netlify to your hosted Directus URL
+- Set `VITE_CLOUDINARY_CLOUD_NAME` in Netlify so the frontend can generate optimized Cloudinary URLs
 - Host Directus separately with access to the same PostgreSQL database
 - Protect `/admin` at the frontend edge if you expose it publicly
 

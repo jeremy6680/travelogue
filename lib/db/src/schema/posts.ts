@@ -1,4 +1,15 @@
-import { pgTable, text, serial, timestamp, real, integer, jsonb, varchar, date } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  real,
+  integer,
+  jsonb,
+  varchar,
+  date,
+} from "drizzle-orm/pg-core";
+import { mediaAssetsTable } from "./media-assets";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { countriesTable } from "./countries";
@@ -11,11 +22,22 @@ export const postsTable = pgTable("posts", {
   content: text("content").notNull(),
   excerpt: text("excerpt").notNull(),
   coverImageUrl: varchar("cover_image_url", { length: 2048 }),
-  gallery: jsonb("gallery").$type<{ url: string; caption: string }[]>(),
+  gallery: jsonb("gallery").$type<{
+    assetId?: number | null;
+    publicId?: string | null;
+    url: string | null;
+    alt?: string | null;
+    caption: string;
+    width?: number | null;
+    height?: number | null;
+  }[]>(),
   latitude: real("latitude"),
   longitude: real("longitude"),
   location: varchar("location", { length: 255 }),
   tripId: integer("trip_id").references(() => tripsTable.id, { onDelete: "set null", onUpdate: "cascade" }),
+  featuredImageId: integer("featured_image_id").references(() => mediaAssetsTable.id, {
+    onDelete: "set null",
+  }),
   countryCode: varchar("country_code", { length: 2 }).references(() => countriesTable.code, { onDelete: "set null", onUpdate: "cascade" }),
   publishedAt: date("published_at", { mode: "string" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

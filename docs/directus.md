@@ -107,7 +107,23 @@ DB_PASSWORD=postgres
 SECRET=replace-with-a-random-32-char-hex-string
 ADMIN_EMAIL=admin@travelogue.local
 ADMIN_PASSWORD=replace-with-a-strong-password
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret
 ```
+
+These Cloudinary variables are used by the custom Directus endpoint `cloudinary-upload`, which signs direct browser uploads for the frontend admin. The image file goes straight from the browser to Cloudinary, and only the metadata is written back into Directus.
+
+For `media_assets`, the recommended workflow is now directly inside the Directus CMS:
+
+1. Open the `Media Assets` collection in Directus.
+2. Create a new item.
+3. Use the custom `public_id` field interface to pick an image and upload it to Cloudinary.
+4. Let the widget fill `public_id`, `delivery_url`, `width`, `height`, `format`, `resource_type`, `bytes`, and `folder`.
+5. Adjust `title`, `alt`, or `caption` if needed.
+6. Save the item in Directus.
+
+This keeps Directus as the content source of truth while Cloudinary handles the actual image binary and delivery.
 
 ## First-Time Bootstrap
 
@@ -560,6 +576,29 @@ The schema snapshot does not include:
 - database backups
 
 If you need content migration, handle that separately.
+
+## Cloudinary Media Model
+
+Travelogue now expects a dedicated `media_assets` collection/table for Cloudinary-backed media metadata, with these relational links:
+
+- `posts.featured_image_id`
+- `trips.cover_image_id`
+- `photos.media_asset_id`
+
+After running the latest database migration, open Directus locally and refresh the schema snapshot so `artifacts/directus/schema.yaml` reflects the new collection metadata and field interfaces.
+
+Recommended asset folders:
+
+- `travelogue/posts`
+- `travelogue/trips`
+- `travelogue/home/featured`
+
+Recommended content flow:
+
+1. Upload the original image to Cloudinary from a trusted backend endpoint or signed-upload flow.
+2. Persist the Cloudinary response metadata into `media_assets`.
+3. Link posts, trips, and homepage/photo records to the relevant `media_assets` row.
+4. Let the frontend build optimized Cloudinary delivery URLs using `public_id`.
 
 ## Common Errors
 

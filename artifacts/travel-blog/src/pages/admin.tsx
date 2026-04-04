@@ -1,5 +1,48 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import {
+  CLOUDINARY_UPLOAD_FOLDERS,
+  getMediaAssetImageUrl,
+  uploadImageToCloudinary,
+} from "@/lib/cloudinary";
+import { Layout } from "@/components/layout";
+import {
+  directusQueryKeys,
+  useCreateJourneyMutation,
+  useCreateMediaAssetMutation,
+  useCreatePhotoMutation,
+  useCreatePostMutation,
+  useCreateTripMutation,
+  useDeleteJourneyMutation,
+  useDeleteMediaAssetMutation,
+  useDeletePhotoMutation,
+  useDeletePostMutation,
+  useDeleteTripMutation,
+  useDirectusHealthQuery,
+  useJourneysQuery,
+  useMediaAssetsQuery,
+  usePhotosQuery,
+  usePostsQuery,
+  useTripsQuery,
+  useUpdateJourneyMutation,
+  useUpdateMediaAssetMutation,
+  useUpdatePhotoMutation,
+  useUpdatePostMutation,
+  useUpdateTripMutation,
+} from "@/lib/directus";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { Trash2, Edit2, CheckCircle2, XCircle, LoaderCircle, UploadCloud } from "lucide-react";
+import type {
+  Journey,
+  MediaAsset,
+  Photo,
+  Post,
+  Trip,
+} from "@/lib/travel-types";
 
 const COUNTRY_CODES: { code: string; name: string }[] = [
   { code: "AF", name: "Afghanistan" }, { code: "AL", name: "Albania" }, { code: "DZ", name: "Algeria" },
@@ -68,36 +111,40 @@ const COUNTRY_CODES: { code: string; name: string }[] = [
   { code: "VU", name: "Vanuatu" }, { code: "VE", name: "Venezuela" }, { code: "VN", name: "Vietnam" },
   { code: "YE", name: "Yemen" }, { code: "ZM", name: "Zambia" }, { code: "ZW", name: "Zimbabwe" },
 ];
-import { Layout } from "@/components/layout";
-import {
-  useCreateJourneyMutation,
-  directusQueryKeys,
-  useCreatePhotoMutation,
-  useCreatePostMutation,
-  useCreateTripMutation,
-  useDeleteJourneyMutation,
-  useDeletePhotoMutation,
-  useDeletePostMutation,
-  useDeleteTripMutation,
-  useDirectusHealthQuery,
-  useJourneysQuery,
-  usePhotosQuery,
-  usePostsQuery,
-  useTripsQuery,
-  useUpdateJourneyMutation,
-  useUpdatePhotoMutation,
-  useUpdatePostMutation,
-  useUpdateTripMutation,
-} from "@/lib/directus";
-import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { Trash2, Edit2, CheckCircle2, XCircle } from "lucide-react";
 
 const actionButtonClass =
   "transition-all hover:scale-105 hover:bg-muted active:scale-95 active:opacity-80";
+
+const selectClassName = cn(
+  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
+  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+  "disabled:cursor-not-allowed disabled:opacity-50",
+);
+
+function useAdminInvalidation() {
+  const queryClient = useQueryClient();
+
+  return {
+    invalidatePosts() {
+      queryClient.invalidateQueries({ queryKey: directusQueryKeys.posts });
+      queryClient.invalidateQueries({ queryKey: directusQueryKeys.mapPins });
+      queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
+    },
+    invalidateTrips() {
+      queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
+      queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
+    },
+    invalidatePhotos() {
+      queryClient.invalidateQueries({ queryKey: directusQueryKeys.photos });
+    },
+    invalidateMedia() {
+      queryClient.invalidateQueries({ queryKey: directusQueryKeys.mediaAssets });
+      queryClient.invalidateQueries({ queryKey: directusQueryKeys.posts });
+      queryClient.invalidateQueries({ queryKey: directusQueryKeys.photos });
+      queryClient.invalidateQueries({ queryKey: directusQueryKeys.mapPins });
+    },
+  };
+}
 
 export default function AdminPage() {
   const [adminToken, setAdminToken] = useState(() =>
@@ -105,13 +152,16 @@ export default function AdminPage() {
       ? ""
       : window.sessionStorage.getItem("travelogue_admin_api_token") ?? "",
   );
+
   const { data: posts = [] } = usePostsQuery();
   const { data: journeys = [] } = useJourneysQuery();
   const { data: trips = [] } = useTripsQuery();
   const { data: photos = [] } = usePhotosQuery();
+  const { data: mediaAssets = [] } = useMediaAssetsQuery();
   const { data: health } = useDirectusHealthQuery();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const invalidation = useAdminInvalidation();
 
   const createJourney = useCreateJourneyMutation();
   const updateJourney = useUpdateJourneyMutation();
@@ -129,14 +179,20 @@ export default function AdminPage() {
   const updatePhoto = useUpdatePhotoMutation();
   const deletePhoto = useDeletePhotoMutation();
 
-  const [editingJourney, setEditingJourney] = useState<any>(null);
-  const [editingPost, setEditingPost] = useState<any>(null);
-  const [editingTrip, setEditingTrip] = useState<any>(null);
-  const [editingPhoto, setEditingPhoto] = useState<any>(null);
+  const createMediaAsset = useCreateMediaAssetMutation();
+  const updateMediaAsset = useUpdateMediaAssetMutation();
+  const deleteMediaAsset = useDeleteMediaAssetMutation();
+
+  const [editingJourney, setEditingJourney] = useState<Journey | null>(null);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+  const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
+  const [editingMediaAsset, setEditingMediaAsset] = useState<MediaAsset | null>(null);
   const [postTripId, setPostTripId] = useState("");
   const [postCountryCode, setPostCountryCode] = useState("");
   const [postLatitude, setPostLatitude] = useState("");
   const [postLongitude, setPostLongitude] = useState("");
+  const [isUploadingAsset, setIsUploadingAsset] = useState(false);
   const isUnlocked = adminToken.trim().length > 0;
   const journeyOptions = useMemo(
     () =>
@@ -195,6 +251,17 @@ export default function AdminPage() {
     setPostLongitude(editingPost.longitude != null ? String(editingPost.longitude) : "");
   }, [editingPost]);
 
+  const mediaAssetOptions = useMemo(
+    () =>
+      [...mediaAssets]
+        .sort((a, b) => a.publicId.localeCompare(b.publicId, "en"))
+        .map((asset) => ({
+          id: asset.id,
+          label: `${asset.publicId} · Asset ID ${asset.id}`,
+        })),
+    [mediaAssets],
+  );
+
   const handleUnlock = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -251,6 +318,7 @@ export default function AdminPage() {
       slug: formData.get("slug") as string,
       content: formData.get("content") as string,
       excerpt: formData.get("excerpt") as string,
+      coverImageId: formData.get("coverImageId") ? Number(formData.get("coverImageId")) : null,
       coverImageUrl: (formData.get("coverImageUrl") as string) || null,
       location: (formData.get("location") as string) || null,
       tripId: formData.get("tripId") ? Number(formData.get("tripId")) : null,
@@ -263,20 +331,16 @@ export default function AdminPage() {
     if (editingPost) {
       updatePost.mutate({ token: adminToken, id: editingPost.id, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.posts });
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.mapPins });
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
+          invalidation.invalidatePosts();
           setEditingPost(null);
           resetPostFormState();
           toast({ title: "Post updated successfully" });
-        }
+        },
       });
     } else {
       createPost.mutate({ token: adminToken, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.posts });
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.mapPins });
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
+          invalidation.invalidatePosts();
           toast({ title: "Post created successfully" });
           resetPostFormState();
           (e.target as HTMLFormElement).reset();
@@ -323,7 +387,7 @@ export default function AdminPage() {
           queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
           toast({ title: "Journey created successfully" });
           (e.target as HTMLFormElement).reset();
-        }
+        },
       });
     }
   };
@@ -343,6 +407,7 @@ export default function AdminPage() {
       travelCompanions: formData.get("travelCompanions") as string,
       friendsFamilyMet: formData.get("friendsFamilyMet") as string,
       visitedAt: formData.get("visitedAt") as string,
+      coverImageId: formData.get("coverImageId") ? Number(formData.get("coverImageId")) : null,
       latitude: latitudeInput ? Number(latitudeInput) : undefined,
       longitude: longitudeInput ? Number(longitudeInput) : undefined,
       journeyId: journeyIdInput ? Number(journeyIdInput) : null,
@@ -354,22 +419,18 @@ export default function AdminPage() {
     if (editingTrip) {
       updateTrip.mutate({ token: adminToken, id: editingTrip.id, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
+          invalidation.invalidateTrips();
           setEditingTrip(null);
           toast({ title: "Trip updated successfully" });
-        }
+        },
       });
     } else {
       createTrip.mutate({ token: adminToken, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
+          invalidation.invalidateTrips();
           toast({ title: "Trip added successfully" });
           (e.target as HTMLFormElement).reset();
-        }
+        },
       });
     }
   };
@@ -379,7 +440,8 @@ export default function AdminPage() {
     const formData = new FormData(e.currentTarget);
     const linkedTrip = findTripById(formData.get("tripId"));
     const data = {
-      url: formData.get("url") as string,
+      mediaAssetId: formData.get("mediaAssetId") ? Number(formData.get("mediaAssetId")) : null,
+      url: (formData.get("url") as string) || null,
       caption: (formData.get("caption") as string) || null,
       link: (formData.get("link") as string) || null,
       tripId: formData.get("tripId") ? Number(formData.get("tripId")) : null,
@@ -390,18 +452,117 @@ export default function AdminPage() {
     if (editingPhoto) {
       updatePhoto.mutate({ token: adminToken, id: editingPhoto.id, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.photos });
+          invalidation.invalidatePhotos();
           setEditingPhoto(null);
           toast({ title: "Photo updated successfully" });
-        }
+        },
       });
     } else {
       createPhoto.mutate({ token: adminToken, data }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: directusQueryKeys.photos });
+          invalidation.invalidatePhotos();
           toast({ title: "Photo added successfully" });
           (e.target as HTMLFormElement).reset();
-        }
+        },
+      });
+    }
+  };
+
+  const handleMediaAssetSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      title: (formData.get("title") as string) || null,
+      publicId: formData.get("publicId") as string,
+      deliveryUrl: (formData.get("deliveryUrl") as string) || null,
+      width: formData.get("width") ? Number(formData.get("width")) : null,
+      height: formData.get("height") ? Number(formData.get("height")) : null,
+      format: (formData.get("format") as string) || null,
+      resourceType: (formData.get("resourceType") as string) || null,
+      bytes: formData.get("bytes") ? Number(formData.get("bytes")) : null,
+      alt: (formData.get("alt") as string) || null,
+      caption: (formData.get("caption") as string) || null,
+      folder: (formData.get("folder") as string) || null,
+      placeholderUrl: (formData.get("placeholderUrl") as string) || null,
+    };
+
+    if (editingMediaAsset) {
+      updateMediaAsset.mutate({ token: adminToken, id: editingMediaAsset.id, data }, {
+        onSuccess: () => {
+          invalidation.invalidateMedia();
+          setEditingMediaAsset(null);
+          toast({ title: "Media asset updated successfully" });
+        },
+      });
+    } else {
+      createMediaAsset.mutate({ token: adminToken, data }, {
+        onSuccess: () => {
+          invalidation.invalidateMedia();
+          toast({ title: "Media asset added successfully" });
+          (e.target as HTMLFormElement).reset();
+        },
+      });
+    }
+  };
+
+  const handleCloudinaryUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const selectedFile = formData.get("file");
+
+    if (!(selectedFile instanceof File) || selectedFile.size === 0) {
+      toast({
+        title: "No file selected",
+        description: "Choose an image before starting the Cloudinary upload.",
+      });
+      return;
+    }
+
+    setIsUploadingAsset(true);
+
+    try {
+      const uploaded = await uploadImageToCloudinary({
+        adminToken,
+        alt: (formData.get("alt") as string) || null,
+        assetFolder: formData.get("assetFolder") as (typeof CLOUDINARY_UPLOAD_FOLDERS)[number],
+        caption: (formData.get("caption") as string) || null,
+        file: selectedFile,
+        publicId: (formData.get("publicId") as string) || null,
+        title: (formData.get("title") as string) || null,
+      });
+
+      createMediaAsset.mutate(
+        {
+          token: adminToken,
+          data: uploaded.mediaAsset,
+        },
+        {
+          onSuccess: () => {
+            invalidation.invalidateMedia();
+            toast({
+              title: "Image uploaded to Cloudinary",
+              description: uploaded.upload.publicId,
+            });
+            (e.target as HTMLFormElement).reset();
+          },
+          onError: (error) => {
+            toast({
+              title: "Cloudinary upload saved, Directus sync failed",
+              description: error.message,
+              variant: "destructive",
+            });
+          },
+          onSettled: () => {
+            setIsUploadingAsset(false);
+          },
+        },
+      );
+    } catch (error) {
+      setIsUploadingAsset(false);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Unknown Cloudinary error",
+        variant: "destructive",
       });
     }
   };
@@ -412,15 +573,16 @@ export default function AdminPage() {
         <header className="border-b pb-8 flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-serif font-bold text-foreground">Admin Journal</h1>
-            <p className="text-muted-foreground mt-2 font-serif italic">Manage your dispatches and map pins.</p>
+            <p className="text-muted-foreground mt-2 font-serif italic">Manage your dispatches, trips, and Cloudinary media.</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm font-mono border rounded-full px-4 py-1.5 bg-card">
-              Server Status: 
-              {health?.status === 'ok' ? 
-                <CheckCircle2 className="w-4 h-4 text-green-500" /> : 
+              Server Status:
+              {health?.status === "ok" ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
                 <XCircle className="w-4 h-4 text-red-500" />
-              }
+              )}
             </div>
             <Button type="button" variant="outline" size="sm" onClick={handleLock}>
               Lock
@@ -429,32 +591,39 @@ export default function AdminPage() {
         </header>
 
         <div className="grid md:grid-cols-2 gap-12">
-          {/* Posts Section */}
           <section className="space-y-6">
             <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
               Dispatches <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{posts.length}</span>
             </h2>
-            
+
             <form onSubmit={handlePostSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingPost ? 'Edit Dispatch' : 'New Dispatch'}</h3>
-              
+              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingPost ? "Edit Dispatch" : "New Dispatch"}</h3>
+
               <div className="space-y-3">
                 <Input name="title" placeholder="Title" defaultValue={editingPost?.title} required />
                 <Input name="slug" placeholder="Slug (e.g. tokyo-nights)" defaultValue={editingPost?.slug} required />
                 <Textarea name="excerpt" placeholder="Brief excerpt..." defaultValue={editingPost?.excerpt} required className="h-20" />
                 <Textarea name="content" placeholder="Full story content..." defaultValue={editingPost?.content} required className="h-40" />
-                <Input name="coverImageUrl" placeholder="Cover Image URL (optional)" defaultValue={editingPost?.coverImageUrl || ''} />
+                <select
+                  name="coverImageId"
+                  defaultValue={editingPost?.coverImage?.id != null ? String(editingPost.coverImage.id) : ""}
+                  className={selectClassName}
+                >
+                  <option value="">No Cloudinary asset linked</option>
+                  {mediaAssetOptions.map((asset) => (
+                    <option key={asset.id} value={String(asset.id)}>
+                      {asset.label}
+                    </option>
+                  ))}
+                </select>
+                <Input name="coverImageUrl" placeholder="Legacy cover image URL (optional)" defaultValue={editingPost?.coverImageUrl || ""} />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="location" placeholder="Location string" defaultValue={editingPost?.location || ''} />
+                  <Input name="location" placeholder="Location string" defaultValue={editingPost?.location || ""} />
                   <select
                     name="tripId"
                     value={postTripId}
                     onChange={(event) => syncPostCoordinatesFromTrip(event.target.value)}
-                    className={cn(
-                      "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
-                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                      "disabled:cursor-not-allowed disabled:opacity-50"
-                    )}
+                    className={selectClassName}
                   >
                     <option value="">No linked trip</option>
                     {tripOptions.map((trip) => (
@@ -467,11 +636,7 @@ export default function AdminPage() {
                     name="countryCode"
                     value={postCountryCode}
                     onChange={(event) => setPostCountryCode(event.target.value)}
-                    className={cn(
-                      "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
-                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                      "disabled:cursor-not-allowed disabled:opacity-50"
-                    )}
+                    className={selectClassName}
                   >
                     <option value="">Country from linked trip if possible</option>
                     {COUNTRY_CODES.map(c => (
@@ -505,33 +670,34 @@ export default function AdminPage() {
 
               <div className="flex gap-3 pt-4">
                 <Button type="submit" className="flex-1">
-                  {editingPost ? 'Update Dispatch' : 'Publish Dispatch'}
+                  {editingPost ? "Update Dispatch" : "Publish Dispatch"}
                 </Button>
                 {editingPost && (
-                  <Button type="button" variant="outline" onClick={() => setEditingPost(null)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setEditingPost(null)}>
+                    Cancel
+                  </Button>
                 )}
               </div>
             </form>
 
             <div className="space-y-3">
-              {posts.map(post => (
+              {posts.map((post) => (
                 <div key={post.id} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors">
                   <div>
                     <h4 className="font-serif font-bold">{post.title}</h4>
                     <p className="text-xs text-muted-foreground font-mono">{post.slug}</p>
+                    {post.coverImage && (
+                      <p className="text-xs text-muted-foreground">Asset ID {post.coverImage.id} · {post.coverImage.publicId}</p>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button size="icon" variant="ghost" className={actionButtonClass} onClick={() => setEditingPost(post)}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
-                      if(confirm("Delete this dispatch?")) {
+                      if (confirm("Delete this dispatch?")) {
                         deletePost.mutate({ token: adminToken, id: post.id }, {
-                          onSuccess: () => {
-                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.posts });
-                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.mapPins });
-                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
-                          }
+                          onSuccess: () => invalidation.invalidatePosts(),
                         });
                       }
                     }}>
@@ -543,7 +709,6 @@ export default function AdminPage() {
             </div>
           </section>
 
-          {/* Trips Section */}
           <section className="space-y-6">
             <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
               Journeys <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{journeys.length}</span>
@@ -647,18 +812,9 @@ export default function AdminPage() {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <Input name="name" placeholder="Trip Name" defaultValue={editingTrip?.name} required />
-                  <select
-                    name="countryCode"
-                    defaultValue={editingTrip?.countryCode ?? ""}
-                    required
-                    className={cn(
-                      "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
-                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                      "disabled:cursor-not-allowed disabled:opacity-50"
-                    )}
-                  >
+                  <select name="countryCode" defaultValue={editingTrip?.countryCode ?? ""} required className={selectClassName}>
                     <option value="" disabled>Country</option>
-                    {COUNTRY_CODES.map(c => (
+                    {COUNTRY_CODES.map((c) => (
                       <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
                     ))}
                   </select>
@@ -692,8 +848,24 @@ export default function AdminPage() {
                 <Input name="travelCompanions" placeholder="Travel Companions" defaultValue={editingTrip?.travelCompanions} required />
                 <Input name="friendsFamilyMet" placeholder="Friends/Family Met" defaultValue={editingTrip?.friendsFamilyMet} required />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="transportationTo" placeholder="Getting There (optional)" defaultValue={editingTrip?.transportationTo || ''} />
-                  <Input name="transportationOnSite" placeholder="Getting Around (optional)" defaultValue={editingTrip?.transportationOnSite || ''} />
+                  <Input name="transportationTo" placeholder="Getting There (optional)" defaultValue={editingTrip?.transportationTo.join(", ") || ""} />
+                  <Input name="transportationOnSite" placeholder="Getting Around (optional)" defaultValue={editingTrip?.transportationOnSite.join(", ") || ""} />
+                </div>
+                <select
+                  name="coverImageId"
+                  defaultValue={editingTrip?.coverImageId != null ? String(editingTrip.coverImageId) : ""}
+                  className={selectClassName}
+                >
+                  <option value="">No Cloudinary cover linked</option>
+                  {mediaAssetOptions.map((asset) => (
+                    <option key={asset.id} value={String(asset.id)}>
+                      {asset.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input name="latitude" type="number" step="any" placeholder="Latitude (optional)" defaultValue={editingTrip?.latitude ?? ""} />
+                  <Input name="longitude" type="number" step="any" placeholder="Longitude (optional)" defaultValue={editingTrip?.longitude ?? ""} />
                 </div>
                 <details className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
                   <summary className="cursor-pointer font-medium text-foreground">Advanced coordinates override</summary>
@@ -710,22 +882,27 @@ export default function AdminPage() {
 
               <div className="flex gap-3 pt-4">
                 <Button type="submit" className="flex-1">
-                  {editingTrip ? 'Update Trip' : 'Log Trip'}
+                  {editingTrip ? "Update Trip" : "Log Trip"}
                 </Button>
                 {editingTrip && (
-                  <Button type="button" variant="outline" onClick={() => setEditingTrip(null)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setEditingTrip(null)}>
+                    Cancel
+                  </Button>
                 )}
               </div>
             </form>
 
             <div className="space-y-3">
-              {trips.map(trip => (
+              {trips.map((trip) => (
                 <div key={trip.id} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors">
                   <div>
                     <h4 className="font-serif font-bold flex items-center gap-2">
                       {trip.name} <span className="text-xs font-mono font-normal text-muted-foreground">{trip.countryCode}</span>
                     </h4>
                     <p className="text-xs text-muted-foreground">Trip ID {trip.id} · {trip.visitedCities}</p>
+                    {trip.coverImage && (
+                      <p className="text-xs text-muted-foreground">Cover Asset ID {trip.coverImage.id} · {trip.coverImage.publicId}</p>
+                    )}
                     {trip.journeyId != null && (
                       <p className="text-xs text-muted-foreground">
                         Journey: {journeys.find((journey) => journey.id === trip.journeyId)?.name ?? `#${trip.journeyId}`}
@@ -745,13 +922,9 @@ export default function AdminPage() {
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
-                      if(confirm("Remove this trip from passport?")) {
+                      if (confirm("Remove this trip from passport?")) {
                         deleteTrip.mutate({ token: adminToken, id: trip.id }, {
-                          onSuccess: () => {
-                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
-                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
-                            queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
-                          }
+                          onSuccess: () => invalidation.invalidateTrips(),
                         });
                       }
                     }}>
@@ -764,27 +937,148 @@ export default function AdminPage() {
           </section>
         </div>
 
-        {/* Photos Section */}
+        <section className="space-y-6">
+          <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
+            Media Assets <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{mediaAssets.length}</span>
+          </h2>
+
+          <form onSubmit={handleCloudinaryUpload} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
+            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">Upload Direct To Cloudinary</h3>
+            <p className="text-sm text-muted-foreground">
+              The file goes straight from your browser to Cloudinary. Directus only stores the metadata afterwards.
+            </p>
+            <div className="space-y-3">
+              <Input name="file" type="file" accept="image/*" required />
+              <select name="assetFolder" defaultValue={CLOUDINARY_UPLOAD_FOLDERS[0]} className={selectClassName}>
+                {CLOUDINARY_UPLOAD_FOLDERS.map((folder) => (
+                  <option key={folder} value={folder}>
+                    {folder}
+                  </option>
+                ))}
+              </select>
+              <div className="grid md:grid-cols-2 gap-3">
+                <Input name="title" placeholder="Title (optional)" />
+                <Input name="publicId" placeholder="Custom public_id without extension (optional)" />
+              </div>
+              <div className="grid md:grid-cols-2 gap-3">
+                <Input name="alt" placeholder="Alt text (optional)" />
+                <Input name="caption" placeholder="Caption (optional)" />
+              </div>
+            </div>
+            <Button type="submit" className="w-full" disabled={isUploadingAsset || createMediaAsset.isPending}>
+              {isUploadingAsset || createMediaAsset.isPending ? (
+                <>
+                  <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+                  Uploading to Cloudinary...
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="w-4 h-4 mr-2" />
+                  Upload image and create media asset
+                </>
+              )}
+            </Button>
+          </form>
+
+          <form onSubmit={handleMediaAssetSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
+            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingMediaAsset ? "Edit Media Asset" : "Add Cloudinary Asset"}</h3>
+            <div className="space-y-3">
+              <Input name="publicId" placeholder="Cloudinary public_id" defaultValue={editingMediaAsset?.publicId} required />
+              <div className="grid md:grid-cols-2 gap-3">
+                <Input name="title" placeholder="Title (optional)" defaultValue={editingMediaAsset?.title || ""} />
+                <Input name="folder" placeholder="Folder (optional)" defaultValue={editingMediaAsset?.folder || ""} />
+              </div>
+              <div className="grid md:grid-cols-2 gap-3">
+                <Input name="alt" placeholder="Alt text (optional)" defaultValue={editingMediaAsset?.alt || ""} />
+                <Input name="caption" placeholder="Caption (optional)" defaultValue={editingMediaAsset?.caption || ""} />
+              </div>
+              <Input name="deliveryUrl" placeholder="Cloudinary secure_url fallback (optional)" defaultValue={editingMediaAsset?.deliveryUrl || ""} />
+              <Input name="placeholderUrl" placeholder="Placeholder / blur URL (optional)" defaultValue={editingMediaAsset?.placeholderUrl || ""} />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Input name="width" type="number" placeholder="Width" defaultValue={editingMediaAsset?.width ?? ""} />
+                <Input name="height" type="number" placeholder="Height" defaultValue={editingMediaAsset?.height ?? ""} />
+                <Input name="format" placeholder="Format" defaultValue={editingMediaAsset?.format || ""} />
+                <Input name="resourceType" placeholder="Resource type" defaultValue={editingMediaAsset?.resourceType || ""} />
+              </div>
+              <Input name="bytes" type="number" placeholder="Bytes (optional)" defaultValue={editingMediaAsset?.bytes ?? ""} />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button type="submit" className="flex-1">
+                {editingMediaAsset ? "Update Asset" : "Add Asset"}
+              </Button>
+              {editingMediaAsset && (
+                <Button type="button" variant="outline" onClick={() => setEditingMediaAsset(null)}>
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </form>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {mediaAssets.map((asset) => (
+              <div key={asset.id} className="flex gap-4 p-4 bg-card border rounded-xl">
+                <div className="w-24 h-24 rounded-xl overflow-hidden bg-muted shrink-0">
+                  {getMediaAssetImageUrl(asset, { width: 192, height: 192, crop: "fill" }) && (
+                    <img
+                      src={getMediaAssetImageUrl(asset, { width: 192, height: 192, crop: "fill" }) ?? ""}
+                      alt={asset.alt ?? asset.title ?? asset.publicId}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-serif font-bold truncate">{asset.title || asset.publicId}</h4>
+                  <p className="text-xs text-muted-foreground font-mono break-all">{asset.publicId}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Asset ID {asset.id}{asset.folder ? ` · ${asset.folder}` : ""}</p>
+                  {asset.alt && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{asset.alt}</p>}
+                </div>
+                <div className="flex gap-2">
+                  <Button size="icon" variant="ghost" className={actionButtonClass} onClick={() => setEditingMediaAsset(asset)}>
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
+                    if (confirm("Delete this media asset? Existing linked records will lose their asset reference.")) {
+                      deleteMediaAsset.mutate({ token: adminToken, id: asset.id }, {
+                        onSuccess: () => invalidation.invalidateMedia(),
+                      });
+                    }
+                  }}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="space-y-6">
           <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
             Photo Grid <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{photos.length}</span>
           </h2>
 
           <form onSubmit={handlePhotoSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingPhoto ? 'Edit Photo' : 'Add Photo'}</h3>
+            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingPhoto ? "Edit Photo" : "Add Photo"}</h3>
             <div className="space-y-3">
-              <Input name="url" placeholder="Image URL" defaultValue={editingPhoto?.url} required />
-              <Input name="caption" placeholder="Caption (optional)" defaultValue={editingPhoto?.caption || ''} />
-              <Input name="link" placeholder="Link URL (optional — e.g. /posts/my-post)" defaultValue={editingPhoto?.link || ''} />
+              <select
+                name="mediaAssetId"
+                defaultValue={editingPhoto?.mediaAssetId != null ? String(editingPhoto.mediaAssetId) : ""}
+                className={selectClassName}
+              >
+                <option value="">No linked Cloudinary asset</option>
+                {mediaAssetOptions.map((asset) => (
+                  <option key={asset.id} value={String(asset.id)}>
+                    {asset.label}
+                  </option>
+                ))}
+              </select>
+              <Input name="url" placeholder="Legacy / fallback image URL (optional)" defaultValue={editingPhoto?.url || ""} />
+              <Input name="caption" placeholder="Caption (optional)" defaultValue={editingPhoto?.caption || ""} />
+              <Input name="link" placeholder="Link URL (optional — e.g. /posts/my-post)" defaultValue={editingPhoto?.link || ""} />
               <div className="grid grid-cols-2 gap-3">
                 <select
                   name="tripId"
                   defaultValue={editingPhoto?.tripId != null ? String(editingPhoto.tripId) : ""}
-                  className={cn(
-                    "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                    "disabled:cursor-not-allowed disabled:opacity-50"
-                  )}
+                  className={selectClassName}
                 >
                   <option value="">No linked trip</option>
                   {tripOptions.map((trip) => (
@@ -796,11 +1090,7 @@ export default function AdminPage() {
                 <select
                   name="countryCode"
                   defaultValue={editingPhoto?.countryCode ?? ""}
-                  className={cn(
-                    "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                    "disabled:cursor-not-allowed disabled:opacity-50"
-                  )}
+                  className={selectClassName}
                 >
                   <option value="">Country from linked trip if possible</option>
                   {COUNTRY_CODES.map(c => (
@@ -811,17 +1101,23 @@ export default function AdminPage() {
               <Input name="displayOrder" type="number" placeholder="Display order (0 = first)" defaultValue={editingPhoto?.displayOrder ?? 0} />
             </div>
             <div className="flex gap-3 pt-4">
-              <Button type="submit" className="flex-1">{editingPhoto ? 'Update Photo' : 'Add Photo'}</Button>
+              <Button type="submit" className="flex-1">{editingPhoto ? "Update Photo" : "Add Photo"}</Button>
               {editingPhoto && (
-                <Button type="button" variant="outline" onClick={() => setEditingPhoto(null)}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => setEditingPhoto(null)}>
+                  Cancel
+                </Button>
               )}
             </div>
           </form>
 
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {photos.map(photo => (
+            {photos.map((photo) => (
               <div key={photo.id} className="group relative aspect-square rounded-xl overflow-hidden bg-muted border">
-                <img src={photo.url} alt={photo.caption ?? ''} className="w-full h-full object-cover" />
+                <img
+                  src={getMediaAssetImageUrl(photo.mediaAsset, { width: 400, height: 400, crop: "fill" }) ?? photo.url ?? ""}
+                  alt={photo.mediaAsset?.alt ?? photo.caption ?? ""}
+                  className="w-full h-full object-cover"
+                />
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
                   <p className="text-white text-xs text-center line-clamp-2">{photo.caption}</p>
                   <div className="flex gap-1">
@@ -831,7 +1127,7 @@ export default function AdminPage() {
                     <Button size="icon" variant="destructive" className="h-7 w-7 active:scale-95 transition-all" onClick={() => {
                       if (confirm("Delete this photo?")) {
                         deletePhoto.mutate({ token: adminToken, id: photo.id }, {
-                          onSuccess: () => queryClient.invalidateQueries({ queryKey: directusQueryKeys.photos })
+                          onSuccess: () => invalidation.invalidatePhotos(),
                         });
                       }
                     }}>

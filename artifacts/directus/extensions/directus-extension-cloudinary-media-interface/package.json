@@ -1,0 +1,12 @@
+{
+  "name": "directus-extension-cloudinary-media-interface",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "directus:extension": {
+    "type": "interface",
+    "path": "dist/index.js",
+    "source": "",
+    "host": "^11.0.0"
+  }
+}

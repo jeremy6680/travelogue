@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import type { Journey, Post, Trip } from "@/lib/travel-types";
 import { Link } from "wouter";
@@ -352,10 +353,10 @@ function renderTripCard(
                 className="group flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50"
                 data-testid={`link-post-${post.id}`}
               >
-                {post.coverImageUrl ? (
+                {(post.coverImage || post.coverImageUrl) ? (
                   <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden shrink-0 shadow-sm">
                     <img
-                      src={post.coverImageUrl}
+                      src={getMediaAssetImageUrl(post.coverImage, { width: 128, height: 128, crop: "fill" }) ?? post.coverImageUrl ?? ""}
                       alt=""
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
