@@ -369,6 +369,55 @@ Always verify:
 
 If the field exists in the database but is missing from the admin UI, restart the Directus app in Coolify and reload the admin.
 
+### Seed the Countries Reference Table
+
+The `countries` collection uses reference content, not only schema. `schema apply` creates the structure, but it does not insert the list of ISO countries.
+
+Use these commands from the repository root:
+
+Local:
+
+```sh
+pnpm run db:seed:countries:local
+```
+
+Production:
+
+```sh
+pnpm run db:seed:countries:prod
+```
+
+What this does:
+
+- inserts the full ISO-style `countries` reference list
+- safely ignores already existing country codes
+
+Important production note:
+
+- `db:seed:countries:prod` runs from your local machine
+- therefore `DATABASE_URL` in `.env.production` must point to a PostgreSQL host that is reachable from your machine
+- a Docker or Coolify internal hostname such as `f476zf8bk6iemsxe3pgzfc9m` will not work from your Mac
+- for local execution, use the database public hostname or public IP and port instead
+
+Valid example:
+
+```env
+DATABASE_URL=postgresql://travelogue:password@46.224.175.91:5432/postgres
+```
+
+If your public database requires SSL, use the appropriate query string, for example:
+
+```env
+DATABASE_URL=postgresql://travelogue:password@46.224.175.91:5432/postgres?sslmode=require
+```
+
+Recommended order when introducing or updating the taxonomy in production:
+
+1. apply the Directus schema
+2. seed the `countries` table
+3. reload Directus admin
+4. verify the country dropdowns now show the full list
+
 ## Public Permissions for the Frontend
 
 The frontend reads Directus without a token for public content.
