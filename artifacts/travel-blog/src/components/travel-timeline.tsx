@@ -161,7 +161,7 @@ function computeJourneyTripDistance(
   const currentCoordinates = getTripCoordinates(orderedTrips[tripIndex]);
   if (!currentCoordinates) return null;
 
-  const previousCoordinates =
+  const arrivalCoordinates =
     tripIndex === 0
       ? getJourneyEndpoint(
           journey.originMode,
@@ -169,21 +169,21 @@ function computeJourneyTripDistance(
           journey.originLongitude,
         )
       : getTripCoordinates(orderedTrips[tripIndex - 1]);
-  const nextCoordinates =
-    tripIndex === orderedTrips.length - 1
-      ? getJourneyEndpoint(
-          journey.destinationMode,
-          journey.destinationLatitude,
-          journey.destinationLongitude,
-        )
-      : getTripCoordinates(orderedTrips[tripIndex + 1]);
+  if (!arrivalCoordinates) return null;
 
-  if (!previousCoordinates || !nextCoordinates) return null;
+  let totalDistance = haversineKm(arrivalCoordinates, currentCoordinates);
 
-  return (
-    haversineKm(previousCoordinates, currentCoordinates) +
-    haversineKm(currentCoordinates, nextCoordinates)
-  );
+  if (tripIndex === orderedTrips.length - 1) {
+    const destinationCoordinates = getJourneyEndpoint(
+      journey.destinationMode,
+      journey.destinationLatitude,
+      journey.destinationLongitude,
+    );
+    if (!destinationCoordinates) return null;
+    totalDistance += haversineKm(currentCoordinates, destinationCoordinates);
+  }
+
+  return totalDistance;
 }
 
 function renderTripCard(
@@ -666,7 +666,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                           computeJourneyTripDistance(item.journey, item.trips, tripIndex),
                           i18n,
                           `${t("stepOf")} ${tripIndex + 1} / ${item.trips.length}`,
-                          t("estimatedTripDistance"),
+                          t("estimatedLegDistance"),
                         )}
                       </div>
                     ))}
