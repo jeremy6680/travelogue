@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
+import { useI18n } from "@/lib/i18n";
 import {
   Compass,
   BookOpen,
@@ -12,12 +13,13 @@ import {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { locale, setLocale, t } = useI18n();
 
   const navItems = [
-    { href: "/", label: "Home", icon: Compass, exact: true },
-    { href: "/atlas", label: "Atlas", icon: Map },
-    { href: "/posts", label: "Journal", icon: BookOpen },
-    { href: "/trips", label: "Trips", icon: Globe },
+    { href: "/", label: t("navHome"), icon: Compass, exact: true },
+    { href: "/atlas", label: t("navAtlas"), icon: Map },
+    { href: "/posts", label: t("navJournal"), icon: BookOpen },
+    { href: "/trips", label: t("navTrips"), icon: Globe },
   ];
 
   return (
@@ -59,6 +61,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            <div className="ml-2 hidden md:flex items-center gap-1 rounded-md border border-border/70 bg-card/70 p-1">
+              {(["fr", "en"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setLocale(value)}
+                  className={`rounded px-2 py-1 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                    locale === value
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  aria-label={`${t("languageLabel")} ${value.toUpperCase()}`}
+                >
+                  {value.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </nav>
         </div>
       </header>
@@ -77,8 +96,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <p className="text-sm text-muted-foreground font-serif italic text-center">
-            &copy; {new Date().getFullYear()} Travelogue Journals. Crafted with
-            intention.
+            &copy; {new Date().getFullYear()} Travelogue Journals. {t("footerTagline")}
           </p>
 
           <div className="flex items-center gap-3">
@@ -112,7 +130,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 href="/admin"
                 className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors ml-2"
               >
-                Admin
+                {t("navAdmin")}
               </Link>
             )}
           </div>

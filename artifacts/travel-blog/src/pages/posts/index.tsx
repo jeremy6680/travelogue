@@ -3,7 +3,6 @@ import { Layout } from "@/components/layout";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { Link } from "wouter";
-import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { MapPin, Calendar, BookOpen, ArrowUpDown, Filter } from "lucide-react";
 import {
@@ -14,8 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 export default function PostsPage() {
+  const { countryName, formatCountLabel, formatDate, t } = useI18n();
   const { data: posts = [], isLoading } = usePostsQuery();
   const { data: trips = [] } = useTripsQuery();
   const [filterTrip, setFilterTrip] = useState<string>("all");
@@ -80,10 +81,10 @@ export default function PostsPage() {
       <div className="space-y-10 max-w-4xl mx-auto">
         <header className="text-center space-y-6 border-b pb-12">
           <h1 className="text-5xl md:text-6xl font-serif font-bold text-foreground tracking-tight">
-            Travel Journal
+            {t("travelJournal")}
           </h1>
           <p className="text-xl text-muted-foreground font-serif italic max-w-2xl mx-auto leading-relaxed">
-            Stories, field notes, and reflections from the road.
+            {t("journalSubtitle")}
           </p>
         </header>
 
@@ -92,13 +93,13 @@ export default function PostsPage() {
           <Filter className="w-4 h-4 text-muted-foreground" />
           <Select value={filterTrip} onValueChange={setFilterTrip}>
             <SelectTrigger className="w-48" data-testid="select-filter-trip">
-              <SelectValue placeholder="All Trips" />
+              <SelectValue placeholder={t("allTrips")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Trips</SelectItem>
+              <SelectItem value="all">{t("allTrips")}</SelectItem>
               {trips.map((t) => (
                 <SelectItem key={t.id} value={String(t.id)}>
-                  {getFlagEmoji(t.countryCode)} {t.name}
+                  {getFlagEmoji(t.countryCode)} {countryName(t.countryCode)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -107,10 +108,10 @@ export default function PostsPage() {
           {transportOptions.length > 0 && (
             <Select value={filterTransport} onValueChange={setFilterTransport}>
               <SelectTrigger className="w-44" data-testid="select-filter-transport">
-                <SelectValue placeholder="All Transport" />
+                <SelectValue placeholder={t("allTransport")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Transport</SelectItem>
+                <SelectItem value="all">{t("allTransport")}</SelectItem>
                 {transportOptions.map((t) => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
@@ -121,10 +122,10 @@ export default function PostsPage() {
           {yearOptions.length > 0 && (
             <Select value={filterYear} onValueChange={setFilterYear}>
               <SelectTrigger className="w-32" data-testid="select-filter-year">
-                <SelectValue placeholder="All Years" />
+                <SelectValue placeholder={t("allYears")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Years</SelectItem>
+                <SelectItem value="all">{t("allYears")}</SelectItem>
                 {yearOptions.map((y) => (
                   <SelectItem key={y} value={y}>{y}</SelectItem>
                 ))}
@@ -142,7 +143,7 @@ export default function PostsPage() {
             data-testid="button-sort-order"
           >
             <ArrowUpDown className="w-4 h-4" />
-            {sortOrder === "newest" ? "Newest First" : "Oldest First"}
+            {sortOrder === "newest" ? t("newestFirst") : t("oldestFirst")}
           </Button>
 
           {(filterTrip !== "all" || filterTransport !== "all" || filterYear !== "all") && (
@@ -153,18 +154,18 @@ export default function PostsPage() {
               className="text-muted-foreground"
               data-testid="button-clear-filters"
             >
-              Clear
+              {t("clear")}
             </Button>
           )}
 
           <span className="text-sm text-muted-foreground font-mono ml-auto">
-            {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
+            {formatCountLabel(filtered.length)}
           </span>
         </div>
 
         {isLoading ? (
           <div className="py-20 text-center text-muted-foreground font-serif italic animate-pulse">
-            Retrieving journal entries...
+            {t("retrievingEntries")}
           </div>
         ) : (
           <div className="grid gap-10">
@@ -202,7 +203,7 @@ export default function PostsPage() {
                     {post.publishedAt && (
                       <span className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5" />
-                        {format(new Date(post.publishedAt), "MMM d, yyyy")}
+                        {formatDate(post.publishedAt, "short")}
                       </span>
                     )}
                     {post.tripId &&
@@ -212,7 +213,7 @@ export default function PostsPage() {
                         );
                         return t ? (
                           <span className="flex items-center gap-1">
-                            {getFlagEmoji(t.countryCode)} {t.name}
+                            {getFlagEmoji(t.countryCode)} {countryName(t.countryCode)}
                           </span>
                         ) : null;
                       })()}
@@ -237,7 +238,7 @@ export default function PostsPage() {
                     className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-secondary transition-colors uppercase tracking-wider font-sans"
                     data-testid={`link-read-post-${post.id}`}
                   >
-                    Read dispatch{" "}
+                    {t("readDispatch")}{" "}
                     <span aria-hidden="true" className="text-lg leading-none">
                       &rarr;
                     </span>
@@ -248,7 +249,7 @@ export default function PostsPage() {
 
             {filtered.length === 0 && !isLoading && (
               <div className="text-center py-20 text-muted-foreground font-serif italic text-lg border rounded-2xl border-dashed">
-                No entries match your filters.
+                {t("noEntries")}
               </div>
             )}
           </div>

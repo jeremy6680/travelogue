@@ -2,8 +2,10 @@ import { Layout } from "@/components/layout";
 import { WorldMap } from "@/components/world-map";
 import { useStatsQuery } from "@/lib/directus";
 import { motion } from "framer-motion";
+import { useI18n } from "@/lib/i18n";
 
 export default function AtlasPage() {
+  const { t } = useI18n();
   const { data: stats } = useStatsQuery();
 
   return (
@@ -14,11 +16,9 @@ export default function AtlasPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center space-y-6 border-b pb-12"
         >
-          <h1 className="text-5xl md:text-6xl font-serif font-bold text-foreground tracking-tight">
-            The Atlas
-          </h1>
+          <h1 className="text-5xl md:text-6xl font-serif font-bold text-foreground tracking-tight">{t("atlasTitle")}</h1>
           <p className="text-xl text-muted-foreground font-serif italic max-w-2xl mx-auto leading-relaxed">
-            Every pin is a story. Click one to read it.
+            {t("atlasSubtitle")}
           </p>
         </motion.header>
 
@@ -30,10 +30,10 @@ export default function AtlasPage() {
             className="flex flex-wrap gap-8 justify-center"
           >
             {[
-              { value: stats.totalTrips, label: "Trips" },
-              { value: stats.continents, label: "Continents" },
-              { value: stats.totalCities, label: "Cities" },
-              { value: stats.totalPosts, label: "Dispatches" },
+              { value: stats.totalTrips, label: t("statTrips") },
+              { value: stats.continents, label: t("statContinents") },
+              { value: stats.totalCities, label: t("statCities") },
+              { value: stats.totalPosts, label: t("statDispatches") },
             ].map(({ value, label }) => (
               <div key={label} className="text-center">
                 <span className="block text-3xl font-serif font-bold text-primary">

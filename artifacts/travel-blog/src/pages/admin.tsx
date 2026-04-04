@@ -112,6 +112,12 @@ const COUNTRY_CODES: { code: string; name: string }[] = [
   { code: "YE", name: "Yemen" }, { code: "ZM", name: "Zambia" }, { code: "ZW", name: "Zimbabwe" },
 ];
 
+const frenchRegionNames = new Intl.DisplayNames(["fr-FR"], { type: "region" });
+
+function getCountryDisplayName(code: string, fallback: string) {
+  return frenchRegionNames.of(code) ?? fallback;
+}
+
 const actionButtonClass =
   "transition-all hover:scale-105 hover:bg-muted active:scale-95 active:opacity-80";
 
@@ -208,7 +214,7 @@ export default function AdminPage() {
     () =>
       [...trips].sort((a, b) => a.name.localeCompare(b.name, "en")).map((trip) => ({
         id: trip.id,
-        label: `${trip.name}, ${trip.countryCode}, Trip ID ${trip.id}`,
+        label: `${trip.name}, ${trip.countryCode}, ID voyage ${trip.id}`,
       })),
     [trips],
   );
@@ -269,13 +275,13 @@ export default function AdminPage() {
     if (!token) return;
     window.sessionStorage.setItem("travelogue_admin_api_token", token);
     setAdminToken(token);
-    toast({ title: "Admin unlocked for this session" });
+    toast({ title: "Admin déverrouillé pour cette session" });
   };
 
   const handleLock = () => {
     window.sessionStorage.removeItem("travelogue_admin_api_token");
     setAdminToken("");
-    toast({ title: "Admin locked" });
+    toast({ title: "Admin verrouillé" });
   };
 
   if (!isUnlocked) {
@@ -284,21 +290,21 @@ export default function AdminPage() {
         <div className="max-w-md mx-auto pt-16">
           <div className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
             <div className="space-y-2">
-              <h1 className="text-3xl font-serif font-bold text-foreground">Unlock Admin</h1>
+              <h1 className="text-3xl font-serif font-bold text-foreground">Déverrouiller l'admin</h1>
               <p className="text-sm text-muted-foreground">
-                Enter your admin API token. It will be stored only in this browser session.
+                Saisis ton token API admin. Il sera stocké uniquement dans cette session du navigateur.
               </p>
             </div>
             <form onSubmit={handleUnlock} className="space-y-4">
               <Input
                 name="adminToken"
                 type="password"
-                placeholder="Admin API token"
+                placeholder="Token API admin"
                 autoComplete="current-password"
                 required
               />
               <Button type="submit" className="w-full">
-                Unlock admin
+                Déverrouiller
               </Button>
             </form>
           </div>
@@ -334,14 +340,14 @@ export default function AdminPage() {
           invalidation.invalidatePosts();
           setEditingPost(null);
           resetPostFormState();
-          toast({ title: "Post updated successfully" });
+          toast({ title: "Article mis à jour" });
         },
       });
     } else {
       createPost.mutate({ token: adminToken, data }, {
         onSuccess: () => {
           invalidation.invalidatePosts();
-          toast({ title: "Post created successfully" });
+          toast({ title: "Article créé" });
           resetPostFormState();
           (e.target as HTMLFormElement).reset();
         }
@@ -378,14 +384,14 @@ export default function AdminPage() {
           queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
           queryClient.invalidateQueries({ queryKey: directusQueryKeys.trips });
           setEditingJourney(null);
-          toast({ title: "Journey updated successfully" });
+          toast({ title: "Parcours mis à jour" });
         }
       });
     } else {
       createJourney.mutate({ token: adminToken, data }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
-          toast({ title: "Journey created successfully" });
+          toast({ title: "Parcours créé" });
           (e.target as HTMLFormElement).reset();
         },
       });
@@ -421,14 +427,14 @@ export default function AdminPage() {
         onSuccess: () => {
           invalidation.invalidateTrips();
           setEditingTrip(null);
-          toast({ title: "Trip updated successfully" });
+          toast({ title: "Voyage mis à jour" });
         },
       });
     } else {
       createTrip.mutate({ token: adminToken, data }, {
         onSuccess: () => {
           invalidation.invalidateTrips();
-          toast({ title: "Trip added successfully" });
+          toast({ title: "Voyage ajouté" });
           (e.target as HTMLFormElement).reset();
         },
       });
@@ -454,14 +460,14 @@ export default function AdminPage() {
         onSuccess: () => {
           invalidation.invalidatePhotos();
           setEditingPhoto(null);
-          toast({ title: "Photo updated successfully" });
+          toast({ title: "Photo mise à jour" });
         },
       });
     } else {
       createPhoto.mutate({ token: adminToken, data }, {
         onSuccess: () => {
           invalidation.invalidatePhotos();
-          toast({ title: "Photo added successfully" });
+          toast({ title: "Photo ajoutée" });
           (e.target as HTMLFormElement).reset();
         },
       });
@@ -491,14 +497,14 @@ export default function AdminPage() {
         onSuccess: () => {
           invalidation.invalidateMedia();
           setEditingMediaAsset(null);
-          toast({ title: "Media asset updated successfully" });
+          toast({ title: "Asset média mis à jour" });
         },
       });
     } else {
       createMediaAsset.mutate({ token: adminToken, data }, {
         onSuccess: () => {
           invalidation.invalidateMedia();
-          toast({ title: "Media asset added successfully" });
+          toast({ title: "Asset média ajouté" });
           (e.target as HTMLFormElement).reset();
         },
       });
@@ -512,8 +518,8 @@ export default function AdminPage() {
 
     if (!(selectedFile instanceof File) || selectedFile.size === 0) {
       toast({
-        title: "No file selected",
-        description: "Choose an image before starting the Cloudinary upload.",
+        title: "Aucun fichier sélectionné",
+        description: "Choisis une image avant de lancer l'envoi Cloudinary.",
       });
       return;
     }
@@ -540,14 +546,14 @@ export default function AdminPage() {
           onSuccess: () => {
             invalidation.invalidateMedia();
             toast({
-              title: "Image uploaded to Cloudinary",
+              title: "Image envoyée vers Cloudinary",
               description: uploaded.upload.publicId,
             });
             (e.target as HTMLFormElement).reset();
           },
           onError: (error) => {
             toast({
-              title: "Cloudinary upload saved, Directus sync failed",
+              title: "Upload Cloudinary OK, synchronisation Directus échouée",
               description: error.message,
               variant: "destructive",
             });
@@ -560,8 +566,8 @@ export default function AdminPage() {
     } catch (error) {
       setIsUploadingAsset(false);
       toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "Unknown Cloudinary error",
+        title: "Échec de l'upload",
+        description: error instanceof Error ? error.message : "Erreur Cloudinary inconnue",
         variant: "destructive",
       });
     }
@@ -572,12 +578,12 @@ export default function AdminPage() {
       <div className="space-y-12 max-w-5xl mx-auto">
         <header className="border-b pb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-serif font-bold text-foreground">Admin Journal</h1>
-            <p className="text-muted-foreground mt-2 font-serif italic">Manage your dispatches, trips, and Cloudinary media.</p>
+            <h1 className="text-4xl font-serif font-bold text-foreground">Administration</h1>
+            <p className="text-muted-foreground mt-2 font-serif italic">Gère tes articles, voyages et médias Cloudinary.</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm font-mono border rounded-full px-4 py-1.5 bg-card">
-              Server Status:
+              Statut serveur :
               {health?.status === "ok" ? (
                 <CheckCircle2 className="w-4 h-4 text-green-500" />
               ) : (
@@ -585,7 +591,7 @@ export default function AdminPage() {
               )}
             </div>
             <Button type="button" variant="outline" size="sm" onClick={handleLock}>
-              Lock
+              Verrouiller
             </Button>
           </div>
         </header>
@@ -593,39 +599,39 @@ export default function AdminPage() {
         <div className="grid md:grid-cols-2 gap-12">
           <section className="space-y-6">
             <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-              Dispatches <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{posts.length}</span>
+              Articles <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{posts.length}</span>
             </h2>
 
             <form onSubmit={handlePostSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingPost ? "Edit Dispatch" : "New Dispatch"}</h3>
+              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingPost ? "Modifier l'article" : "Nouvel article"}</h3>
 
               <div className="space-y-3">
-                <Input name="title" placeholder="Title" defaultValue={editingPost?.title} required />
-                <Input name="slug" placeholder="Slug (e.g. tokyo-nights)" defaultValue={editingPost?.slug} required />
-                <Textarea name="excerpt" placeholder="Brief excerpt..." defaultValue={editingPost?.excerpt} required className="h-20" />
-                <Textarea name="content" placeholder="Full story content..." defaultValue={editingPost?.content} required className="h-40" />
+                <Input name="title" placeholder="Titre" defaultValue={editingPost?.title} required />
+                <Input name="slug" placeholder="Slug (ex. tokyo-nights)" defaultValue={editingPost?.slug} required />
+                <Textarea name="excerpt" placeholder="Court extrait..." defaultValue={editingPost?.excerpt} required className="h-20" />
+                <Textarea name="content" placeholder="Contenu complet..." defaultValue={editingPost?.content} required className="h-40" />
                 <select
                   name="coverImageId"
                   defaultValue={editingPost?.coverImage?.id != null ? String(editingPost.coverImage.id) : ""}
                   className={selectClassName}
                 >
-                  <option value="">No Cloudinary asset linked</option>
+                  <option value="">Aucun asset Cloudinary lié</option>
                   {mediaAssetOptions.map((asset) => (
                     <option key={asset.id} value={String(asset.id)}>
                       {asset.label}
                     </option>
                   ))}
                 </select>
-                <Input name="coverImageUrl" placeholder="Legacy cover image URL (optional)" defaultValue={editingPost?.coverImageUrl || ""} />
+                <Input name="coverImageUrl" placeholder="URL d'image de couverture legacy (optionnel)" defaultValue={editingPost?.coverImageUrl || ""} />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="location" placeholder="Location string" defaultValue={editingPost?.location || ""} />
+                  <Input name="location" placeholder="Lieu" defaultValue={editingPost?.location || ""} />
                   <select
                     name="tripId"
                     value={postTripId}
                     onChange={(event) => syncPostCoordinatesFromTrip(event.target.value)}
                     className={selectClassName}
                   >
-                    <option value="">No linked trip</option>
+                    <option value="">Aucun voyage lié</option>
                     {tripOptions.map((trip) => (
                       <option key={trip.id} value={String(trip.id)}>
                         {trip.label}
@@ -638,9 +644,9 @@ export default function AdminPage() {
                     onChange={(event) => setPostCountryCode(event.target.value)}
                     className={selectClassName}
                   >
-                    <option value="">Country from linked trip if possible</option>
+                    <option value="">Pays du voyage lié si possible</option>
                     {COUNTRY_CODES.map(c => (
-                      <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                      <option key={c.code} value={c.code}>{c.code} — {getCountryDisplayName(c.code, c.name)}</option>
                     ))}
                   </select>
                 </div>
@@ -665,16 +671,16 @@ export default function AdminPage() {
                     onChange={(event) => setPostLongitude(event.target.value)}
                   />
                 </div>
-                <Input name="publishedAt" type="date" placeholder="Published At" defaultValue={editingPost?.publishedAt ?? ''} />
+                <Input name="publishedAt" type="date" placeholder="Date de publication" defaultValue={editingPost?.publishedAt ?? ''} />
               </div>
 
               <div className="flex gap-3 pt-4">
                 <Button type="submit" className="flex-1">
-                  {editingPost ? "Update Dispatch" : "Publish Dispatch"}
+                  {editingPost ? "Mettre à jour l'article" : "Publier l'article"}
                 </Button>
                 {editingPost && (
                   <Button type="button" variant="outline" onClick={() => setEditingPost(null)}>
-                    Cancel
+                    Annuler
                   </Button>
                 )}
               </div>
@@ -695,7 +701,7 @@ export default function AdminPage() {
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
-                      if (confirm("Delete this dispatch?")) {
+                      if (confirm("Supprimer cet article ?")) {
                         deletePost.mutate({ token: adminToken, id: post.id }, {
                           onSuccess: () => invalidation.invalidatePosts(),
                         });
@@ -711,15 +717,15 @@ export default function AdminPage() {
 
           <section className="space-y-6">
             <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-              Journeys <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{journeys.length}</span>
+              Parcours <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{journeys.length}</span>
             </h2>
 
             <form key={editingJourney?.id ?? "new-journey"} onSubmit={handleJourneySubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingJourney ? 'Edit Journey' : 'Create Journey'}</h3>
+              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingJourney ? 'Modifier le parcours' : 'Créer un parcours'}</h3>
 
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="name" placeholder="Journey Name" defaultValue={editingJourney?.name} required />
+                  <Input name="name" placeholder="Nom du parcours" defaultValue={editingJourney?.name} required />
                   <Input name="slug" placeholder="journey-slug" defaultValue={editingJourney?.slug} required />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -735,8 +741,8 @@ export default function AdminPage() {
                       "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                     )}
                   >
-                    <option value="default_nice">Departure: Nice by default</option>
-                    <option value="custom">Departure: custom coordinates</option>
+                    <option value="default_nice">Départ : Nice par défaut</option>
+                    <option value="custom">Départ : coordonnées personnalisées</option>
                   </select>
                   <select
                     name="destinationMode"
@@ -746,27 +752,27 @@ export default function AdminPage() {
                       "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                     )}
                   >
-                    <option value="default_nice">Return: Nice by default</option>
-                    <option value="custom">Return: custom coordinates</option>
+                    <option value="default_nice">Retour : Nice par défaut</option>
+                    <option value="custom">Retour : coordonnées personnalisées</option>
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="originLatitude" type="number" step="any" placeholder="Origin latitude" defaultValue={editingJourney?.originLatitude ?? ""} />
-                  <Input name="originLongitude" type="number" step="any" placeholder="Origin longitude" defaultValue={editingJourney?.originLongitude ?? ""} />
+                  <Input name="originLatitude" type="number" step="any" placeholder="Latitude départ" defaultValue={editingJourney?.originLatitude ?? ""} />
+                  <Input name="originLongitude" type="number" step="any" placeholder="Longitude départ" defaultValue={editingJourney?.originLongitude ?? ""} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="destinationLatitude" type="number" step="any" placeholder="Destination latitude" defaultValue={editingJourney?.destinationLatitude ?? ""} />
-                  <Input name="destinationLongitude" type="number" step="any" placeholder="Destination longitude" defaultValue={editingJourney?.destinationLongitude ?? ""} />
+                  <Input name="destinationLatitude" type="number" step="any" placeholder="Latitude arrivée" defaultValue={editingJourney?.destinationLatitude ?? ""} />
+                  <Input name="destinationLongitude" type="number" step="any" placeholder="Longitude arrivée" defaultValue={editingJourney?.destinationLongitude ?? ""} />
                 </div>
-                <Textarea name="notes" placeholder="Optional notes about this multi-country journey" defaultValue={editingJourney?.notes ?? ""} className="h-24" />
+                <Textarea name="notes" placeholder="Notes optionnelles sur ce parcours multi-pays" defaultValue={editingJourney?.notes ?? ""} className="h-24" />
               </div>
 
               <div className="flex gap-3 pt-4">
                 <Button type="submit" className="flex-1">
-                  {editingJourney ? 'Update Journey' : 'Create Journey'}
+                  {editingJourney ? 'Mettre à jour le parcours' : 'Créer le parcours'}
                 </Button>
                 {editingJourney && (
-                  <Button type="button" variant="outline" onClick={() => setEditingJourney(null)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setEditingJourney(null)}>Annuler</Button>
                 )}
               </div>
             </form>
@@ -776,9 +782,9 @@ export default function AdminPage() {
                 <div key={journey.id} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/50 transition-colors">
                   <div>
                     <h4 className="font-serif font-bold">{journey.name}</h4>
-                    <p className="text-xs text-muted-foreground font-mono">{journey.slug} · Journey ID {journey.id}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{journey.slug} · ID parcours {journey.id}</p>
                     <p className="text-xs text-muted-foreground">
-                      {journey.startDate || "Unknown start"} · {journey.endDate || "Unknown end"}
+                      {journey.startDate || "Début inconnu"} · {journey.endDate || "Fin inconnue"}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -786,7 +792,7 @@ export default function AdminPage() {
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
-                      if(confirm("Delete this journey? Trips will simply become standalone again.")) {
+                      if(confirm("Supprimer ce parcours ? Les voyages redeviendront simplement autonomes.")) {
                         deleteJourney.mutate({ token: adminToken, id: journey.id }, {
                           onSuccess: () => {
                             queryClient.invalidateQueries({ queryKey: directusQueryKeys.journeys });
@@ -803,27 +809,27 @@ export default function AdminPage() {
             </div>
 
             <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-              Trips <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{trips.length}</span>
+              Voyages <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{trips.length}</span>
             </h2>
 
             <form key={editingTrip?.id ?? "new-trip"} onSubmit={handleTripSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingTrip ? 'Edit Trip' : 'Log New Trip'}</h3>
+              <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingTrip ? 'Modifier le voyage' : 'Ajouter un voyage'}</h3>
 
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="name" placeholder="Trip Name" defaultValue={editingTrip?.name} required />
+                  <Input name="name" placeholder="Nom du voyage" defaultValue={editingTrip?.name} required />
                   <select name="countryCode" defaultValue={editingTrip?.countryCode ?? ""} required className={selectClassName}>
-                    <option value="" disabled>Country</option>
+                    <option value="" disabled>Pays</option>
                     {COUNTRY_CODES.map((c) => (
-                      <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                      <option key={c.code} value={c.code}>{c.code} — {getCountryDisplayName(c.code, c.name)}</option>
                     ))}
                   </select>
                 </div>
-                <Input name="visitedCities" placeholder="Visited Cities" defaultValue={editingTrip?.visitedCities} required />
+                <Input name="visitedCities" placeholder="Villes visitées" defaultValue={editingTrip?.visitedCities} required />
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
-                      Journey
+                      Parcours
                     </label>
                     <select
                       name="journeyId"
@@ -834,7 +840,7 @@ export default function AdminPage() {
                         "disabled:cursor-not-allowed disabled:opacity-50"
                       )}
                     >
-                      <option value="">Standalone trip</option>
+                      <option value="">Voyage autonome</option>
                       {journeyOptions.map((journey) => (
                         <option key={journey.id} value={String(journey.id)}>
                           {journey.label}
@@ -842,21 +848,21 @@ export default function AdminPage() {
                       ))}
                     </select>
                   </div>
-                  <Input name="journeyOrder" type="number" min="1" placeholder="Order inside journey" defaultValue={editingTrip?.journeyOrder ?? ""} />
+                  <Input name="journeyOrder" type="number" min="1" placeholder="Ordre dans le parcours" defaultValue={editingTrip?.journeyOrder ?? ""} />
                 </div>
-                <Input name="reasonForVisit" placeholder="Reason for Visit" defaultValue={editingTrip?.reasonForVisit} required />
-                <Input name="travelCompanions" placeholder="Travel Companions" defaultValue={editingTrip?.travelCompanions} required />
-                <Input name="friendsFamilyMet" placeholder="Friends/Family Met" defaultValue={editingTrip?.friendsFamilyMet} required />
+                <Input name="reasonForVisit" placeholder="Motif du voyage" defaultValue={editingTrip?.reasonForVisit} required />
+                <Input name="travelCompanions" placeholder="Compagnons de voyage" defaultValue={editingTrip?.travelCompanions} required />
+                <Input name="friendsFamilyMet" placeholder="Amis / famille rencontrés" defaultValue={editingTrip?.friendsFamilyMet} required />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="transportationTo" placeholder="Getting There (optional)" defaultValue={editingTrip?.transportationTo.join(", ") || ""} />
-                  <Input name="transportationOnSite" placeholder="Getting Around (optional)" defaultValue={editingTrip?.transportationOnSite.join(", ") || ""} />
+                  <Input name="transportationTo" placeholder="Transport aller (optionnel)" defaultValue={editingTrip?.transportationTo.join(", ") || ""} />
+                  <Input name="transportationOnSite" placeholder="Transport sur place (optionnel)" defaultValue={editingTrip?.transportationOnSite.join(", ") || ""} />
                 </div>
                 <select
                   name="coverImageId"
                   defaultValue={editingTrip?.coverImageId != null ? String(editingTrip.coverImageId) : ""}
                   className={selectClassName}
                 >
-                  <option value="">No Cloudinary cover linked</option>
+                  <option value="">Aucune couverture Cloudinary liée</option>
                   {mediaAssetOptions.map((asset) => (
                     <option key={asset.id} value={String(asset.id)}>
                       {asset.label}
@@ -864,29 +870,29 @@ export default function AdminPage() {
                   ))}
                 </select>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input name="latitude" type="number" step="any" placeholder="Latitude (optional)" defaultValue={editingTrip?.latitude ?? ""} />
-                  <Input name="longitude" type="number" step="any" placeholder="Longitude (optional)" defaultValue={editingTrip?.longitude ?? ""} />
+                  <Input name="latitude" type="number" step="any" placeholder="Latitude (optionnel)" defaultValue={editingTrip?.latitude ?? ""} />
+                  <Input name="longitude" type="number" step="any" placeholder="Longitude (optionnel)" defaultValue={editingTrip?.longitude ?? ""} />
                 </div>
                 <details className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-                  <summary className="cursor-pointer font-medium text-foreground">Advanced coordinates override</summary>
+                  <summary className="cursor-pointer font-medium text-foreground">Surcharge avancée des coordonnées</summary>
                   <p className="mt-2">
-                    Latitude and longitude are now auto-calculated by default from the first listed city, with the trip country as context. These fields remain optional manual overrides.
+                    La latitude et la longitude sont maintenant calculées automatiquement à partir de la première ville listée, avec le pays du voyage comme contexte. Ces champs restent des surcharges manuelles optionnelles.
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-3">
-                    <Input name="latitude" type="number" step="any" placeholder="Latitude override" defaultValue={editingTrip?.latitude ?? ''} />
-                    <Input name="longitude" type="number" step="any" placeholder="Longitude override" defaultValue={editingTrip?.longitude ?? ''} />
+                    <Input name="latitude" type="number" step="any" placeholder="Surcharge latitude" defaultValue={editingTrip?.latitude ?? ''} />
+                    <Input name="longitude" type="number" step="any" placeholder="Surcharge longitude" defaultValue={editingTrip?.longitude ?? ''} />
                   </div>
                 </details>
-                <Input name="visitedAt" type="date" placeholder="Visited At" defaultValue={editingTrip?.visitedAt ?? ''} required />
+                <Input name="visitedAt" type="date" placeholder="Date de visite" defaultValue={editingTrip?.visitedAt ?? ''} required />
               </div>
 
               <div className="flex gap-3 pt-4">
                 <Button type="submit" className="flex-1">
-                  {editingTrip ? "Update Trip" : "Log Trip"}
+                  {editingTrip ? "Mettre à jour le voyage" : "Ajouter le voyage"}
                 </Button>
                 {editingTrip && (
                   <Button type="button" variant="outline" onClick={() => setEditingTrip(null)}>
-                    Cancel
+                    Annuler
                   </Button>
                 )}
               </div>
@@ -899,21 +905,21 @@ export default function AdminPage() {
                     <h4 className="font-serif font-bold flex items-center gap-2">
                       {trip.name} <span className="text-xs font-mono font-normal text-muted-foreground">{trip.countryCode}</span>
                     </h4>
-                    <p className="text-xs text-muted-foreground">Trip ID {trip.id} · {trip.visitedCities}</p>
+                    <p className="text-xs text-muted-foreground">ID voyage {trip.id} · {trip.visitedCities}</p>
                     {trip.coverImage && (
-                      <p className="text-xs text-muted-foreground">Cover Asset ID {trip.coverImage.id} · {trip.coverImage.publicId}</p>
+                      <p className="text-xs text-muted-foreground">Asset de couverture {trip.coverImage.id} · {trip.coverImage.publicId}</p>
                     )}
                     {trip.journeyId != null && (
                       <p className="text-xs text-muted-foreground">
-                        Journey: {journeys.find((journey) => journey.id === trip.journeyId)?.name ?? `#${trip.journeyId}`}
-                        {trip.journeyOrder != null ? ` · Step ${trip.journeyOrder}` : ""}
+                        Parcours : {journeys.find((journey) => journey.id === trip.journeyId)?.name ?? `#${trip.journeyId}`}
+                        {trip.journeyOrder != null ? ` · Étape ${trip.journeyOrder}` : ""}
                       </p>
                     )}
                     {(trip.transportationTo || trip.transportationOnSite) && (
                       <p className="text-xs text-muted-foreground">
-                        {trip.transportationTo ? `Getting There: ${trip.transportationTo}` : "Getting There: -"}
+                        {trip.transportationTo ? `Transport aller : ${trip.transportationTo}` : "Transport aller : -"}
                         {" · "}
-                        {trip.transportationOnSite ? `Getting Around: ${trip.transportationOnSite}` : "Getting Around: -"}
+                        {trip.transportationOnSite ? `Transport sur place : ${trip.transportationOnSite}` : "Transport sur place : -"}
                       </p>
                     )}
                   </div>
@@ -922,7 +928,7 @@ export default function AdminPage() {
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
-                      if (confirm("Remove this trip from passport?")) {
+                      if (confirm("Supprimer ce voyage du passeport ?")) {
                         deleteTrip.mutate({ token: adminToken, id: trip.id }, {
                           onSuccess: () => invalidation.invalidateTrips(),
                         });
@@ -939,13 +945,13 @@ export default function AdminPage() {
 
         <section className="space-y-6">
           <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-            Media Assets <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{mediaAssets.length}</span>
+            Assets média <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{mediaAssets.length}</span>
           </h2>
 
           <form onSubmit={handleCloudinaryUpload} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">Upload Direct To Cloudinary</h3>
+            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">Upload direct vers Cloudinary</h3>
             <p className="text-sm text-muted-foreground">
-              The file goes straight from your browser to Cloudinary. Directus only stores the metadata afterwards.
+              Le fichier part directement du navigateur vers Cloudinary. Directus ne stocke ensuite que les métadonnées.
             </p>
             <div className="space-y-3">
               <Input name="file" type="file" accept="image/*" required />
@@ -957,58 +963,58 @@ export default function AdminPage() {
                 ))}
               </select>
               <div className="grid md:grid-cols-2 gap-3">
-                <Input name="title" placeholder="Title (optional)" />
-                <Input name="publicId" placeholder="Custom public_id without extension (optional)" />
+                <Input name="title" placeholder="Titre (optionnel)" />
+                <Input name="publicId" placeholder="public_id personnalisé sans extension (optionnel)" />
               </div>
               <div className="grid md:grid-cols-2 gap-3">
-                <Input name="alt" placeholder="Alt text (optional)" />
-                <Input name="caption" placeholder="Caption (optional)" />
+                <Input name="alt" placeholder="Texte alternatif (optionnel)" />
+                <Input name="caption" placeholder="Légende (optionnel)" />
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={isUploadingAsset || createMediaAsset.isPending}>
               {isUploadingAsset || createMediaAsset.isPending ? (
                 <>
                   <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
-                  Uploading to Cloudinary...
+                  Envoi vers Cloudinary...
                 </>
               ) : (
                 <>
                   <UploadCloud className="w-4 h-4 mr-2" />
-                  Upload image and create media asset
+                  Envoyer l'image et créer l'asset média
                 </>
               )}
             </Button>
           </form>
 
           <form onSubmit={handleMediaAssetSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingMediaAsset ? "Edit Media Asset" : "Add Cloudinary Asset"}</h3>
+            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingMediaAsset ? "Modifier l'asset média" : "Ajouter un asset Cloudinary"}</h3>
             <div className="space-y-3">
               <Input name="publicId" placeholder="Cloudinary public_id" defaultValue={editingMediaAsset?.publicId} required />
               <div className="grid md:grid-cols-2 gap-3">
-                <Input name="title" placeholder="Title (optional)" defaultValue={editingMediaAsset?.title || ""} />
-                <Input name="folder" placeholder="Folder (optional)" defaultValue={editingMediaAsset?.folder || ""} />
+                <Input name="title" placeholder="Titre (optionnel)" defaultValue={editingMediaAsset?.title || ""} />
+                <Input name="folder" placeholder="Dossier (optionnel)" defaultValue={editingMediaAsset?.folder || ""} />
               </div>
               <div className="grid md:grid-cols-2 gap-3">
-                <Input name="alt" placeholder="Alt text (optional)" defaultValue={editingMediaAsset?.alt || ""} />
-                <Input name="caption" placeholder="Caption (optional)" defaultValue={editingMediaAsset?.caption || ""} />
+                <Input name="alt" placeholder="Texte alternatif (optionnel)" defaultValue={editingMediaAsset?.alt || ""} />
+                <Input name="caption" placeholder="Légende (optionnel)" defaultValue={editingMediaAsset?.caption || ""} />
               </div>
-              <Input name="deliveryUrl" placeholder="Cloudinary secure_url fallback (optional)" defaultValue={editingMediaAsset?.deliveryUrl || ""} />
-              <Input name="placeholderUrl" placeholder="Placeholder / blur URL (optional)" defaultValue={editingMediaAsset?.placeholderUrl || ""} />
+              <Input name="deliveryUrl" placeholder="Cloudinary secure_url de secours (optionnel)" defaultValue={editingMediaAsset?.deliveryUrl || ""} />
+              <Input name="placeholderUrl" placeholder="URL de placeholder / blur (optionnel)" defaultValue={editingMediaAsset?.placeholderUrl || ""} />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Input name="width" type="number" placeholder="Width" defaultValue={editingMediaAsset?.width ?? ""} />
-                <Input name="height" type="number" placeholder="Height" defaultValue={editingMediaAsset?.height ?? ""} />
+                <Input name="width" type="number" placeholder="Largeur" defaultValue={editingMediaAsset?.width ?? ""} />
+                <Input name="height" type="number" placeholder="Hauteur" defaultValue={editingMediaAsset?.height ?? ""} />
                 <Input name="format" placeholder="Format" defaultValue={editingMediaAsset?.format || ""} />
-                <Input name="resourceType" placeholder="Resource type" defaultValue={editingMediaAsset?.resourceType || ""} />
+                <Input name="resourceType" placeholder="Type de ressource" defaultValue={editingMediaAsset?.resourceType || ""} />
               </div>
-              <Input name="bytes" type="number" placeholder="Bytes (optional)" defaultValue={editingMediaAsset?.bytes ?? ""} />
+              <Input name="bytes" type="number" placeholder="Poids en octets (optionnel)" defaultValue={editingMediaAsset?.bytes ?? ""} />
             </div>
             <div className="flex gap-3 pt-4">
               <Button type="submit" className="flex-1">
-                {editingMediaAsset ? "Update Asset" : "Add Asset"}
+                {editingMediaAsset ? "Mettre à jour l'asset" : "Ajouter l'asset"}
               </Button>
               {editingMediaAsset && (
                 <Button type="button" variant="outline" onClick={() => setEditingMediaAsset(null)}>
-                  Cancel
+                  Annuler
                 </Button>
               )}
             </div>
@@ -1037,7 +1043,7 @@ export default function AdminPage() {
                     <Edit2 className="w-4 h-4" />
                   </Button>
                   <Button size="icon" variant="destructive" className={actionButtonClass} onClick={() => {
-                    if (confirm("Delete this media asset? Existing linked records will lose their asset reference.")) {
+                    if (confirm("Supprimer cet asset média ? Les contenus liés perdront leur référence.")) {
                       deleteMediaAsset.mutate({ token: adminToken, id: asset.id }, {
                         onSuccess: () => invalidation.invalidateMedia(),
                       });
@@ -1053,34 +1059,34 @@ export default function AdminPage() {
 
         <section className="space-y-6">
           <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-            Photo Grid <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{photos.length}</span>
+            Grille photo <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{photos.length}</span>
           </h2>
 
           <form onSubmit={handlePhotoSubmit} className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm">
-            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingPhoto ? "Edit Photo" : "Add Photo"}</h3>
+            <h3 className="font-serif font-medium text-lg border-b pb-2 mb-4">{editingPhoto ? "Modifier la photo" : "Ajouter une photo"}</h3>
             <div className="space-y-3">
               <select
                 name="mediaAssetId"
                 defaultValue={editingPhoto?.mediaAssetId != null ? String(editingPhoto.mediaAssetId) : ""}
                 className={selectClassName}
               >
-                <option value="">No linked Cloudinary asset</option>
+                <option value="">Aucun asset Cloudinary lié</option>
                 {mediaAssetOptions.map((asset) => (
                   <option key={asset.id} value={String(asset.id)}>
                     {asset.label}
                   </option>
                 ))}
               </select>
-              <Input name="url" placeholder="Legacy / fallback image URL (optional)" defaultValue={editingPhoto?.url || ""} />
-              <Input name="caption" placeholder="Caption (optional)" defaultValue={editingPhoto?.caption || ""} />
-              <Input name="link" placeholder="Link URL (optional — e.g. /posts/my-post)" defaultValue={editingPhoto?.link || ""} />
+              <Input name="url" placeholder="URL d'image legacy / de secours (optionnel)" defaultValue={editingPhoto?.url || ""} />
+              <Input name="caption" placeholder="Légende (optionnel)" defaultValue={editingPhoto?.caption || ""} />
+              <Input name="link" placeholder="URL du lien (optionnel — ex. /posts/mon-article)" defaultValue={editingPhoto?.link || ""} />
               <div className="grid grid-cols-2 gap-3">
                 <select
                   name="tripId"
                   defaultValue={editingPhoto?.tripId != null ? String(editingPhoto.tripId) : ""}
                   className={selectClassName}
                 >
-                  <option value="">No linked trip</option>
+                  <option value="">Aucun voyage lié</option>
                   {tripOptions.map((trip) => (
                     <option key={trip.id} value={String(trip.id)}>
                       {trip.label}
@@ -1092,19 +1098,19 @@ export default function AdminPage() {
                   defaultValue={editingPhoto?.countryCode ?? ""}
                   className={selectClassName}
                 >
-                  <option value="">Country from linked trip if possible</option>
+                  <option value="">Pays du voyage lié si possible</option>
                   {COUNTRY_CODES.map(c => (
-                    <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                    <option key={c.code} value={c.code}>{c.code} — {getCountryDisplayName(c.code, c.name)}</option>
                   ))}
                 </select>
               </div>
-              <Input name="displayOrder" type="number" placeholder="Display order (0 = first)" defaultValue={editingPhoto?.displayOrder ?? 0} />
+              <Input name="displayOrder" type="number" placeholder="Ordre d'affichage (0 = premier)" defaultValue={editingPhoto?.displayOrder ?? 0} />
             </div>
             <div className="flex gap-3 pt-4">
-              <Button type="submit" className="flex-1">{editingPhoto ? "Update Photo" : "Add Photo"}</Button>
+              <Button type="submit" className="flex-1">{editingPhoto ? "Mettre à jour la photo" : "Ajouter la photo"}</Button>
               {editingPhoto && (
                 <Button type="button" variant="outline" onClick={() => setEditingPhoto(null)}>
-                  Cancel
+                  Annuler
                 </Button>
               )}
             </div>
@@ -1125,7 +1131,7 @@ export default function AdminPage() {
                       <Edit2 className="w-3 h-3" />
                     </Button>
                     <Button size="icon" variant="destructive" className="h-7 w-7 active:scale-95 transition-all" onClick={() => {
-                      if (confirm("Delete this photo?")) {
+                      if (confirm("Supprimer cette photo ?")) {
                         deletePhoto.mutate({ token: adminToken, id: photo.id }, {
                           onSuccess: () => invalidation.invalidatePhotos(),
                         });

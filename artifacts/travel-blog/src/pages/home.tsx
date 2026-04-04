@@ -3,7 +3,6 @@ import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePhotosQuery, usePostsQuery, useStatsQuery } from "@/lib/directus";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
 import {
   MapPin,
   Calendar,
@@ -19,14 +18,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useI18n } from "@/lib/i18n";
 
 const FALLBACK_PHOTOS = [
-  { id: "f1", url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80", mediaAsset: null, caption: "Tokyo neon dreams", link: null },
+  { id: "f1", url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80", mediaAsset: null, caption: "Tokyo, néons et insomnies", link: null },
   { id: "f2", url: "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=600&q=80", mediaAsset: null, caption: "Milford Sound", link: null },
   { id: "f3", url: "https://images.unsplash.com/photo-1598300188904-6e3b1dc9e3b6?w=600&q=80", mediaAsset: null, caption: "Chefchaouen", link: null },
-  { id: "f4", url: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&q=80", mediaAsset: null, caption: "Rome at golden hour", link: null },
-  { id: "f5", url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80", mediaAsset: null, caption: "Kyoto before dawn", link: null },
-  { id: "f6", url: "https://images.unsplash.com/photo-1557409518-691ebcd96038?w=600&q=80", mediaAsset: null, caption: "Japanese morning", link: null },
+  { id: "f4", url: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&q=80", mediaAsset: null, caption: "Rome à l'heure dorée", link: null },
+  { id: "f5", url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80", mediaAsset: null, caption: "Kyoto avant l'aube", link: null },
+  { id: "f6", url: "https://images.unsplash.com/photo-1557409518-691ebcd96038?w=600&q=80", mediaAsset: null, caption: "Matin japonais", link: null },
 ];
 
 const fadeUp = (delay = 0) => ({
@@ -37,6 +37,7 @@ const fadeUp = (delay = 0) => ({
 });
 
 export default function Home() {
+  const { formatDate, t } = useI18n();
   const { data: allPosts = [] } = usePostsQuery();
   const { data: stats } = useStatsQuery();
   const { data: dbPhotos = [] } = usePhotosQuery();
@@ -82,9 +83,9 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="text-6xl md:text-8xl font-serif font-bold text-foreground tracking-tight leading-[1.05]"
           >
-            Mapping the World,{" "}
+            {t("heroTitle")}{" "}
             <span className="text-secondary italic font-light block">
-              One Story at a Time
+              {t("heroTitleAccent")}
             </span>
           </motion.h1>
           <motion.p
@@ -93,8 +94,7 @@ export default function Home() {
             transition={{ delay: 0.2 }}
             className="text-xl text-muted-foreground font-serif italic max-w-2xl mx-auto leading-relaxed"
           >
-            A collection of dispatches from dusty roads, night trains, and
-            unfamiliar shores.
+            {t("heroSubtitle")}
           </motion.p>
           <motion.div
             initial={{ opacity: 0 }}
@@ -107,14 +107,14 @@ export default function Home() {
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-primary/90 transition-colors shadow-sm"
               data-testid="link-read-journal"
             >
-              Read Journal <ArrowRight className="w-4 h-4" />
+              {t("readJournal")} <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/atlas"
               className="inline-flex items-center gap-2 px-6 py-3 bg-card border border-border text-foreground rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-muted transition-colors"
               data-testid="link-view-atlas"
             >
-              View Atlas <Globe className="w-4 h-4" />
+              {t("viewAtlas")} <Globe className="w-4 h-4" />
             </Link>
           </motion.div>
 
@@ -126,10 +126,10 @@ export default function Home() {
               className="flex flex-wrap justify-center gap-12 pt-4 border-t border-border/40 mt-8"
             >
               {[
-                { value: stats.totalTrips, label: "Trips" },
-                { value: stats.continents, label: "Continents" },
-                { value: stats.totalCities, label: "Cities" },
-                { value: stats.totalPosts, label: "Dispatches" },
+                { value: stats.totalTrips, label: t("statTrips") },
+                { value: stats.continents, label: t("statContinents") },
+                { value: stats.totalCities, label: t("statCities") },
+                { value: stats.totalPosts, label: t("statDispatches") },
               ].map(({ value, label }) => (
                 <div key={label} className="text-center">
                   <span className="block text-4xl font-serif font-bold text-primary">
@@ -149,17 +149,17 @@ export default function Home() {
           <motion.div {...fadeUp()} className="flex items-end justify-between">
             <div>
               <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-2">
-                Latest writing
+                {t("latestWriting")}
               </p>
               <h2 className="text-4xl font-serif font-bold text-foreground">
-                Recent Dispatches
+                {t("recentDispatches")}
               </h2>
             </div>
             <Link
               href="/posts"
               className="text-sm font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors flex items-center gap-1"
             >
-              All posts <ArrowRight className="w-4 h-4" />
+              {t("allPosts")} <ArrowRight className="w-4 h-4" />
             </Link>
           </motion.div>
 
@@ -194,7 +194,7 @@ export default function Home() {
                   {post.publishedAt && (
                     <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <Calendar className="w-3 h-3" />
-                      {format(new Date(post.publishedAt), "MMM d, yyyy")}
+                      {formatDate(post.publishedAt, "short")}
                     </span>
                   )}
                   <h3 className="font-serif font-bold text-xl text-foreground group-hover:text-secondary transition-colors leading-snug">
@@ -212,7 +212,7 @@ export default function Home() {
                     href={`/posts/${post.slug}`}
                     className="text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors inline-flex items-center gap-1 mt-auto"
                   >
-                    Read dispatch <ArrowRight className="w-3.5 h-3.5" />
+                    {t("readDispatch")} <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </motion.article>
@@ -225,10 +225,10 @@ export default function Home() {
           <motion.div {...fadeUp()} className="flex items-end justify-between">
             <div>
               <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-2">
-                On the road
+                {t("onTheRoad")}
               </p>
               <h2 className="text-4xl font-serif font-bold text-foreground">
-                Photo Journal
+                {t("photoJournal")}
               </h2>
             </div>
           </motion.div>
@@ -246,7 +246,7 @@ export default function Home() {
               >
                 <img
                   src={getMediaAssetImageUrl(photo.mediaAsset, { width: 720, height: 720, crop: "fill" }) ?? photo.url ?? ""}
-                  alt={photo.mediaAsset?.alt ?? photo.caption ?? "Photo"}
+                  alt={photo.mediaAsset?.alt ?? photo.caption ?? t("photoFallbackAlt")}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
                 {photo.caption && (
@@ -267,7 +267,7 @@ export default function Home() {
             <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-muted shadow-xl">
               <img
                 src="https://images.unsplash.com/photo-1503220317375-aaad61436b1b?w=800&q=80"
-                alt="Traveler portrait"
+                alt="Portrait de voyageur"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -276,25 +276,24 @@ export default function Home() {
           <motion.div {...fadeUp(0.15)} className="space-y-6">
             <div>
               <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-3">
-                The wanderer
+                Le voyageur
               </p>
               <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground leading-tight">
-                About This Blog
+                À propos de ce blog
               </h2>
             </div>
             <div className="space-y-4 text-muted-foreground font-serif leading-relaxed text-lg">
               <p>
-                I'm a traveler, writer, and perpetual over-packer who believes
-                the best conversations happen on overnight trains and in
-                hole-in-the-wall restaurants nobody's heard of yet.
+                Je suis un voyageur, un auteur et un éternel adepte du sac trop
+                plein, convaincu que les meilleures conversations naissent dans
+                les trains de nuit et les restaurants que personne ne connaît encore.
               </p>
               <p>
-                This blog is my attempt to slow down and actually remember the
-                places I've been — the light, the smell, the people, the awkward
-                language mistakes. It's a personal record more than anything
-                else.
+                Ce blog est ma manière de ralentir et de vraiment me souvenir
+                des lieux traversés : la lumière, les odeurs, les gens, les
+                maladresses de langage. C'est avant tout une mémoire personnelle.
               </p>
-              <p>Currently based wherever the next flight is going.</p>
+              <p>Basé, pour l'instant, là où part le prochain vol.</p>
             </div>
             <div className="flex items-center gap-4 pt-2">
               <a
@@ -333,14 +332,13 @@ export default function Home() {
         <section id="contact" className="max-w-2xl mx-auto space-y-8">
           <motion.div {...fadeUp()} className="text-center space-y-3">
             <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground">
-              Get in touch
+              Me contacter
             </p>
             <h2 className="text-4xl font-serif font-bold text-foreground">
-              Say Hello
+              Dire bonjour
             </h2>
             <p className="text-muted-foreground font-serif italic text-lg">
-              Travel tips, collaboration ideas, or just to share a story from
-              the road.
+              Conseils de voyage, idées de collaboration ou simple envie de partager une histoire de route.
             </p>
           </motion.div>
 
@@ -351,11 +349,10 @@ export default function Home() {
                   <Send className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-serif font-bold text-foreground">
-                  Message received!
+                  Message reçu !
                 </h3>
                 <p className="text-muted-foreground font-serif italic">
-                  Thanks for reaching out. I'll reply from wherever I am in the
-                  world.
+                  Merci pour ton message. Je répondrai depuis l'endroit du monde où je me trouve.
                 </p>
                 <button
                   onClick={() => {
@@ -365,7 +362,7 @@ export default function Home() {
                   className="text-sm text-primary hover:text-secondary transition-colors font-medium"
                   data-testid="button-send-another"
                 >
-                  Send another message
+                  Envoyer un autre message
                 </button>
               </div>
             ) : (
@@ -379,13 +376,13 @@ export default function Home() {
                       className="text-sm font-medium text-foreground"
                       htmlFor="contact-name"
                     >
-                      Name
+                      Nom
                     </label>
                     <Input
                       id="contact-name"
-                      placeholder="Your name"
+                      placeholder="Ton nom"
                       value={contactForm.name}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setContactForm((f) => ({ ...f, name: e.target.value }))
                       }
                       required
@@ -397,14 +394,14 @@ export default function Home() {
                       className="text-sm font-medium text-foreground"
                       htmlFor="contact-email"
                     >
-                      Email
+                      E-mail
                     </label>
                     <Input
                       id="contact-email"
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder="ton@email.com"
                       value={contactForm.email}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setContactForm((f) => ({ ...f, email: e.target.value }))
                       }
                       required
@@ -421,10 +418,10 @@ export default function Home() {
                   </label>
                   <Textarea
                     id="contact-message"
-                    placeholder="Tell me where you've been, where you're going, or what you're dreaming about..."
+                    placeholder="Raconte-moi d'où tu viens, où tu vas, ou ce que tu rêves encore de vivre..."
                     rows={5}
                     value={contactForm.message}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                       setContactForm((f) => ({ ...f, message: e.target.value }))
                     }
                     required
@@ -436,7 +433,7 @@ export default function Home() {
                   className="w-full"
                   data-testid="button-submit-contact"
                 >
-                  Send Message <Send className="w-4 h-4 ml-2" />
+                  Envoyer le message <Send className="w-4 h-4 ml-2" />
                 </Button>
               </form>
             )}

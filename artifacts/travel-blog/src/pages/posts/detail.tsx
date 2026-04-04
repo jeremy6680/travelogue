@@ -4,12 +4,13 @@ import { Layout } from "@/components/layout";
 import { getGalleryImageUrl, getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePostBySlugQuery, useTripsQuery } from "@/lib/directus";
 import { useParams, Link } from "wouter";
-import { format } from "date-fns";
 import { MapPin, Calendar, ArrowLeft, Globe2 } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import { motion } from "framer-motion";
+import { useI18n } from "@/lib/i18n";
 
 export default function PostDetail() {
+  const { formatDate, t } = useI18n();
   const { slug } = useParams();
   const { data: post, isLoading } = usePostBySlugQuery(slug);
   const { data: trips = [] } = useTripsQuery();
@@ -21,7 +22,7 @@ export default function PostDetail() {
     return (
       <Layout>
         <div className="py-32 text-center animate-pulse font-serif italic text-lg text-muted-foreground">
-          Unearthing the dispatch...
+          {t("loadingPost")}
         </div>
       </Layout>
     );
@@ -36,7 +37,7 @@ export default function PostDetail() {
           className="inline-flex items-center gap-2 text-sm font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group"
           data-testid="link-back-to-journal"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Journal
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> {t("backToJournal")}
         </Link>
 
         {/* Header */}
@@ -45,7 +46,7 @@ export default function PostDetail() {
             {post.publishedAt && (
               <span className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-primary" />
-                {format(new Date(post.publishedAt), "MMMM d, yyyy")}
+                {formatDate(post.publishedAt, "long")}
               </span>
             )}
             {post.location && (
@@ -92,8 +93,8 @@ export default function PostDetail() {
         {gallery.length > 0 && (
           <section className="space-y-6 pt-8 border-t border-border/60">
             <div>
-              <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-1">From the road</p>
-              <h2 className="text-2xl font-serif font-bold text-foreground">Photo Gallery</h2>
+              <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-1">{t("fromTheRoad")}</p>
+              <h2 className="text-2xl font-serif font-bold text-foreground">{t("photoGallery")}</h2>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -128,15 +129,15 @@ export default function PostDetail() {
               <Globe2 className="w-10 h-10 text-primary" />
             </div>
             <div className="text-center md:text-left space-y-2">
-              <h3 className="text-2xl font-serif font-bold text-foreground">More from {trip.name}</h3>
-              <p className="text-base text-muted-foreground">Explore other dispatches and notes from this region.</p>
+              <h3 className="text-2xl font-serif font-bold text-foreground">{t("moreFrom")} {trip.name}</h3>
+              <p className="text-base text-muted-foreground">{t("exploreRegion")}</p>
             </div>
             <Link
               href="/trips"
               className="md:ml-auto inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground text-sm font-bold uppercase tracking-wider rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
               data-testid="link-view-itinerary"
             >
-              View Itinerary
+              {t("viewItinerary")}
             </Link>
           </div>
         )}

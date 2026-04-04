@@ -4,7 +4,7 @@ import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import type { Journey, Post, Trip } from "@/lib/travel-types";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { differenceInCalendarDays, format } from "date-fns";
+import { differenceInCalendarDays } from "date-fns";
 import {
   BedDouble,
   CalendarRange,
@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 const NICE_COORDINATES = { latitude: 43.7102, longitude: 7.262 };
 
@@ -37,7 +38,12 @@ function getFlagEmoji(countryCode: string) {
   return String.fromCodePoint(...codePoints);
 }
 
-function formatLengthOfStay(visitedAt: string, visitedUntil: string | null) {
+function formatLengthOfStay(
+  visitedAt: string,
+  visitedUntil: string | null,
+  t: ReturnType<typeof useI18n>["t"],
+  formatDaysLabel: ReturnType<typeof useI18n>["formatDaysLabel"],
+) {
   if (!visitedUntil) return null;
 
   const start = new Date(visitedAt);
@@ -50,9 +56,9 @@ function formatLengthOfStay(visitedAt: string, visitedUntil: string | null) {
   const days = differenceInCalendarDays(end, start);
 
   if (days < 0) return null;
-  if (days === 0) return "Same day";
+  if (days === 0) return t("sameDay");
 
-  return `${days} day${days > 1 ? "s" : ""}`;
+  return formatDaysLabel(days);
 }
 
 function getTripRegion(countryCode: string) {
@@ -104,11 +110,6 @@ function haversineKm(from: Coordinates, to: Coordinates) {
     Math.sin(dLon / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
 
   return 2 * earthRadiusKm * Math.asin(Math.sqrt(a));
-}
-
-function formatDistance(distanceKm: number | null) {
-  if (distanceKm == null) return null;
-  return `${Math.round(distanceKm).toLocaleString("en-US")} km approx.`;
 }
 
 function computeStandaloneTripDistance(trip: Trip) {
@@ -189,17 +190,21 @@ function renderTripCard(
   trip: Trip,
   tripPosts: Post[],
   distanceKm: number | null,
+  i18n: ReturnType<typeof useI18n>,
   metadata?: string,
-  summaryLabel = "Estimated Distance",
+  summaryLabel?: string,
 ) {
+  const { countryName, formatDate, formatDistanceKm, formatDaysLabel, t } = i18n;
   const accomodationLabel = trip.accomodation.join(", ");
   const transportationToLabel = trip.transportationTo.join(", ");
   const transportationOnSiteLabel = trip.transportationOnSite.join(", ");
   const lengthOfStay = formatLengthOfStay(
     trip.visitedAt,
     trip.visitedUntil,
+    t,
+    formatDaysLabel,
   );
-  const distanceLabel = formatDistance(distanceKm);
+  const distanceLabel = formatDistanceKm(distanceKm);
 
   return (
     <div className="bg-card border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -209,10 +214,10 @@ function renderTripCard(
             <span className="text-4xl" aria-hidden="true">
               {getFlagEmoji(trip.countryCode)}
             </span>
-            {trip.name}
+            {countryName(trip.countryCode)}
           </h3>
           <p className="text-sm text-muted-foreground font-mono mt-2 uppercase tracking-wider">
-            {format(new Date(trip.visitedAt), "MMMM yyyy")}
+            {formatDate(trip.visitedAt, "monthYear")}
           </p>
           {metadata && (
             <p className="text-xs text-muted-foreground font-mono mt-1 uppercase tracking-[0.2em]">
@@ -238,7 +243,7 @@ function renderTripCard(
             <MapPin className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
-                Cities Visited
+                {t("citiesVisited")}
               </strong>
               <span className="text-muted-foreground leading-relaxed">
                 {trip.visitedCities}
@@ -251,7 +256,7 @@ function renderTripCard(
             <Navigation className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
-                The Mission
+                {t("mission")}
               </strong>
               <span className="text-muted-foreground leading-relaxed">
                 {trip.reasonForVisit}
@@ -264,7 +269,7 @@ function renderTripCard(
             <Users className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
-                Companions
+                {t("companions")}
               </strong>
               <span className="text-muted-foreground leading-relaxed">
                 {trip.travelCompanions}
@@ -277,7 +282,7 @@ function renderTripCard(
             <Heart className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
-                Met Along the Way
+                {t("metAlongTheWay")}
               </strong>
               <span className="text-muted-foreground leading-relaxed">
                 {trip.friendsFamilyMet}
@@ -290,7 +295,7 @@ function renderTripCard(
             <PlaneTakeoff className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
-                Getting There
+                {t("gettingThere")}
               </strong>
               <span className="text-muted-foreground leading-relaxed">
                 {transportationToLabel}
@@ -303,7 +308,7 @@ function renderTripCard(
             <Car className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
-                Getting Around
+                {t("gettingAround")}
               </strong>
               <span className="text-muted-foreground leading-relaxed">
                 {transportationOnSiteLabel}
@@ -316,7 +321,7 @@ function renderTripCard(
             <BedDouble className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
-                Accomodation
+                {t("accommodation")}
               </strong>
               <span className="text-muted-foreground leading-relaxed">
                 {accomodationLabel}
@@ -329,7 +334,7 @@ function renderTripCard(
             <CalendarRange className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
-                Length of Stay
+                {t("lengthOfStay")}
               </strong>
               <span className="text-muted-foreground leading-relaxed">
                 {lengthOfStay}
@@ -343,7 +348,7 @@ function renderTripCard(
         <div className="mt-6 pt-6 border-t border-border/60">
           <h4 className="font-serif font-medium mb-4 text-foreground/80 flex items-center gap-2">
             <span className="w-8 h-px bg-border inline-block" />
-            Dispatches from {trip.name}
+            {t("dispatchesFrom")} {countryName(trip.countryCode)}
           </h4>
           <div className="grid gap-3">
             {tripPosts.map((post) => (
@@ -384,6 +389,8 @@ function renderTripCard(
 }
 
 export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
+  const i18n = useI18n();
+  const { countryName, formatCountLabel, formatDate, formatDistanceKm, t } = i18n;
   const { data: journeys = [] } = useJourneysQuery();
   const { data: trips = [], isLoading } = useTripsQuery();
   const { data: posts = [] } = usePostsQuery();
@@ -487,9 +494,9 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
 
   if (isLoading) {
     return (
-      <div className="py-20 text-center text-muted-foreground animate-pulse font-serif italic">
-        Unfolding the map...
-      </div>
+        <div className="py-20 text-center text-muted-foreground animate-pulse font-serif italic">
+        {t("loadingMap")}
+        </div>
     );
   }
 
@@ -499,13 +506,13 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
         <div className="flex flex-wrap gap-3 items-center">
           <Select value={filterTrip} onValueChange={setFilterTrip}>
             <SelectTrigger className="w-48" data-testid="select-filter-trip">
-              <SelectValue placeholder="All Trips" />
+              <SelectValue placeholder={t("allTrips")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Trips</SelectItem>
+              <SelectItem value="all">{t("allTrips")}</SelectItem>
               {trips.map((t) => (
                 <SelectItem key={t.id} value={String(t.id)}>
-                  {getFlagEmoji(t.countryCode)} {t.name}
+                  {getFlagEmoji(t.countryCode)} {countryName(t.countryCode)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -513,12 +520,12 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
 
           <Select value={filterRegion} onValueChange={setFilterRegion}>
             <SelectTrigger className="w-44" data-testid="select-filter-region">
-              <SelectValue placeholder="All Regions" />
+              <SelectValue placeholder={t("allRegions")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Regions</SelectItem>
-              <SelectItem value="france">France</SelectItem>
-              <SelectItem value="international">International</SelectItem>
+              <SelectItem value="all">{t("allRegions")}</SelectItem>
+              <SelectItem value="france">{t("france")}</SelectItem>
+              <SelectItem value="international">{t("international")}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -528,10 +535,10 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                 className="w-44"
                 data-testid="select-filter-transport"
               >
-                <SelectValue placeholder="All Transport" />
+                <SelectValue placeholder={t("allTransport")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Transport</SelectItem>
+                <SelectItem value="all">{t("allTransport")}</SelectItem>
                 {transportOptions.map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
@@ -544,10 +551,10 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
           {yearOptions.length > 0 && (
             <Select value={filterYear} onValueChange={setFilterYear}>
               <SelectTrigger className="w-32" data-testid="select-filter-year">
-                <SelectValue placeholder="All Years" />
+                <SelectValue placeholder={t("allYears")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Years</SelectItem>
+                <SelectItem value="all">{t("allYears")}</SelectItem>
                 {yearOptions.map((y) => (
                   <SelectItem key={y} value={y}>
                     {y}
@@ -567,7 +574,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
             data-testid="button-sort-order"
           >
             <ArrowUpDown className="w-4 h-4" />
-            {sortOrder === "newest" ? "Newest First" : "Oldest First"}
+            {sortOrder === "newest" ? t("newestFirst") : t("oldestFirst")}
           </Button>
 
           {(filterTrip !== "all" ||
@@ -586,13 +593,12 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
               className="text-muted-foreground"
               data-testid="button-clear-filters"
             >
-              Clear filters
+              {t("clearFilters")}
             </Button>
           )}
 
           <span className="text-sm text-muted-foreground font-mono ml-auto">
-            {filteredSorted.length}{" "}
-            {filteredSorted.length === 1 ? "entry" : "entries"}
+            {formatCountLabel(filteredSorted.length)}
           </span>
         </div>
       )}
@@ -615,8 +621,9 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                   item.trip,
                   posts.filter((post) => post.tripId === item.trip.id),
                   item.distanceKm,
+                  i18n,
                   undefined,
-                  "Estimated Trip Distance",
+                  t("estimatedTripDistance"),
                 )
               ) : (
                 <div className="space-y-4">
@@ -624,22 +631,22 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div>
                         <p className="text-xs text-muted-foreground font-mono uppercase tracking-[0.25em]">
-                          Multi-country journey
+                          {t("multiCountryJourney")}
                         </p>
                         <h3 className="font-serif text-3xl font-bold text-foreground mt-2">
                           {item.journey.name}
                         </h3>
                         <p className="text-sm text-muted-foreground font-mono mt-2 uppercase tracking-wider">
-                          {format(new Date(item.sortDate), "MMMM yyyy")}
+                          {formatDate(item.sortDate, "monthYear")}
                         </p>
                       </div>
-                      {formatDistance(item.distanceKm) && (
+                      {formatDistanceKm(item.distanceKm) && (
                         <div className="rounded-xl border border-border/60 bg-background/60 px-4 py-3 text-sm">
                           <strong className="block font-serif text-foreground">
-                            Estimated Journey Distance
+                            {t("estimatedJourneyDistance")}
                           </strong>
                           <span className="text-muted-foreground">
-                            {formatDistance(item.distanceKm)}
+                            {formatDistanceKm(item.distanceKm)}
                           </span>
                         </div>
                       )}
@@ -657,8 +664,9 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                           trip,
                           posts.filter((post) => post.tripId === trip.id),
                           computeJourneyTripDistance(item.journey, item.trips, tripIndex),
-                          `Step ${tripIndex + 1} of ${item.trips.length}`,
-                          "Estimated Trip Distance",
+                          i18n,
+                          `${t("stepOf")} ${tripIndex + 1} / ${item.trips.length}`,
+                          t("estimatedTripDistance"),
                         )}
                       </div>
                     ))}
@@ -671,7 +679,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
 
         {filteredSorted.length === 0 && (
           <div className="text-center py-10 text-muted-foreground font-serif italic">
-            No entries match your filters.
+            {t("noEntries")}
           </div>
         )}
       </div>
