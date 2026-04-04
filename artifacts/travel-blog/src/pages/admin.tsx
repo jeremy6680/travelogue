@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const COUNTRY_CODES: { code: string; name: string }[] = [
@@ -123,6 +123,10 @@ export default function AdminPage() {
   const [editingPost, setEditingPost] = useState<any>(null);
   const [editingTrip, setEditingTrip] = useState<any>(null);
   const [editingPhoto, setEditingPhoto] = useState<any>(null);
+  const [postTripId, setPostTripId] = useState("");
+  const [postCountryCode, setPostCountryCode] = useState("");
+  const [postLatitude, setPostLatitude] = useState("");
+  const [postLongitude, setPostLongitude] = useState("");
   const isUnlocked = adminToken.trim().length > 0;
   const tripOptions = useMemo(
     () =>
@@ -136,6 +140,40 @@ export default function AdminPage() {
     const tripId = value ? Number(value) : null;
     return tripId != null ? trips.find((trip) => trip.id === tripId) ?? null : null;
   };
+  const resetPostFormState = () => {
+    setPostTripId("");
+    setPostCountryCode("");
+    setPostLatitude("");
+    setPostLongitude("");
+  };
+  const syncPostCoordinatesFromTrip = (tripIdValue: string) => {
+    setPostTripId(tripIdValue);
+
+    if (!tripIdValue) {
+      return;
+    }
+
+    const linkedTrip = trips.find((trip) => trip.id === Number(tripIdValue)) ?? null;
+    if (!linkedTrip) {
+      return;
+    }
+
+    setPostLatitude(linkedTrip.latitude != null ? String(linkedTrip.latitude) : "");
+    setPostLongitude(linkedTrip.longitude != null ? String(linkedTrip.longitude) : "");
+    setPostCountryCode(linkedTrip.countryCode ?? "");
+  };
+
+  useEffect(() => {
+    if (!editingPost) {
+      resetPostFormState();
+      return;
+    }
+
+    setPostTripId(editingPost.tripId != null ? String(editingPost.tripId) : "");
+    setPostCountryCode(editingPost.countryCode ?? "");
+    setPostLatitude(editingPost.latitude != null ? String(editingPost.latitude) : "");
+    setPostLongitude(editingPost.longitude != null ? String(editingPost.longitude) : "");
+  }, [editingPost]);
 
   const handleUnlock = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -209,6 +247,7 @@ export default function AdminPage() {
           queryClient.invalidateQueries({ queryKey: directusQueryKeys.mapPins });
           queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
           setEditingPost(null);
+          resetPostFormState();
           toast({ title: "Post updated successfully" });
         }
       });
@@ -219,6 +258,7 @@ export default function AdminPage() {
           queryClient.invalidateQueries({ queryKey: directusQueryKeys.mapPins });
           queryClient.invalidateQueries({ queryKey: directusQueryKeys.stats });
           toast({ title: "Post created successfully" });
+          resetPostFormState();
           (e.target as HTMLFormElement).reset();
         }
       });
@@ -339,7 +379,8 @@ export default function AdminPage() {
                   <Input name="location" placeholder="Location string" defaultValue={editingPost?.location || ''} />
                   <select
                     name="tripId"
-                    defaultValue={editingPost?.tripId != null ? String(editingPost.tripId) : ""}
+                    value={postTripId}
+                    onChange={(event) => syncPostCoordinatesFromTrip(event.target.value)}
                     className={cn(
                       "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
                       "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -355,7 +396,8 @@ export default function AdminPage() {
                   </select>
                   <select
                     name="countryCode"
-                    defaultValue={editingPost?.countryCode ?? ""}
+                    value={postCountryCode}
+                    onChange={(event) => setPostCountryCode(event.target.value)}
                     className={cn(
                       "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
                       "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -368,16 +410,27 @@ export default function AdminPage() {
                     ))}
                   </select>
                 </div>
-                <details className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-                  <summary className="cursor-pointer font-medium text-foreground">Advanced coordinates override</summary>
-                  <p className="mt-2">
-                    If left empty, the post will reuse the linked trip coordinates when available. City-based geocoding is not configured in this project yet.
-                  </p>
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <Input name="latitude" type="number" step="any" placeholder="Latitude override" defaultValue={editingPost?.latitude || ''} />
-                    <Input name="longitude" type="number" step="any" placeholder="Longitude override" defaultValue={editingPost?.longitude || ''} />
-                  </div>
-                </details>
+                <p className="text-sm text-muted-foreground">
+                  Latitude et longitude se préremplissent depuis le voyage lié quand il est sélectionné, puis restent modifiables manuellement.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    name="latitude"
+                    type="number"
+                    step="any"
+                    placeholder="Latitude"
+                    value={postLatitude}
+                    onChange={(event) => setPostLatitude(event.target.value)}
+                  />
+                  <Input
+                    name="longitude"
+                    type="number"
+                    step="any"
+                    placeholder="Longitude"
+                    value={postLongitude}
+                    onChange={(event) => setPostLongitude(event.target.value)}
+                  />
+                </div>
                 <Input name="publishedAt" type="date" placeholder="Published At" defaultValue={editingPost?.publishedAt ?? ''} />
               </div>
 

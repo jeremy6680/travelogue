@@ -872,9 +872,9 @@ fields:
       display_options: null
       field: latitude
       group: null
-      hidden: true
+      hidden: false
       interface: input
-      note: Optional coordinate override. Leave empty to manage indirectly.
+      note: Optional coordinate value. Auto-filled from the post location when left empty, and still editable manually.
       options: null
       readonly: false
       required: false
@@ -912,9 +912,9 @@ fields:
       display_options: null
       field: longitude
       group: null
-      hidden: true
+      hidden: false
       interface: input
-      note: Optional coordinate override. Leave empty to manage indirectly.
+      note: Optional coordinate value. Auto-filled from the post location when left empty, and still editable manually.
       options: null
       readonly: false
       required: false
