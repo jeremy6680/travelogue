@@ -21,12 +21,48 @@ import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/lib/i18n";
 
 const FALLBACK_PHOTOS = [
-  { id: "f1", url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80", mediaAsset: null, caption: "Tokyo, néons et insomnies", link: null },
-  { id: "f2", url: "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=600&q=80", mediaAsset: null, caption: "Milford Sound", link: null },
-  { id: "f3", url: "https://images.unsplash.com/photo-1598300188904-6e3b1dc9e3b6?w=600&q=80", mediaAsset: null, caption: "Chefchaouen", link: null },
-  { id: "f4", url: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&q=80", mediaAsset: null, caption: "Rome à l'heure dorée", link: null },
-  { id: "f5", url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80", mediaAsset: null, caption: "Kyoto avant l'aube", link: null },
-  { id: "f6", url: "https://images.unsplash.com/photo-1557409518-691ebcd96038?w=600&q=80", mediaAsset: null, caption: "Matin japonais", link: null },
+  {
+    id: "f1",
+    url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80",
+    mediaAsset: null,
+    caption: "Tokyo, néons et insomnies",
+    link: null,
+  },
+  {
+    id: "f2",
+    url: "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=600&q=80",
+    mediaAsset: null,
+    caption: "Milford Sound",
+    link: null,
+  },
+  {
+    id: "f3",
+    url: "https://images.unsplash.com/photo-1598300188904-6e3b1dc9e3b6?w=600&q=80",
+    mediaAsset: null,
+    caption: "Chefchaouen",
+    link: null,
+  },
+  {
+    id: "f4",
+    url: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&q=80",
+    mediaAsset: null,
+    caption: "Rome à l'heure dorée",
+    link: null,
+  },
+  {
+    id: "f5",
+    url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80",
+    mediaAsset: null,
+    caption: "Kyoto avant l'aube",
+    link: null,
+  },
+  {
+    id: "f6",
+    url: "https://images.unsplash.com/photo-1557409518-691ebcd96038?w=600&q=80",
+    mediaAsset: null,
+    caption: "Matin japonais",
+    link: null,
+  },
 ];
 
 const fadeUp = (delay = 0) => ({
@@ -172,9 +208,17 @@ export default function Home() {
                 data-testid={`card-post-${post.id}`}
               >
                 <div className="aspect-[4/3] bg-muted overflow-hidden relative">
-                  {(post.coverImage || post.coverImageUrl) ? (
+                  {post.coverImage || post.coverImageUrl ? (
                     <img
-                      src={getMediaAssetImageUrl(post.coverImage, { width: 960, height: 720, crop: "fill" }) ?? post.coverImageUrl ?? ""}
+                      src={
+                        getMediaAssetImageUrl(post.coverImage, {
+                          width: 960,
+                          height: 720,
+                          crop: "fill",
+                        }) ??
+                        post.coverImageUrl ??
+                        ""
+                      }
                       alt={post.coverImage?.alt ?? post.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
@@ -238,15 +282,33 @@ export default function Home() {
               <motion.a
                 key={photo.id}
                 href={photo.link ?? "#"}
-                target={photo.link?.startsWith("/") ? undefined : photo.link ? "_blank" : undefined}
+                target={
+                  photo.link?.startsWith("/")
+                    ? undefined
+                    : photo.link
+                      ? "_blank"
+                      : undefined
+                }
                 rel="noopener noreferrer"
                 {...fadeUp(i * 0.07)}
                 className="group relative aspect-square overflow-hidden rounded-2xl bg-muted block"
                 data-testid={`card-photo-${photo.id}`}
               >
                 <img
-                  src={getMediaAssetImageUrl(photo.mediaAsset, { width: 720, height: 720, crop: "fill" }) ?? photo.url ?? ""}
-                  alt={photo.mediaAsset?.alt ?? photo.caption ?? t("photoFallbackAlt")}
+                  src={
+                    getMediaAssetImageUrl(photo.mediaAsset, {
+                      width: 720,
+                      height: 720,
+                      crop: "fill",
+                    }) ??
+                    photo.url ??
+                    ""
+                  }
+                  alt={
+                    photo.mediaAsset?.alt ??
+                    photo.caption ??
+                    t("photoFallbackAlt")
+                  }
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
                 {photo.caption && (
@@ -266,7 +328,7 @@ export default function Home() {
           <motion.div {...fadeUp()}>
             <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-muted shadow-xl">
               <img
-                src="https://images.unsplash.com/photo-1503220317375-aaad61436b1b?w=800&q=80"
+                src="https://res.cloudinary.com/dylqfjiax/image/upload/q_auto/f_auto/v1775400941/mini-jey_gvyat0.png"
                 alt="Portrait de voyageur"
                 className="w-full h-full object-cover"
               />
@@ -286,12 +348,14 @@ export default function Home() {
               <p>
                 Je suis un voyageur, un auteur et un éternel adepte du sac trop
                 plein, convaincu que les meilleures conversations naissent dans
-                les trains de nuit et les restaurants que personne ne connaît encore.
+                les trains de nuit et les restaurants que personne ne connaît
+                encore.
               </p>
               <p>
                 Ce blog est ma manière de ralentir et de vraiment me souvenir
                 des lieux traversés : la lumière, les odeurs, les gens, les
-                maladresses de langage. C'est avant tout une mémoire personnelle.
+                maladresses de langage. C'est avant tout une mémoire
+                personnelle.
               </p>
               <p>Basé, pour l'instant, là où part le prochain vol.</p>
             </div>
@@ -338,7 +402,8 @@ export default function Home() {
               Dire bonjour
             </h2>
             <p className="text-muted-foreground font-serif italic text-lg">
-              Conseils de voyage, idées de collaboration ou simple envie de partager une histoire de route.
+              Conseils de voyage, idées de collaboration ou simple envie de
+              partager une histoire de route.
             </p>
           </motion.div>
 
@@ -352,7 +417,8 @@ export default function Home() {
                   Message reçu !
                 </h3>
                 <p className="text-muted-foreground font-serif italic">
-                  Merci pour ton message. Je répondrai depuis l'endroit du monde où je me trouve.
+                  Merci pour ton message. Je répondrai depuis l'endroit du monde
+                  où je me trouve.
                 </p>
                 <button
                   onClick={() => {
