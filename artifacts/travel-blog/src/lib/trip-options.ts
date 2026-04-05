@@ -42,19 +42,82 @@ export const ACCOMODATION_OPTIONS: Option[] = [
 export const COMPANION_OPTIONS = [
   "Hine",
   "Javier",
-  "papa",
+  "North",
   "maman",
+  "papa",
   "Caro",
   "Fred",
   "Guillaume",
-  "Jeff",
   "Eric",
-  "Nico K.",
-  "Loic",
-  "Flo",
+  "Jeff",
   "papy",
   "mamy",
 ] as const;
+
+export const TRAVEL_REASON_OPTIONS: Option[] = [
+  { value: "vacances", label: { fr: "Vacances", en: "Vacation" } },
+  { value: "week-end", label: { fr: "Week-end", en: "Weekend" } },
+  { value: "travail", label: { fr: "Travail", en: "Work" } },
+  { value: "etudes", label: { fr: "Etudes", en: "Studies" } },
+  { value: "stage", label: { fr: "Stage", en: "Internship" } },
+  {
+    value: "visa vacances travail (vvt)",
+    label: {
+      fr: "Visa vacances travail (VVT)",
+      en: "Working holiday visa (WHV)",
+    },
+  },
+] as const;
+
+export const CONTINENT_OPTIONS: Record<
+  "europe" | "america" | "africa" | "asia" | "oceania",
+  { label: Record<Locale, string>; countryCodes: string[] }
+> = {
+  europe: {
+    label: { fr: "Europe", en: "Europe" },
+    countryCodes: [
+      "AD", "AL", "AT", "BA", "BE", "BG", "BY", "CH", "CY", "CZ", "DE", "DK",
+      "EE", "ES", "FI", "GB", "GE", "GR", "HR", "HU", "IE", "IS", "IT", "LI",
+      "LT", "LU", "LV", "MC", "MD", "ME", "MK", "MT", "NL", "NO", "PL", "PT",
+      "RO", "RS", "SE", "SI", "SK", "SM", "UA", "VA",
+    ],
+  },
+  america: {
+    label: { fr: "Amérique", en: "America" },
+    countryCodes: [
+      "AG", "AR", "BB", "BO", "BR", "BS", "BZ", "CA", "CL", "CO", "CR", "CU",
+      "DM", "DO", "EC", "GD", "GT", "GY", "HN", "HT", "JM", "KN", "LC", "MX",
+      "NI", "PA", "PE", "PY", "SV", "SR", "TT", "US", "UY", "VC", "VE",
+    ],
+  },
+  africa: {
+    label: { fr: "Afrique", en: "Africa" },
+    countryCodes: [
+      "AO", "BF", "BI", "BJ", "BW", "CD", "CF", "CG", "CI", "CM", "CV", "DJ",
+      "DZ", "EG", "ER", "ET", "GA", "GH", "GM", "GN", "GQ", "GW", "KE", "KM",
+      "LR", "LS", "LY", "MA", "MG", "ML", "MR", "MU", "MW", "MZ", "NA", "NE",
+      "NG", "RW", "SC", "SD", "SL", "SN", "SO", "SS", "SZ", "TD", "TG", "TN",
+      "TZ", "UG", "ZA", "ZM", "ZW",
+    ],
+  },
+  asia: {
+    label: { fr: "Asie", en: "Asia" },
+    countryCodes: [
+      "AE", "AF", "AM", "AZ", "BD", "BH", "BN", "BT", "CN", "GE", "HK", "ID",
+      "IL", "IN", "IQ", "IR", "JO", "JP", "KG", "KH", "KP", "KR", "KW", "KZ",
+      "LA", "LB", "LK", "MM", "MN", "MO", "MV", "MY", "NP", "OM", "PH", "PK",
+      "PS", "QA", "SA", "SG", "SY", "TH", "TJ", "TL", "TM", "TR", "TW", "UZ",
+      "VN", "YE",
+    ],
+  },
+  oceania: {
+    label: { fr: "Océanie", en: "Oceania" },
+    countryCodes: [
+      "AU", "FJ", "FM", "KI", "MH", "NR", "NZ", "PG", "PW", "SB", "TO", "TV",
+      "VU", "WS",
+    ],
+  },
+};
 
 const TRANSPORT_LABELS = new Map(
   TRANSPORT_OPTIONS.map((option) => [option.value, option.label]),
@@ -62,6 +125,10 @@ const TRANSPORT_LABELS = new Map(
 
 const ACCOMODATION_LABELS = new Map(
   ACCOMODATION_OPTIONS.map((option) => [option.value, option.label]),
+);
+
+const TRAVEL_REASON_LABELS = new Map(
+  TRAVEL_REASON_OPTIONS.map((option) => [option.value, option.label]),
 );
 
 function formatOptionLabel(
@@ -97,4 +164,35 @@ export function sortTransportValues(values: string[], locale: Locale) {
       locale,
     ),
   );
+}
+
+export function normalizeMultiValueField(value: string[] | string | null | undefined) {
+  if (Array.isArray(value)) {
+    return value.map((item) => item.trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+export function formatTravelReasonLabel(value: string, locale: Locale) {
+  return formatOptionLabel(value, TRAVEL_REASON_LABELS, locale);
+}
+
+export function formatTravelReasonLabels(values: string[], locale: Locale) {
+  return values.map((value) => formatTravelReasonLabel(value, locale)).join(", ");
+}
+
+export function getContinentKey(countryCode: string) {
+  const normalizedCode = countryCode.toUpperCase();
+
+  return (Object.entries(CONTINENT_OPTIONS).find(([, continent]) =>
+    continent.countryCodes.includes(normalizedCode),
+  )?.[0] ?? null) as keyof typeof CONTINENT_OPTIONS | null;
 }

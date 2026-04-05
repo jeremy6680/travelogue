@@ -34,6 +34,10 @@ import type {
   UpdatePostBody,
   UpdateTripBody,
 } from "@/lib/travel-types";
+import {
+  getContinentKey,
+  normalizeMultiValueField,
+} from "@/lib/trip-options";
 
 type DirectusGalleryImage = GalleryImage;
 
@@ -82,7 +86,8 @@ type DirectusTrip = {
   visited_cities: string;
   accomodation: string[] | string | null;
   reason_for_visit: string;
-  travel_companions: string;
+  reason_for_travel?: string[] | string | null;
+  travel_companions: string[] | string | null;
   friends_family_met: string;
   visited_at: string;
   visited_until: string | null;
@@ -182,6 +187,7 @@ const TRIP_FIELDS = [
   "visited_cities",
   "accomodation",
   "reason_for_visit",
+  "reason_for_travel",
   "travel_companions",
   "friends_family_met",
   "visited_at",
@@ -263,15 +269,6 @@ const LEGACY_PHOTO_FIELDS = [
   "updated_at",
 ] as const;
 
-const continentMap: Record<string, string[]> = {
-  EU: ["FR", "DE", "IT", "ES", "PT", "NL", "BE", "CH", "AT", "PL", "CZ", "HU", "SE", "NO", "DK", "FI", "GR", "HR", "RO", "BG"],
-  NA: ["US", "CA", "MX", "CU", "JM", "HT", "DO", "GT", "BZ", "HN", "SV", "NI", "CR", "PA"],
-  SA: ["BR", "AR", "CL", "CO", "PE", "VE", "EC", "BO", "PY", "UY", "GY", "SR"],
-  AS: ["JP", "CN", "IN", "KR", "TH", "VN", "ID", "MY", "SG", "PH", "TW", "HK", "AE", "TR", "IL", "JO", "LB"],
-  AF: ["ZA", "NG", "KE", "ET", "EG", "MA", "TZ", "GH", "SN", "TN"],
-  OC: ["AU", "NZ", "FJ", "PG"],
-};
-
 const directus = createDirectus<DirectusSchema>(
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8055",
 ).with(rest());
@@ -343,23 +340,16 @@ function mapPost(post: DirectusPost): Post {
   };
 }
 
-function normalizeMultiSelect(value: string[] | string | null | undefined): string[] {
-  if (Array.isArray(value)) return value.map((item) => item.trim()).filter(Boolean);
-  if (typeof value === "string") {
-    return value.split(",").map((item) => item.trim()).filter(Boolean);
-  }
-  return [];
-}
-
 function mapTrip(trip: DirectusTrip): Trip {
   return {
     id: trip.id,
     name: trip.name,
     countryCode: trip.country_code,
     visitedCities: trip.visited_cities,
-    accomodation: normalizeMultiSelect(trip.accomodation),
+    accomodation: normalizeMultiValueField(trip.accomodation),
     reasonForVisit: trip.reason_for_visit,
-    travelCompanions: trip.travel_companions,
+    reasonForTravel: normalizeMultiValueField(trip.reason_for_travel),
+    travelCompanions: normalizeMultiValueField(trip.travel_companions),
     friendsFamilyMet: trip.friends_family_met,
     visitedAt: trip.visited_at,
     visitedUntil: trip.visited_until,
@@ -369,8 +359,8 @@ function mapTrip(trip: DirectusTrip): Trip {
     coverImage: mapMediaAsset(trip.cover_image),
     journeyId: trip.journey_id ?? null,
     journeyOrder: trip.journey_order ?? null,
-    transportationTo: normalizeMultiSelect(trip.transportation_to),
-    transportationOnSite: normalizeMultiSelect(trip.transportation_on_site),
+    transportationTo: normalizeMultiValueField(trip.transportation_to),
+    transportationOnSite: normalizeMultiValueField(trip.transportation_on_site),
     createdAt: trip.created_at,
     updatedAt: trip.updated_at,
   };
@@ -430,11 +420,9 @@ function buildStats(trips: Trip[], posts: Post[]): TravelStats {
   const visitedContinents = new Set<string>();
 
   for (const trip of trips) {
-    for (const [continent, codes] of Object.entries(continentMap)) {
-      if (codes.includes(trip.countryCode.toUpperCase())) {
-        visitedContinents.add(continent);
-        break;
-      }
+    const continent = getContinentKey(trip.countryCode);
+    if (continent) {
+      visitedContinents.add(continent);
     }
   }
 
@@ -475,7 +463,8 @@ function mapCreateTripInput(data: CreateTripBody | UpdateTripBody) {
     visited_cities: data.visitedCities,
     accomodation: data.accomodation,
     reason_for_visit: data.reasonForVisit,
-    travel_companions: data.travelCompanions,
+    reason_for_travel: normalizeMultiValueField(data.reasonForTravel),
+    travel_companions: normalizeMultiValueField(data.travelCompanions),
     friends_family_met: data.friendsFamilyMet,
     visited_at: data.visitedAt,
     visited_until: data.visitedUntil,
@@ -484,8 +473,8 @@ function mapCreateTripInput(data: CreateTripBody | UpdateTripBody) {
     cover_image_id: data.coverImageId,
     journey_id: data.journeyId,
     journey_order: data.journeyOrder,
-    transportation_to: normalizeMultiSelect(data.transportationTo),
-    transportation_on_site: normalizeMultiSelect(data.transportationOnSite),
+    transportation_to: normalizeMultiValueField(data.transportationTo),
+    transportation_on_site: normalizeMultiValueField(data.transportationOnSite),
   };
 }
 

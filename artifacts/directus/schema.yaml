@@ -2620,12 +2620,12 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 9
+      sort: 11
       special: null
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: reason_for_visit
       table: trips
@@ -2645,7 +2645,7 @@ fields:
       foreign_key_column: null
   - collection: trips
     field: travel_companions
-    type: string
+    type: json
     meta:
       collection: trips
       conditions: null
@@ -2654,13 +2654,61 @@ fields:
       field: travel_companions
       group: null
       hidden: false
-      interface: input
+      interface: select-multiple-dropdown
       note: Comma-separated values are supported.
-      options: null
+      options:
+        allowOther: true
+        choices:
+          - text: solo
+            value: solo
+          - text: Hine
+            value: Hine
+          - text: Javier
+            value: Javier
+          - text: North
+            value: North
+          - text: maman
+            value: maman
+          - text: papa
+            value: papa
+          - text: Caro
+            value: Caro
+          - text: Fred
+            value: Fred
+          - text: Guillaume
+            value: Guillaume
+          - text: Vincent
+            value: Vincent
+          - text: Henri
+            value: Henri
+          - text: Eric
+            value: Eric
+          - text: Loïc
+            value: Loïc
+          - text: Jeff
+            value: Jeff
+          - text: Nico K.
+            value: Nico k.
+          - text: Flo
+            value: Flo
+          - text: papy
+            value: papy
+          - text: mamy
+            value: mamy
+          - text: Marie
+            value: Marie
+          - text: Nico D.
+            value: Nico D.
+          - text: JC
+            value: JC
+          - text: Ben
+            value: Ben
+          - text: Vivien
+            value: Vivien
       readonly: false
       required: false
       searchable: true
-      sort: 10
+      sort: 12
       special: null
       translations: null
       validation: null
@@ -2669,12 +2717,12 @@ fields:
     schema:
       name: travel_companions
       table: trips
-      data_type: character varying
-      default_value: null
-      max_length: 255
+      data_type: jsonb
+      default_value: []
+      max_length: null
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_indexed: false
       is_primary_key: false
@@ -2700,7 +2748,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 11
+      sort: 13
       special: null
       translations: null
       validation: null
@@ -2740,7 +2788,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 14
+      sort: 16
       special: null
       translations: null
       validation: null
@@ -2782,7 +2830,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 7
+      sort: 8
       special: null
       translations: null
       validation: null
@@ -2824,7 +2872,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 8
+      sort: 9
       special: null
       translations: null
       validation: null
@@ -2864,7 +2912,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 17
+      sort: 19
       special: null
       translations: null
       validation: null
@@ -2904,7 +2952,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 18
+      sort: 20
       special: null
       translations: null
       validation: null
@@ -2944,7 +2992,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 15
+      sort: 17
       special: null
       translations: null
       validation: null
@@ -3002,7 +3050,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 16
+      sort: 18
       special:
         - cast-json
       translations: null
@@ -3051,10 +3099,6 @@ fields:
             value: rental car
           - text: Train
             value: train
-          - text: Tram
-            value: tram
-          - text: Metro
-            value: metro
           - text: Bateau
             value: boat
           - text: Moto
@@ -3065,7 +3109,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 12
+      sort: 14
       special:
         - cast-json
       translations: null
@@ -3114,10 +3158,6 @@ fields:
             value: rental car
           - text: Train
             value: train
-          - text: Tram
-            value: tram
-          - text: Metro
-            value: metro
           - text: Bateau
             value: boat
           - text: Moto
@@ -3128,7 +3168,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 13
+      sort: 15
       special:
         - cast-json
       translations: null
@@ -3251,7 +3291,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 6
+      sort: 7
       special: null
       translations: null
       validation: null
@@ -3274,6 +3314,61 @@ fields:
       has_auto_increment: false
       foreign_key_table: media_assets
       foreign_key_column: id
+  - collection: trips
+    field: reason_for_travel
+    type: json
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: reason_for_travel
+      group: null
+      hidden: false
+      interface: select-multiple-dropdown
+      note: null
+      options:
+        allowOther: true
+        choices:
+          - text: Vacances
+            value: vacances
+          - text: Week-end
+            value: week-end
+          - text: Travail
+            value: travail
+          - text: Etudes
+            value: études
+          - text: Stage
+            value: stage
+          - text: Visa Vacances-Travail
+            value: visa vacances travail (vvt)
+      readonly: false
+      required: false
+      searchable: true
+      sort: 10
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: reason_for_travel
+      table: trips
+      data_type: jsonb
+      default_value: []
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
 systemFields:
   - collection: directus_activity
     field: timestamp
@@ -3476,25 +3571,4 @@ relations:
       foreign_key_column: id
       constraint_name: trips_cover_image_id_foreign
       on_update: NO ACTION
-      on_delete: SET NULL
-  - collection: trips
-    field: journey_id
-    related_collection: journeys
-    meta:
-      junction_field: null
-      many_collection: trips
-      many_field: journey_id
-      one_allowed_collections: null
-      one_collection: journeys
-      one_collection_field: null
-      one_deselect_action: nullify
-      one_field: null
-      sort_field: null
-    schema:
-      table: trips
-      column: journey_id
-      foreign_key_table: journeys
-      foreign_key_column: id
-      constraint_name: trips_journey_id_journeys_id_fk
-      on_update: CASCADE
       on_delete: SET NULL

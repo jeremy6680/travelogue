@@ -1,4 +1,4 @@
-import { pgTable, varchar, serial, timestamp, real, date, text, integer } from "drizzle-orm/pg-core";
+import { pgTable, varchar, serial, timestamp, real, date, text, integer, jsonb } from "drizzle-orm/pg-core";
 import { mediaAssetsTable } from "./media-assets";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -13,7 +13,8 @@ export const tripsTable = pgTable("trips", {
     .references(() => countriesTable.code, { onUpdate: "cascade" }),
   visitedCities: varchar("visited_cities", { length: 500 }).notNull(),
   reasonForVisit: varchar("reason_for_visit", { length: 255 }).notNull(),
-  travelCompanions: varchar("travel_companions", { length: 255 }).notNull(),
+  reasonForTravel: jsonb("reason_for_travel").$type<string[]>().default([]).notNull(),
+  travelCompanions: jsonb("travel_companions").$type<string[]>().default([]).notNull(),
   friendsFamilyMet: varchar("friends_family_met", { length: 255 }).notNull(),
   visitedAt: date("visited_at", { mode: "string" }).notNull(),
   latitude: real("latitude"),

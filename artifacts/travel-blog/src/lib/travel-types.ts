@@ -84,7 +84,8 @@ export interface Trip {
   visitedCities: string;
   accomodation: string[];
   reasonForVisit: string;
-  travelCompanions: string;
+  reasonForTravel: string[];
+  travelCompanions: string[];
   friendsFamilyMet: string;
   visitedAt: string;
   visitedUntil: string | null;
@@ -106,7 +107,8 @@ export interface CreateTripBody {
   visitedCities: string;
   accomodation?: string[] | null;
   reasonForVisit: string;
-  travelCompanions: string;
+  reasonForTravel?: string[] | string | null;
+  travelCompanions?: string[] | string | null;
   friendsFamilyMet: string;
   visitedAt: string;
   visitedUntil?: string | null;
@@ -125,7 +127,8 @@ export interface UpdateTripBody {
   visitedCities?: string;
   accomodation?: string[] | null;
   reasonForVisit?: string;
-  travelCompanions?: string;
+  reasonForTravel?: string[] | string | null;
+  travelCompanions?: string[] | string | null;
   friendsFamilyMet?: string;
   visitedAt?: string;
   visitedUntil?: string | null;

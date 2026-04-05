@@ -37,8 +37,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   COMPANION_OPTIONS,
+  TRAVEL_REASON_OPTIONS,
   TRANSPORT_OPTIONS,
   formatTransportLabels,
+  formatTravelReasonLabels,
 } from "@/lib/trip-options";
 import {
   Trash2,
@@ -304,6 +306,119 @@ function CheckboxGroup({
   );
 }
 
+function MultiSelectWithCustomOption({
+  name,
+  options,
+  defaultValues = [],
+  customLabel,
+  customPlaceholder,
+}: {
+  name: string;
+  options: readonly CheckboxOption[];
+  defaultValues?: readonly string[];
+  customLabel: string;
+  customPlaceholder: string;
+}) {
+  const knownValues = useMemo(
+    () => new Set(options.map((option) => option.value)),
+    [options],
+  );
+  const [selectedValues, setSelectedValues] = useState<string[]>(() =>
+    Array.from(new Set(defaultValues.map((value) => value.trim()).filter(Boolean))),
+  );
+  const [customValue, setCustomValue] = useState("");
+
+  useEffect(() => {
+    setSelectedValues(
+      Array.from(new Set(defaultValues.map((value) => value.trim()).filter(Boolean))),
+    );
+    setCustomValue("");
+  }, [defaultValues]);
+
+  const customValues = selectedValues.filter((value) => !knownValues.has(value));
+
+  const toggleValue = (value: string) => {
+    setSelectedValues((currentValues) =>
+      currentValues.includes(value)
+        ? currentValues.filter((currentValue) => currentValue !== value)
+        : [...currentValues, value],
+    );
+  };
+
+  const addCustomValue = () => {
+    const nextValue = customValue.trim();
+    if (!nextValue) return;
+
+    setSelectedValues((currentValues) =>
+      currentValues.includes(nextValue)
+        ? currentValues
+        : [...currentValues, nextValue],
+    );
+    setCustomValue("");
+  };
+
+  return (
+    <div className="space-y-3 rounded-xl border border-input/60 bg-background/60 p-3">
+      <div className="grid grid-cols-2 gap-2">
+        {options.map((option) => (
+          <label
+            key={option.value}
+            className="flex items-center gap-2 rounded-lg border border-border/60 bg-card px-3 py-2 text-sm text-foreground"
+          >
+            <input
+              type="checkbox"
+              checked={selectedValues.includes(option.value)}
+              onChange={() => toggleValue(option.value)}
+              className="h-4 w-4"
+            />
+            <span>{option.label}</span>
+          </label>
+        ))}
+      </div>
+
+      <div className="space-y-2 rounded-lg border border-dashed border-border/70 bg-card/60 p-3">
+        <p className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
+          {customLabel}
+        </p>
+        <div className="flex gap-2">
+          <Input
+            value={customValue}
+            onChange={(event) => setCustomValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                addCustomValue();
+              }
+            }}
+            placeholder={customPlaceholder}
+          />
+          <Button type="button" variant="outline" onClick={addCustomValue}>
+            Ajouter
+          </Button>
+        </div>
+        {customValues.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {customValues.map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => toggleValue(value)}
+                className="rounded-full border border-border bg-background px-3 py-1 text-xs text-foreground transition-colors hover:bg-muted"
+              >
+                {value} ×
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {selectedValues.map((value) => (
+        <input key={value} type="hidden" name={name} value={value} />
+      ))}
+    </div>
+  );
+}
+
 function useAdminInvalidation() {
   const queryClient = useQueryClient();
 
@@ -375,6 +490,7 @@ export default function AdminPage() {
   const [editingMediaAsset, setEditingMediaAsset] = useState<MediaAsset | null>(
     null,
   );
+  const [tripFormVersion, setTripFormVersion] = useState(0);
   const [postTripId, setPostTripId] = useState("");
   const [postCountryCode, setPostCountryCode] = useState("");
   const [postLatitude, setPostLatitude] = useState("");
@@ -649,6 +765,10 @@ export default function AdminPage() {
       .getAll("travelCompanions")
       .map((value) => String(value).trim())
       .filter(Boolean);
+    const reasonForTravel = formData
+      .getAll("reasonForTravel")
+      .map((value) => String(value).trim())
+      .filter(Boolean);
     const transportationTo = formData
       .getAll("transportationTo")
       .map((value) => String(value).trim())
@@ -658,21 +778,13 @@ export default function AdminPage() {
       .map((value) => String(value).trim())
       .filter(Boolean);
 
-    if (travelCompanions.length === 0) {
-      toast({
-        title: "Compagnons requis",
-        description: "Selectionne au moins un compagnon de voyage.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const data = {
       name: formData.get("name") as string,
       countryCode: formData.get("countryCode") as string,
       visitedCities: formData.get("visitedCities") as string,
       reasonForVisit: formData.get("reasonForVisit") as string,
-      travelCompanions: travelCompanions.join(", "),
+      reasonForTravel,
+      travelCompanions,
       friendsFamilyMet: formData.get("friendsFamilyMet") as string,
       visitedAt: formData.get("visitedAt") as string,
       coverImageId: formData.get("coverImageId")
@@ -693,6 +805,7 @@ export default function AdminPage() {
           onSuccess: () => {
             invalidation.invalidateTrips();
             setEditingTrip(null);
+            setTripFormVersion((currentValue) => currentValue + 1);
             toast({ title: "Voyage mis à jour" });
           },
         },
@@ -703,8 +816,8 @@ export default function AdminPage() {
         {
           onSuccess: () => {
             invalidation.invalidateTrips();
+            setTripFormVersion((currentValue) => currentValue + 1);
             toast({ title: "Voyage ajouté" });
-            (e.target as HTMLFormElement).reset();
           },
         },
       );
@@ -1300,7 +1413,7 @@ export default function AdminPage() {
             </h2>
 
             <form
-              key={editingTrip?.id ?? "new-trip"}
+              key={editingTrip ? `trip-${editingTrip.id}` : `trip-new-${tripFormVersion}`}
               onSubmit={handleTripSubmit}
               className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm"
             >
@@ -1380,20 +1493,32 @@ export default function AdminPage() {
                 />
                 <div className="space-y-1">
                   <label className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
+                    Raison du voyage
+                  </label>
+                  <MultiSelectWithCustomOption
+                    name="reasonForTravel"
+                    options={TRAVEL_REASON_OPTIONS.map((option) => ({
+                      value: option.value,
+                      label: option.label.fr,
+                    }))}
+                    defaultValues={editingTrip?.reasonForTravel ?? []}
+                    customLabel="Autre raison"
+                    customPlaceholder="Saisir une autre raison"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
                     Compagnons de voyage
                   </label>
-                  <CheckboxGroup
+                  <MultiSelectWithCustomOption
                     name="travelCompanions"
                     options={COMPANION_OPTIONS.map((name) => ({
                       value: name,
                       label: name,
                     }))}
-                    defaultValues={
-                      editingTrip?.travelCompanions
-                        ?.split(",")
-                        .map((value) => value.trim())
-                        .filter(Boolean) ?? []
-                    }
+                    defaultValues={editingTrip?.travelCompanions ?? []}
+                    customLabel="Autre compagnon"
+                    customPlaceholder="Saisir une autre personne"
                   />
                 </div>
                 <Input
@@ -1558,6 +1683,17 @@ export default function AdminPage() {
                         {trip.transportationOnSite.length > 0
                           ? `Transport sur place : ${formatTransportLabels(trip.transportationOnSite, "fr")}`
                           : "Transport sur place : -"}
+                      </p>
+                    )}
+                    {trip.reasonForTravel.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Raison du voyage :{" "}
+                        {formatTravelReasonLabels(trip.reasonForTravel, "fr")}
+                      </p>
+                    )}
+                    {trip.travelCompanions.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Compagnons : {trip.travelCompanions.join(", ")}
                       </p>
                     )}
                   </div>

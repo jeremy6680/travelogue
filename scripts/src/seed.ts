@@ -23,6 +23,7 @@ type TripRow = {
   country_code: string;
   visited_cities: string;
   reason_for_visit: string;
+  reason_for_travel?: string[] | string;
   travel_companions: string;
   friends_family_met: string;
   visited_at: string;
@@ -61,7 +62,13 @@ const insertedTrips = await db
       countryCode: t.country_code,
       visitedCities: t.visited_cities,
       reasonForVisit: t.reason_for_visit,
-      travelCompanions: t.travel_companions,
+      reasonForTravel: Array.isArray(t.reason_for_travel)
+        ? t.reason_for_travel
+        : [],
+      travelCompanions: t.travel_companions
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
       friendsFamilyMet: t.friends_family_met,
       visitedAt: t.visited_at,
       latitude: t.latitude,

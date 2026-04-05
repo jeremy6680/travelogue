@@ -28,8 +28,10 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import {
   formatAccomodationLabels,
+  formatTravelReasonLabel,
   formatTransportLabel,
   formatTransportLabels,
+  getContinentKey,
   sortTransportValues,
 } from "@/lib/trip-options";
 
@@ -67,15 +69,26 @@ function formatLengthOfStay(
   return formatDaysLabel(days);
 }
 
-function getTripRegion(countryCode: string) {
-  return countryCode.toUpperCase() === "FR" ? "france" : "international";
-}
-
 interface TravelTimelineProps {
   showFilters?: boolean;
 }
 
 type Coordinates = { latitude: number; longitude: number };
+type TripCountryOption = {
+  value: string;
+  label: string;
+  count: number;
+};
+type RegionOption = {
+  value: string;
+  label: string;
+  count: number;
+};
+type FacetOption = {
+  value: string;
+  label: string;
+  count: number;
+};
 
 type TimelineItem =
   | { type: "trip"; sortDate: string; trip: Trip; distanceKm: number | null }
@@ -91,6 +104,108 @@ function isCoordinatePair(
 function getTripCoordinates(trip: Trip): Coordinates | null {
   if (!isCoordinatePair(trip.latitude, trip.longitude)) return null;
   return { latitude: trip.latitude as number, longitude: trip.longitude as number };
+}
+
+function formatList(values: string[]) {
+  return values.join(", ");
+}
+
+function getCountryFilterOptions(
+  trips: Trip[],
+  countryName: ReturnType<typeof useI18n>["countryName"],
+) {
+  const counts = new Map<string, number>();
+
+  for (const trip of trips) {
+    const code = trip.countryCode.toUpperCase();
+    counts.set(code, (counts.get(code) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([code, count]) => ({
+      value: code,
+      label: `${getFlagEmoji(code)} ${countryName(code)} (${count})`,
+      count,
+    }))
+    .sort((left, right) => {
+      if (right.count !== left.count) return right.count - left.count;
+      return left.label.localeCompare(right.label, "fr");
+    });
+}
+
+function getRegionFilterOptions(
+  trips: Trip[],
+  t: ReturnType<typeof useI18n>["t"],
+  locale: ReturnType<typeof useI18n>["locale"],
+) {
+  const counts = new Map<string, number>();
+
+  for (const trip of trips) {
+    counts.set("france", trip.countryCode.toUpperCase() === "FR" ? (counts.get("france") ?? 0) + 1 : counts.get("france") ?? 0);
+    counts.set(
+      "international",
+      trip.countryCode.toUpperCase() !== "FR"
+        ? (counts.get("international") ?? 0) + 1
+        : counts.get("international") ?? 0,
+    );
+
+    const continentKey = getContinentKey(trip.countryCode);
+    if (continentKey) {
+      const value = `continent:${continentKey}`;
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(counts.entries())
+    .filter(([, count]) => count > 0)
+    .map(([value, count]) => {
+      if (value === "france") {
+        return { value, label: `${t("france")} (${count})`, count };
+      }
+
+      if (value === "international") {
+        return { value, label: `${t("international")} (${count})`, count };
+      }
+
+      const continentKey = value.replace("continent:", "") as ReturnType<typeof getContinentKey>;
+      const continentLabel =
+        continentKey != null
+          ? {
+              europe: locale === "fr" ? "Europe" : "Europe",
+              america: locale === "fr" ? "Amérique" : "America",
+              africa: locale === "fr" ? "Afrique" : "Africa",
+              asia: locale === "fr" ? "Asie" : "Asia",
+              oceania: locale === "fr" ? "Océanie" : "Oceania",
+            }[continentKey]
+          : value;
+
+      return {
+        value,
+        label: `${continentLabel} (${count})`,
+        count,
+      };
+    })
+    .sort((left, right) => {
+      if (right.count !== left.count) return right.count - left.count;
+      return left.label.localeCompare(right.label, locale);
+    });
+}
+
+function getFacetOptions(values: string[][], locale: string) {
+  const counts = new Map<string, number>();
+
+  for (const tripValues of values) {
+    for (const value of new Set(tripValues.map((item) => item.trim()).filter(Boolean))) {
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(counts.entries())
+    .map(([value, count]) => ({ value, label: value, count }))
+    .sort((left, right) => {
+      if (right.count !== left.count) return right.count - left.count;
+      return left.label.localeCompare(right.label, locale);
+    });
 }
 
 function getJourneyEndpoint(
@@ -283,7 +398,7 @@ function renderTripCard(
             </div>
           </div>
         )}
-        {trip.travelCompanions && (
+        {trip.travelCompanions.length > 0 && (
           <div className="flex items-start gap-2.5">
             <Users className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
             <div>
@@ -291,7 +406,7 @@ function renderTripCard(
                 {t("companions")}
               </strong>
               <span className="text-muted-foreground leading-relaxed">
-                {trip.travelCompanions}
+                {formatList(trip.travelCompanions)}
               </span>
             </div>
           </div>
@@ -409,13 +524,15 @@ function renderTripCard(
 
 export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const i18n = useI18n();
-  const { countryName, formatCountLabel, formatDate, formatDistanceKm, t } = i18n;
+  const { countryName, formatCountLabel, formatDate, formatDistanceKm, locale, t } = i18n;
   const { data: journeys = [] } = useJourneysQuery();
   const { data: trips = [], isLoading } = useTripsQuery();
   const { data: posts = [] } = usePostsQuery();
   const [filterTrip, setFilterTrip] = useState<string>("all");
   const [filterRegion, setFilterRegion] = useState<string>("all");
   const [filterTransport, setFilterTransport] = useState<string>("all");
+  const [filterCompanion, setFilterCompanion] = useState<string>("all");
+  const [filterReason, setFilterReason] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
@@ -438,19 +555,65 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
     return Array.from(years).sort((a, b) => Number(b) - Number(a));
   }, [trips]);
 
+  const tripCountryOptions = useMemo(
+    () => getCountryFilterOptions(trips, countryName),
+    [countryName, trips],
+  );
+
+  const regionOptions = useMemo(
+    () => getRegionFilterOptions(trips, t, locale),
+    [locale, t, trips],
+  );
+
+  const companionOptions = useMemo(
+    () => getFacetOptions(trips.map((trip) => trip.travelCompanions), locale),
+    [locale, trips],
+  );
+
+  const reasonOptions = useMemo(
+    () =>
+      getFacetOptions(trips.map((trip) => trip.reasonForTravel), locale).map(
+        (option) => ({
+          ...option,
+          label: `${formatTravelReasonLabel(option.value, i18n.locale)} (${option.count})`,
+        }),
+      ),
+    [i18n.locale, locale, trips],
+  );
+
   const filteredSorted = useMemo<TimelineItem[]>(() => {
     let list = [...trips];
     if (filterTrip !== "all") {
-      list = list.filter((t) => String(t.id) === filterTrip);
+      list = list.filter((trip) => trip.countryCode.toUpperCase() === filterTrip);
     }
     if (filterRegion !== "all") {
-      list = list.filter((t) => getTripRegion(t.countryCode) === filterRegion);
+      list = list.filter((trip) => {
+        if (filterRegion === "france") {
+          return trip.countryCode.toUpperCase() === "FR";
+        }
+
+        if (filterRegion === "international") {
+          return trip.countryCode.toUpperCase() !== "FR";
+        }
+
+        if (filterRegion.startsWith("continent:")) {
+          return getContinentKey(trip.countryCode) === filterRegion.replace("continent:", "");
+        }
+
+        return true;
+      });
     }
     if (filterTransport !== "all") {
       list = list.filter((t) => {
         const modes = [...t.transportationTo, ...t.transportationOnSite];
         return modes.includes(filterTransport);
       });
+    }
+    if (filterCompanion !== "all") {
+      list = list.filter((trip) => trip.travelCompanions.includes(filterCompanion));
+    }
+    if (filterReason !== "all") {
+      list = list.filter((trip) => trip.reasonForTravel.includes(filterReason));
     }
     if (filterYear !== "all") {
       list = list.filter(
@@ -509,7 +672,17 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
     });
 
     return timelineItems;
-  }, [trips, journeys, filterTrip, filterRegion, filterTransport, filterYear, sortOrder]);
+  }, [
+    trips,
+    journeys,
+    filterTrip,
+    filterRegion,
+    filterTransport,
+    filterCompanion,
+    filterReason,
+    filterYear,
+    sortOrder,
+  ]);
 
   if (isLoading) {
     return (
@@ -529,9 +702,9 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allTrips")}</SelectItem>
-              {trips.map((t) => (
-                <SelectItem key={t.id} value={String(t.id)}>
-                  {getFlagEmoji(t.countryCode)} {countryName(t.countryCode)}
+              {tripCountryOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -543,8 +716,11 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allRegions")}</SelectItem>
-              <SelectItem value="france">{t("france")}</SelectItem>
-              <SelectItem value="international">{t("international")}</SelectItem>
+              {regionOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -561,6 +737,40 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                 {transportOptions.map((t) => (
                   <SelectItem key={t} value={t}>
                     {formatTransportLabel(t, i18n.locale)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {companionOptions.length > 0 && (
+            <Select value={filterCompanion} onValueChange={setFilterCompanion}>
+              <SelectTrigger className="w-52" data-testid="select-filter-companion">
+                <SelectValue placeholder={t("companions")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("companions")}</SelectItem>
+                {companionOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label} ({option.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {reasonOptions.length > 0 && (
+            <Select value={filterReason} onValueChange={setFilterReason}>
+              <SelectTrigger className="w-52" data-testid="select-filter-reason">
+                <SelectValue placeholder={locale === "fr" ? "Raison du voyage" : "Reason for travel"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  {locale === "fr" ? "Raison du voyage" : "Reason for travel"}
+                </SelectItem>
+                {reasonOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -599,6 +809,8 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
           {(filterTrip !== "all" ||
             filterRegion !== "all" ||
             filterTransport !== "all" ||
+            filterCompanion !== "all" ||
+            filterReason !== "all" ||
             filterYear !== "all") && (
             <Button
               variant="ghost"
@@ -607,6 +819,8 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                 setFilterTrip("all");
                 setFilterRegion("all");
                 setFilterTransport("all");
+                setFilterCompanion("all");
+                setFilterReason("all");
                 setFilterYear("all");
               }}
               className="text-muted-foreground"

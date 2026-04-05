@@ -74,7 +74,7 @@ export function WorldMap() {
       {/* Map container */}
       <div
         className="w-full relative overflow-hidden rounded-3xl border border-border/40 shadow-xl"
-        style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d1f3c 40%, #0f2840 100%)", minHeight: "380px" }}
+        style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d1f3c 40%, #0f2840 100%)", minHeight: "320px" }}
       >
         {/* Subtle grid overlay */}
         <div
@@ -126,8 +126,10 @@ export function WorldMap() {
         </div>
 
         <ComposableMap
-          projectionConfig={{ scale: 155, center }}
-          style={{ width: "100%", height: "100%", minHeight: "380px" }}
+          width={1200}
+          height={540}
+          projectionConfig={{ scale: 176, center }}
+          style={{ width: "100%", height: "auto", minHeight: "330px" }}
           onClick={handleMapClick}
         >
           <ZoomableGroup zoom={zoom} onMoveEnd={({ coordinates }) => setCenter(coordinates as [number, number])}>

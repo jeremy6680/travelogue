@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Layout } from "@/components/layout";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePostsQuery, useTripsQuery } from "@/lib/directus";
+import type { Trip } from "@/lib/travel-types";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { MapPin, Calendar, BookOpen, ArrowUpDown, Filter } from "lucide-react";
@@ -14,29 +15,52 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
-import {
-  formatTransportLabel,
-  sortTransportValues,
-} from "@/lib/trip-options";
+
+function getFlagEmoji(code: string) {
+  if (!code || code.length !== 2) return "";
+  return String.fromCodePoint(
+    ...code
+      .toUpperCase()
+      .split("")
+      .map((char) => 127397 + char.charCodeAt(0)),
+  );
+}
+
+function getCountryFilterOptions(
+  trips: Trip[],
+  countryName: (code: string) => string,
+) {
+  const counts = new Map<string, number>();
+
+  for (const trip of trips) {
+    const code = trip.countryCode.toUpperCase();
+    counts.set(code, (counts.get(code) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([code, count]) => ({
+      value: code,
+      label: `${getFlagEmoji(code)} ${countryName(code)} (${count})`,
+      count,
+    }))
+    .sort((left, right) => {
+      if (right.count !== left.count) return right.count - left.count;
+      return left.label.localeCompare(right.label, "fr");
+    });
+}
 
 export default function PostsPage() {
-  const { countryName, formatCountLabel, formatDate, locale, t } = useI18n();
+  const { countryName, formatCountLabel, formatDate, t } = useI18n();
   const { data: posts = [], isLoading } = usePostsQuery();
   const { data: trips = [] } = useTripsQuery();
   const [filterTrip, setFilterTrip] = useState<string>("all");
-  const [filterTransport, setFilterTransport] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
-  const transportOptions = useMemo(() => {
-    const modes = new Set<string>();
-    for (const t of trips) {
-      for (const mode of [...t.transportationTo, ...t.transportationOnSite]) {
-        modes.add(mode);
-      }
-    }
-    return sortTransportValues(Array.from(modes), locale);
-  }, [locale, trips]);
+  const tripCountryOptions = useMemo(
+    () => getCountryFilterOptions(trips, countryName),
+    [countryName, trips],
+  );
 
   const yearOptions = useMemo(() => {
     const years = new Set<string>();
@@ -49,14 +73,10 @@ export default function PostsPage() {
   const filtered = useMemo(() => {
     let list = [...posts];
     if (filterTrip !== "all") {
-      list = list.filter(p => p.tripId != null && String(p.tripId) === filterTrip);
-    }
-    if (filterTransport !== "all") {
-      list = list.filter(p => {
-        const trip = trips.find(t => t.id === p.tripId);
-        if (!trip) return false;
-        const modes = [...trip.transportationTo, ...trip.transportationOnSite];
-        return modes.includes(filterTransport);
+      list = list.filter((post) => {
+        const trip = trips.find((currentTrip) => currentTrip.id === post.tripId);
+        const countryCode = trip?.countryCode ?? post.countryCode;
+        return countryCode?.toUpperCase() === filterTrip;
       });
     }
     if (filterYear !== "all") {
@@ -68,17 +88,7 @@ export default function PostsPage() {
       return sortOrder === "newest" ? db - da : da - db;
     });
     return list;
-  }, [posts, trips, filterTrip, filterTransport, filterYear, sortOrder]);
-
-  function getFlagEmoji(code: string) {
-    if (!code || code.length !== 2) return "";
-    return String.fromCodePoint(
-      ...code
-        .toUpperCase()
-        .split("")
-        .map((c) => 127397 + c.charCodeAt(0)),
-    );
-  }
+  }, [posts, trips, filterTrip, filterYear, sortOrder]);
 
   return (
     <Layout>
@@ -101,29 +111,13 @@ export default function PostsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allTrips")}</SelectItem>
-              {trips.map((t) => (
-                <SelectItem key={t.id} value={String(t.id)}>
-                  {getFlagEmoji(t.countryCode)} {countryName(t.countryCode)}
+              {tripCountryOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-
-          {transportOptions.length > 0 && (
-            <Select value={filterTransport} onValueChange={setFilterTransport}>
-              <SelectTrigger className="w-44" data-testid="select-filter-transport">
-                <SelectValue placeholder={t("allTransport")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allTransport")}</SelectItem>
-                {transportOptions.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {formatTransportLabel(t, locale)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
 
           {yearOptions.length > 0 && (
             <Select value={filterYear} onValueChange={setFilterYear}>
@@ -152,11 +146,11 @@ export default function PostsPage() {
             {sortOrder === "newest" ? t("newestFirst") : t("oldestFirst")}
           </Button>
 
-          {(filterTrip !== "all" || filterTransport !== "all" || filterYear !== "all") && (
+          {(filterTrip !== "all" || filterYear !== "all") && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { setFilterTrip("all"); setFilterTransport("all"); setFilterYear("all"); }}
+              onClick={() => { setFilterTrip("all"); setFilterYear("all"); }}
               className="text-muted-foreground"
               data-testid="button-clear-filters"
             >
