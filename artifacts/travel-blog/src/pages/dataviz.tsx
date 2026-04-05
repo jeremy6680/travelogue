@@ -274,12 +274,13 @@ export default function DataVizPage() {
     ]),
   );
 
+  const formatRoundedKm = (value: number) =>
+    `${Math.round(value).toLocaleString(numberLocale)} km`;
+
   const surfaceCards = [
     {
       title: t("datavizTotalDistance"),
-      value:
-        formatDistanceKm(analytics.totalEstimatedKm)?.replace(/\s+approx\.?$/i, "") ??
-        `0 km`,
+      value: formatRoundedKm(analytics.totalEstimatedKm),
       icon: TrendingUp,
     },
     {
@@ -368,7 +369,21 @@ export default function DataVizPage() {
                     <XAxis type="number" tickLine={false} axisLine={false} />
                     <ChartTooltip
                       cursor={false}
-                      content={<ChartTooltipContent hideLabel />}
+                      content={
+                        <ChartTooltipContent
+                          hideLabel
+                          formatter={(value) => (
+                            <>
+                              <span className="text-muted-foreground">
+                                {t("datavizDistanceSeries")} :
+                              </span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {formatRoundedKm(Number(value))}
+                              </span>
+                            </>
+                          )}
+                        />
+                      }
                     />
                     <Bar dataKey="distanceKm" radius={8}>
                       {analytics.transportDistanceRows.map((row, index) => (
@@ -542,7 +557,7 @@ export default function DataVizPage() {
                           <div className="rounded-lg border border-border/60 bg-background px-3 py-2 text-xs shadow-xl">
                             <p className="font-medium text-foreground">{point.name}</p>
                             <p className="text-muted-foreground">
-                              {Math.round(point.distanceKm).toLocaleString(numberLocale)} km
+                              {formatRoundedKm(point.distanceKm)}
                             </p>
                             <p className="text-muted-foreground">
                               {point.durationDays.toLocaleString(numberLocale)}{" "}
