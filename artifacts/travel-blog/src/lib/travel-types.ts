@@ -30,8 +30,9 @@ export interface Post {
   id: number;
   title: string;
   slug: string;
-  content: string;
+  content: string | null;
   excerpt: string;
+  externalUrl: string | null;
   coverImageUrl: string | null;
   coverImage: MediaAsset | null;
   gallery: GalleryImage[] | null;
@@ -48,8 +49,9 @@ export interface Post {
 export interface CreatePostBody {
   title: string;
   slug: string;
-  content: string;
+  content?: string | null;
   excerpt: string;
+  externalUrl?: string | null;
   coverImageId?: number | null;
   coverImageUrl?: string | null;
   gallery?: GalleryImage[] | null;
@@ -64,8 +66,9 @@ export interface CreatePostBody {
 export interface UpdatePostBody {
   title?: string;
   slug?: string;
-  content?: string;
+  content?: string | null;
   excerpt?: string;
+  externalUrl?: string | null;
   coverImageId?: number | null;
   coverImageUrl?: string | null;
   gallery?: GalleryImage[] | null;
@@ -255,6 +258,7 @@ export interface MapPin {
   title: string;
   slug: string;
   excerpt: string;
+  externalUrl: string | null;
   coverImageUrl: string | null;
   coverImage: MediaAsset | null;
   latitude: number;

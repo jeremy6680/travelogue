@@ -19,8 +19,9 @@ export const postsTable = pgTable("posts", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 200 }).notNull(),
   slug: varchar("slug", { length: 200 }).notNull().unique(),
-  content: text("content").notNull(),
+  content: text("content"),
   excerpt: text("excerpt").notNull(),
+  externalUrl: varchar("external_url", { length: 2048 }),
   coverImageUrl: varchar("cover_image_url", { length: 2048 }),
   gallery: jsonb("gallery").$type<{
     assetId?: number | null;

@@ -3,6 +3,7 @@ import Markdown from "react-markdown";
 import { Layout } from "@/components/layout";
 import { getGalleryImageUrl, getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePostBySlugQuery, useTripsQuery } from "@/lib/directus";
+import { isExternalPost } from "@/lib/post-links";
 import { useParams, Link } from "wouter";
 import { MapPin, Calendar, ArrowLeft, Globe2 } from "lucide-react";
 import NotFound from "@/pages/not-found";
@@ -17,6 +18,7 @@ export default function PostDetail() {
 
   const trip = useMemo(() => trips.find(t => t.id === post?.tripId), [trips, post]);
   const gallery = post?.gallery ?? [];
+  const hasLocalContent = Boolean(post?.content?.trim());
 
   if (isLoading) {
     return (
@@ -82,12 +84,32 @@ export default function PostDetail() {
           </motion.div>
         )}
 
-        {/* Content */}
-        <div
-          className="prose prose-lg md:prose-xl dark:prose-invert prose-p:font-sans prose-p:leading-relaxed prose-headings:font-serif prose-a:text-primary hover:prose-a:text-[var(--color-primary-hover)] max-w-none prose-img:rounded-2xl prose-img:shadow-sm"
-        >
-          <Markdown>{post.content}</Markdown>
-        </div>
+        {isExternalPost(post) && (
+          <section className="rounded-3xl border border-border/60 bg-card/60 p-8 text-center space-y-4">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+              {t("externalArticle")}
+            </p>
+            <p className="text-base text-muted-foreground">
+              {t("articleHostedElsewhere")}
+            </p>
+            <a
+              href={post.externalUrl ?? "#"}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground text-sm font-bold uppercase tracking-wider rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+            >
+              {t("openOriginalArticle")}
+            </a>
+          </section>
+        )}
+
+        {hasLocalContent && (
+          <div
+            className="prose prose-lg md:prose-xl dark:prose-invert prose-p:font-sans prose-p:leading-relaxed prose-headings:font-serif prose-a:text-primary hover:prose-a:text-[var(--color-primary-hover)] max-w-none prose-img:rounded-2xl prose-img:shadow-sm"
+          >
+            <Markdown>{post.content ?? ""}</Markdown>
+          </div>
+        )}
 
         {/* Photo Gallery */}
         {gallery.length > 0 && (

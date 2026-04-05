@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePhotosQuery, usePostsQuery, useStatsQuery } from "@/lib/directus";
+import { getPostHref, isExternalPost } from "@/lib/post-links";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
@@ -242,22 +243,49 @@ export default function Home() {
                     </span>
                   )}
                   <h3 className="font-serif font-bold text-xl text-foreground group-hover:text-primary transition-colors leading-snug">
-                    <Link
-                      href={`/posts/${post.slug}`}
-                      data-testid={`link-post-title-${post.id}`}
-                    >
-                      {post.title}
-                    </Link>
+                    {isExternalPost(post) ? (
+                      <a
+                        href={getPostHref(post)}
+                        target="_blank"
+                        rel="noreferrer"
+                        data-testid={`link-post-title-${post.id}`}
+                      >
+                        {post.title}
+                      </a>
+                    ) : (
+                      <Link
+                        href={getPostHref(post)}
+                        data-testid={`link-post-title-${post.id}`}
+                      >
+                        {post.title}
+                      </Link>
+                    )}
                   </h3>
                   <p className="text-sm text-muted-foreground line-clamp-2 flex-1">
                     {post.excerpt}
                   </p>
-                  <Link
-                    href={`/posts/${post.slug}`}
-                    className="text-xs font-bold uppercase tracking-wider text-primary hover:text-[var(--color-primary-hover)] transition-colors inline-flex items-center gap-1 mt-auto"
-                  >
-                    {t("readDispatch")} <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+                  {isExternalPost(post) && (
+                    <p className="inline-flex items-center rounded-full border border-border/70 px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-muted-foreground w-fit">
+                      {t("externalArticle")}
+                    </p>
+                  )}
+                  {isExternalPost(post) ? (
+                    <a
+                      href={getPostHref(post)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-bold uppercase tracking-wider text-primary hover:text-[var(--color-primary-hover)] transition-colors inline-flex items-center gap-1 mt-auto"
+                    >
+                      {t("readExternalArticle")} <ArrowRight className="w-3.5 h-3.5" />
+                    </a>
+                  ) : (
+                    <Link
+                      href={getPostHref(post)}
+                      className="text-xs font-bold uppercase tracking-wider text-primary hover:text-[var(--color-primary-hover)] transition-colors inline-flex items-center gap-1 mt-auto"
+                    >
+                      {t("readDispatch")} <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
                 </div>
               </motion.article>
             ))}

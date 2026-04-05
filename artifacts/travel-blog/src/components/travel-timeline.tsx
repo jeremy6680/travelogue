@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
+import { getPostHref, isExternalPost } from "@/lib/post-links";
 import type { Journey, Post, Trip } from "@/lib/travel-types";
-import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { differenceInCalendarDays } from "date-fns";
 import {
@@ -495,9 +495,11 @@ function renderTripCard(
           </h4>
           <div className="grid gap-3">
             {tripPosts.map((post) => (
-              <Link
+              <a
                 key={post.id}
-                href={`/posts/${post.slug}`}
+                href={getPostHref(post)}
+                target={isExternalPost(post) ? "_blank" : undefined}
+                rel={isExternalPost(post) ? "noreferrer" : undefined}
                 className="group flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50"
                 data-testid={`link-post-${post.id}`}
               >
@@ -522,7 +524,7 @@ function renderTripCard(
                     {post.excerpt}
                   </p>
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         </div>

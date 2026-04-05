@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Layout } from "@/components/layout";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePostsQuery, useTripsQuery } from "@/lib/directus";
+import { getPostHref, isExternalPost } from "@/lib/post-links";
 import type { Trip } from "@/lib/travel-types";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -221,28 +222,59 @@ export default function PostsPage() {
 
                   <div>
                     <h2 className="text-3xl font-serif font-bold group-hover:text-primary transition-colors text-foreground leading-tight">
-                      <Link
-                        href={`/posts/${post.slug}`}
-                        data-testid={`link-post-title-${post.id}`}
-                      >
-                        {post.title}
-                      </Link>
+                      {isExternalPost(post) ? (
+                        <a
+                          href={getPostHref(post)}
+                          target="_blank"
+                          rel="noreferrer"
+                          data-testid={`link-post-title-${post.id}`}
+                        >
+                          {post.title}
+                        </a>
+                      ) : (
+                        <Link
+                          href={getPostHref(post)}
+                          data-testid={`link-post-title-${post.id}`}
+                        >
+                          {post.title}
+                        </Link>
+                      )}
                     </h2>
                     <p className="text-muted-foreground mt-3 leading-relaxed text-base">
                       {post.excerpt}
                     </p>
+                    {isExternalPost(post) && (
+                      <p className="mt-3 inline-flex items-center rounded-full border border-border/70 px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                        {t("externalArticle")}
+                      </p>
+                    )}
                   </div>
 
-                  <Link
-                    href={`/posts/${post.slug}`}
-                    className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-[var(--color-primary-hover)] transition-colors uppercase tracking-wider font-sans"
-                    data-testid={`link-read-post-${post.id}`}
-                  >
-                    {t("readDispatch")}{" "}
-                    <span aria-hidden="true" className="text-lg leading-none">
-                      &rarr;
-                    </span>
-                  </Link>
+                  {isExternalPost(post) ? (
+                    <a
+                      href={getPostHref(post)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-[var(--color-primary-hover)] transition-colors uppercase tracking-wider font-sans"
+                      data-testid={`link-read-post-${post.id}`}
+                    >
+                      {t("readExternalArticle")}{" "}
+                      <span aria-hidden="true" className="text-lg leading-none">
+                        &rarr;
+                      </span>
+                    </a>
+                  ) : (
+                    <Link
+                      href={getPostHref(post)}
+                      className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-[var(--color-primary-hover)] transition-colors uppercase tracking-wider font-sans"
+                      data-testid={`link-read-post-${post.id}`}
+                    >
+                      {t("readDispatch")}{" "}
+                      <span aria-hidden="true" className="text-lg leading-none">
+                        &rarr;
+                      </span>
+                    </Link>
+                  )}
                 </div>
               </motion.article>
             ))}

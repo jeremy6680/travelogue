@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from "react-simple-maps";
 import { useMapPinsQuery, useTripsQuery } from "@/lib/directus";
+import { getPostHref, isExternalPost } from "@/lib/post-links";
 import { Link } from "wouter";
 import { MapPin, ZoomIn, ZoomOut, RotateCcw, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -242,12 +243,28 @@ export function WorldMap() {
               </p>
             )}
             <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{activeData.excerpt}</p>
-            <Link
-              href={`/posts/${activeData.slug}`}
-              className="inline-block mt-3 text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors"
-            >
-              {t("readMore")} &rarr;
-            </Link>
+            {isExternalPost(activeData) && (
+              <p className="mt-3 inline-flex items-center rounded-full border border-border/70 px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                {t("externalArticle")}
+              </p>
+            )}
+            {isExternalPost(activeData) ? (
+              <a
+                href={getPostHref(activeData)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block mt-3 text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors"
+              >
+                {t("readExternalArticle")} &rarr;
+              </a>
+            ) : (
+              <Link
+                href={getPostHref(activeData)}
+                className="inline-block mt-3 text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors"
+              >
+                {t("readMore")} &rarr;
+              </Link>
+            )}
           </div>
         );
       })()}

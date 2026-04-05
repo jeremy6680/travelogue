@@ -635,8 +635,9 @@ export default function AdminPage() {
     const data = {
       title: formData.get("title") as string,
       slug: formData.get("slug") as string,
-      content: formData.get("content") as string,
+      content: (formData.get("content") as string) || null,
       excerpt: formData.get("excerpt") as string,
+      externalUrl: (formData.get("externalUrl") as string) || null,
       coverImageId: formData.get("coverImageId")
         ? Number(formData.get("coverImageId"))
         : null,
@@ -1051,10 +1052,15 @@ export default function AdminPage() {
                 />
                 <Textarea
                   name="content"
-                  placeholder="Contenu complet..."
-                  defaultValue={editingPost?.content}
-                  required
+                  placeholder="Contenu complet... (optionnel pour un article externe)"
+                  defaultValue={editingPost?.content ?? ""}
                   className="h-40"
+                />
+                <Input
+                  name="externalUrl"
+                  type="url"
+                  placeholder="URL de l'article externe (optionnel)"
+                  defaultValue={editingPost?.externalUrl || ""}
                 />
                 <select
                   name="coverImageId"
@@ -1172,6 +1178,11 @@ export default function AdminPage() {
                     <p className="text-xs text-muted-foreground font-mono">
                       {post.slug}
                     </p>
+                    {post.externalUrl && (
+                      <p className="text-xs text-muted-foreground">
+                        Article externe
+                      </p>
+                    )}
                     {post.coverImage && (
                       <p className="text-xs text-muted-foreground">
                         Asset ID {post.coverImage.id} ·{" "}

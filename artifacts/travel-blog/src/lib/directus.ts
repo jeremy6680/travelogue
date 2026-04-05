@@ -63,8 +63,9 @@ type DirectusPost = {
   id: number;
   title: string;
   slug: string;
-  content: string;
+  content: string | null;
   excerpt: string;
+  external_url?: string | null;
   cover_image_url: string | null;
   featured_image_id?: number | null;
   featured_image?: DirectusMediaAsset | null;
@@ -166,6 +167,7 @@ const POST_FIELDS = [
   "slug",
   "content",
   "excerpt",
+  "external_url",
   "cover_image_url",
   "featured_image_id",
   { featured_image: [...MEDIA_ASSET_FIELDS] },
@@ -326,6 +328,7 @@ function mapPost(post: DirectusPost): Post {
     slug: post.slug,
     content: post.content,
     excerpt: post.excerpt,
+    externalUrl: post.external_url ?? null,
     coverImageUrl: post.cover_image_url,
     coverImage: mapMediaAsset(post.featured_image),
     gallery: post.gallery?.map(mapGalleryImage) ?? null,
@@ -407,6 +410,7 @@ function mapPin(post: Post): MapPin {
     title: post.title,
     slug: post.slug,
     excerpt: post.excerpt,
+    externalUrl: post.externalUrl,
     coverImageUrl: post.coverImageUrl,
     coverImage: post.coverImage,
     latitude: post.latitude ?? 0,
@@ -442,8 +446,9 @@ function mapCreatePostInput(data: CreatePostBody | UpdatePostBody) {
   return {
     title: data.title,
     slug: data.slug,
-    content: data.content,
+    content: data.content || null,
     excerpt: data.excerpt,
+    external_url: data.externalUrl,
     cover_image_url: data.coverImageUrl,
     featured_image_id: data.coverImageId,
     gallery: data.gallery,
