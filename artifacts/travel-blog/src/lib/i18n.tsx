@@ -17,6 +17,7 @@ const messages = {
   fr: {
     navHome: "Accueil",
     navAtlas: "Atlas",
+    navDataViz: "DataViz",
     navJournal: "Journal",
     navTrips: "Voyages",
     navAdmin: "Admin",
@@ -103,10 +104,44 @@ const messages = {
     noLinkedCountry: "Pays du voyage lié si possible",
     standaloneTrip: "Voyage autonome",
     photoFallbackAlt: "Photo",
+    datavizTitle: "DataViz",
+    datavizSubtitle:
+      "Une lecture visuelle de mes voyages: distances estimées, rythmes annuels, compagnons récurrents et zones du monde les plus traversées.",
+    datavizEstimatedNote:
+      "Les kilomètres sont des estimations calculées à partir des coordonnées enregistrées et réparties entre les modes de transport déclarés pour chaque trajet.",
+    datavizTotalDistance: "Distance estimée",
+    datavizTripsAnalyzed: "Voyages analysés",
+    datavizCompanionsCount: "Compagnons distincts",
+    datavizContinentsCount: "Continents visités",
+    datavizTransportDistance: "Kilomètres par transport",
+    datavizTransportDistanceDesc:
+      "Répartition estimée des distances selon les modes utilisés pour rejoindre chaque destination.",
+    datavizYearlyDistance: "Distance au fil des années",
+    datavizYearlyDistanceDesc:
+      "Courbe des kilomètres estimés parcourus année après année.",
+    datavizCompanions: "Compagnons les plus présents",
+    datavizCompanionsDesc:
+      "Les personnes qui reviennent le plus souvent d'un voyage à l'autre.",
+    datavizContinents: "Continents traversés",
+    datavizContinentsDesc:
+      "Part des voyages par continent, avec le volume de déplacements associé.",
+    datavizScatter: "Distance vs durée",
+    datavizScatterDesc:
+      "Chaque point représente un voyage: plus la bulle est grande, plus il y a eu de récits publiés.",
+    datavizHeatmap: "Heatmap mensuelle",
+    datavizHeatmapDesc:
+      "Une vue rapide de l'intensité des départs mois par mois et année par année.",
+    datavizHeatmapLegend:
+      "Plus la case est dense, plus le mois a concentré de voyages.",
+    datavizDistanceSeries: "Distance",
+    datavizDurationSeries: "Durée",
+    datavizDaysLabel: "jours",
+    datavizNoData: "Pas encore assez de données pour afficher ce graphique.",
   },
   en: {
     navHome: "Home",
     navAtlas: "Atlas",
+    navDataViz: "DataViz",
     navJournal: "Journal",
     navTrips: "Trips",
     navAdmin: "Admin",
@@ -193,6 +228,39 @@ const messages = {
     noLinkedCountry: "Country from linked trip if possible",
     standaloneTrip: "Standalone trip",
     photoFallbackAlt: "Photo",
+    datavizTitle: "DataViz",
+    datavizSubtitle:
+      "A visual reading of my travels: estimated distances, yearly rhythm, recurring travel companions, and the parts of the world crossed most often.",
+    datavizEstimatedNote:
+      "Kilometers are estimated from stored coordinates and split across the transport modes declared for each trip.",
+    datavizTotalDistance: "Estimated distance",
+    datavizTripsAnalyzed: "Trips analyzed",
+    datavizCompanionsCount: "Distinct companions",
+    datavizContinentsCount: "Continents visited",
+    datavizTransportDistance: "Kilometers by transport",
+    datavizTransportDistanceDesc:
+      "Estimated distance split across the modes used to reach each destination.",
+    datavizYearlyDistance: "Distance over time",
+    datavizYearlyDistanceDesc:
+      "A yearly curve of estimated kilometers traveled.",
+    datavizCompanions: "Most frequent companions",
+    datavizCompanionsDesc:
+      "The people who show up most often from one trip to the next.",
+    datavizContinents: "Continents crossed",
+    datavizContinentsDesc:
+      "Share of trips by continent, along with their associated travel volume.",
+    datavizScatter: "Distance vs duration",
+    datavizScatterDesc:
+      "Each point is a trip: larger bubbles mean more published dispatches.",
+    datavizHeatmap: "Monthly heatmap",
+    datavizHeatmapDesc:
+      "A quick look at travel intensity by month and by year.",
+    datavizHeatmapLegend:
+      "Darker cells indicate months with more trips.",
+    datavizDistanceSeries: "Distance",
+    datavizDurationSeries: "Duration",
+    datavizDaysLabel: "days",
+    datavizNoData: "There is not enough data yet to render this chart.",
   },
 } as const;
 

@@ -6,6 +6,7 @@ import {
   BookOpen,
   Map,
   Globe,
+  BarChart3,
   Instagram,
   Twitter,
   Mail,
@@ -20,6 +21,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/atlas", label: t("navAtlas"), icon: Map },
     { href: "/posts", label: t("navJournal"), icon: BookOpen },
     { href: "/trips", label: t("navTrips"), icon: Globe },
+    { href: "/dataviz", label: t("navDataViz"), icon: BarChart3 },
   ];
 
   return (

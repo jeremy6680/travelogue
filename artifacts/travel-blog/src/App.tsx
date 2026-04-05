@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/home";
 import AtlasPage from "@/pages/atlas";
+import DataVizPage from "@/pages/dataviz";
 import PostsPage from "@/pages/posts/index";
 import PostDetail from "@/pages/posts/detail";
 import TripsPage from "@/pages/trips/index";
@@ -24,6 +25,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/atlas" component={AtlasPage} />
+      <Route path="/dataviz" component={DataVizPage} />
       <Route path="/posts" component={PostsPage} />
       <Route path="/posts/:slug" component={PostDetail} />
       <Route path="/trips" component={TripsPage} />
