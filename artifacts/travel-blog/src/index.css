@@ -43,35 +43,65 @@
 }
 
 :root {
-  --background: 40 33% 96%; /* Ivory */
-  --foreground: 160 20% 15%; /* Deep Forest */
-  
-  --card: 40 40% 98%;
-  --card-foreground: 160 20% 15%;
-  --card-border: 40 15% 85%;
+  /* Travelogue color system */
+  --color-primary: #4D2080;
+  --color-primary-hover: #361560;
+  --color-primary-lightest: #F0E8FF;
+  --color-primary-light: #EDE0FF;
+  --color-primary-mid: #8B50C0;
+  --color-accent: #E8F000;
 
-  --popover: 40 40% 98%;
-  --popover-foreground: 160 20% 15%;
-  --popover-border: 40 15% 85%;
+  --color-text: #1A1A1A;
+  --color-text-muted: #5A5A5A;
+  --color-text-subtle: #9B9B9B;
 
-  --primary: 160 25% 25%;
-  --primary-foreground: 40 33% 96%;
+  --color-bg: #FFFFFF;
+  --color-bg-warm: #F7F3EE;
+  --color-bg-subtle: #F2F0ED;
 
-  --secondary: 20 60% 50%; /* Terracotta */
-  --secondary-foreground: 40 33% 96%;
+  --color-border: #DDD6CD;
+  --color-border-light: #E8E8E8;
 
-  --muted: 40 15% 85%;
-  --muted-foreground: 160 10% 40%;
+  --color-tag-bg: #EDE0FF;
+  --color-tag-text: #4D2080;
+  --color-tag-featured-bg: #E8F000;
+  --color-tag-featured-text: #1A1A1A;
 
-  --accent: 35 70% 55%; /* Gold / Ochre */
-  --accent-foreground: 160 20% 15%;
+  /* Tailwind theme bridge */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 10%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+  --card-border: 0 0% 91%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+  --popover-border: 0 0% 91%;
+
+  --primary: 267 60% 31%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 95%;
+  --secondary-foreground: 0 0% 10%;
+
+  --muted: 36 24% 95%;
+  --muted-foreground: 0 0% 35%;
+
+  --accent: 64 100% 47%;
+  --accent-foreground: 0 0% 10%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 40 15% 85%;
-  --input: 40 15% 85%;
-  --ring: 160 25% 25%;
+  --border: 0 0% 91%;
+  --input: 0 0% 91%;
+  --ring: 267 60% 31%;
+
+  --primary-border: var(--color-primary);
+  --secondary-border: var(--color-border);
+  --button-outline: var(--color-border);
+  --badge-outline: var(--color-border-light);
 
   --radius: 0.75rem;
 
@@ -81,40 +111,44 @@
 }
 
 .dark {
-  --background: 160 25% 10%;
-  --foreground: 40 33% 90%;
+  --background: 0 0% 10%;
+  --foreground: 0 0% 100%;
 
-  --card: 160 25% 12%;
-  --card-foreground: 40 33% 90%;
-  --card-border: 160 20% 20%;
+  --card: 0 0% 12%;
+  --card-foreground: 0 0% 100%;
+  --card-border: 0 0% 24%;
 
-  --popover: 160 25% 12%;
-  --popover-foreground: 40 33% 90%;
-  --popover-border: 160 20% 20%;
+  --popover: 0 0% 12%;
+  --popover-foreground: 0 0% 100%;
+  --popover-border: 0 0% 24%;
 
-  --primary: 35 70% 55%; /* Gold/Ochre */
-  --primary-foreground: 160 25% 10%;
+  --primary: 270 43% 44%;
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 20 60% 50%; /* Terracotta */
-  --secondary-foreground: 40 33% 96%;
+  --secondary: 270 43% 29%;
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 160 20% 20%;
-  --muted-foreground: 160 10% 65%;
+  --muted: 0 0% 16%;
+  --muted-foreground: 0 0% 72%;
 
-  --accent: 35 70% 55%;
-  --accent-foreground: 160 25% 10%;
+  --accent: 64 100% 47%;
+  --accent-foreground: 0 0% 10%;
 
   --destructive: 0 62% 30%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 160 20% 20%;
-  --input: 160 20% 20%;
-  --ring: 35 70% 55%;
+  --border: 0 0% 24%;
+  --input: 0 0% 24%;
+  --ring: 270 43% 44%;
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
   body {
     @apply bg-background text-foreground font-sans;
@@ -122,5 +156,14 @@
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
+  }
+  a:not([class]) {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-color: rgba(77, 32, 128, 0.3);
+  }
+  a:not([class]):hover {
+    color: var(--color-primary-hover);
+    text-decoration-color: var(--color-primary-hover);
   }
 }

@@ -77,14 +77,14 @@ export default function Home() {
     <Layout>
       <div className="space-y-32">
         {/* ── Hero ── */}
-        <section className="text-center space-y-8 pt-8 max-w-4xl mx-auto">
+        <section className="text-center space-y-8 pt-8 max-w-4xl mx-auto bg-[var(--color-bg-warm)] border border-[var(--color-border)] rounded-[2rem] px-6 py-10">
           <motion.h1
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-6xl md:text-8xl font-serif font-bold text-foreground tracking-tight leading-[1.05]"
           >
             {t("heroTitle")}{" "}
-            <span className="text-secondary italic font-light block">
+            <span className="text-[var(--color-primary-mid)] italic font-light block">
               {t("heroTitleAccent")}
             </span>
           </motion.h1>
@@ -157,7 +157,7 @@ export default function Home() {
             </div>
             <Link
               href="/posts"
-              className="text-sm font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors flex items-center gap-1"
+              className="text-sm font-bold uppercase tracking-wider text-primary hover:text-[var(--color-primary-hover)] transition-colors flex items-center gap-1"
             >
               {t("allPosts")} <ArrowRight className="w-4 h-4" />
             </Link>
@@ -185,7 +185,7 @@ export default function Home() {
                   )}
                   {post.location && (
                     <div className="absolute top-3 left-3 bg-background/90 backdrop-blur text-foreground text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                      <MapPin className="w-3 h-3 text-secondary" />{" "}
+                      <MapPin className="w-3 h-3 text-primary" />{" "}
                       {post.location}
                     </div>
                   )}
@@ -197,7 +197,7 @@ export default function Home() {
                       {formatDate(post.publishedAt, "short")}
                     </span>
                   )}
-                  <h3 className="font-serif font-bold text-xl text-foreground group-hover:text-secondary transition-colors leading-snug">
+                  <h3 className="font-serif font-bold text-xl text-foreground group-hover:text-primary transition-colors leading-snug">
                     <Link
                       href={`/posts/${post.slug}`}
                       data-testid={`link-post-title-${post.id}`}
@@ -210,7 +210,7 @@ export default function Home() {
                   </p>
                   <Link
                     href={`/posts/${post.slug}`}
-                    className="text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors inline-flex items-center gap-1 mt-auto"
+                    className="text-xs font-bold uppercase tracking-wider text-primary hover:text-[var(--color-primary-hover)] transition-colors inline-flex items-center gap-1 mt-auto"
                   >
                     {t("readDispatch")} <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
@@ -359,7 +359,7 @@ export default function Home() {
                     setContactSent(false);
                     setContactForm({ name: "", email: "", message: "" });
                   }}
-                  className="text-sm text-primary hover:text-secondary transition-colors font-medium"
+                  className="text-sm text-primary hover:text-[var(--color-primary-hover)] transition-colors font-medium"
                   data-testid="button-send-another"
                 >
                   Envoyer un autre message

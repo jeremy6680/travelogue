@@ -25,18 +25,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background selection:bg-secondary/30 selection:text-secondary-foreground">
-      <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-background/80 border-b border-border/50">
+    <div className="min-h-screen flex flex-col bg-background selection:bg-[var(--color-primary-lightest)] selection:text-foreground">
+      <header className="sticky top-0 z-40 w-full border-b border-[#DDD6CDCC] bg-[#F7F3EED1] backdrop-blur-md supports-[backdrop-filter]:bg-[#F7F3EEB8]">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link
             href="/"
             className="flex items-center gap-2 group"
             data-testid="link-home-logo"
           >
-            <div className="bg-primary text-primary-foreground p-1.5 rounded-md group-hover:bg-secondary transition-colors shadow-sm">
+            <div className="bg-primary text-primary-foreground p-1.5 rounded-md group-hover:bg-[var(--color-primary-hover)] transition-colors shadow-sm">
               <Compass className="w-5 h-5" />
             </div>
-            <span className="font-serif font-bold text-xl tracking-tight">
+            <span className="font-serif font-bold text-xl tracking-tight text-foreground">
               Travelogue
             </span>
           </Link>
@@ -53,8 +53,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   href={item.href}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "text-primary"
+                      : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)] hover:text-foreground"
                   }`}
                   data-testid={`link-nav-${item.label.toLowerCase()}`}
                 >
@@ -64,7 +64,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               );
             })}
             {isLocaleSwitcherEnabled && (
-              <div className="ml-2 hidden md:flex items-center gap-1 rounded-md border border-border/70 bg-card/70 p-1">
+              <div className="ml-2 hidden md:flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-background/70 p-1">
                 {(["fr", "en"] as const).map((value) => (
                   <button
                     key={value}
@@ -73,7 +73,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     className={`rounded px-2 py-1 text-xs font-semibold uppercase tracking-wider transition-colors ${
                       locale === value
                         ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground"
+                        : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)] hover:text-foreground"
                     }`}
                     aria-label={`${t("languageLabel")} ${value.toUpperCase()}`}
                   >
@@ -100,7 +100,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <p className="text-sm text-muted-foreground font-serif italic text-center">
-            &copy; {new Date().getFullYear()} Travelogue Journals. {t("footerTagline")}
+            &copy; {new Date().getFullYear()} Travelogue Journals.{" "}
+            {t("footerTagline")}
           </p>
 
           <div className="flex items-center gap-3">

@@ -51,7 +51,7 @@ export default function PostDetail() {
             )}
             {post.location && (
               <span className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-secondary" /> {post.location}
+                <MapPin className="w-4 h-4 text-primary" /> {post.location}
               </span>
             )}
           </div>
@@ -84,7 +84,7 @@ export default function PostDetail() {
 
         {/* Content */}
         <div
-          className="prose prose-lg md:prose-xl dark:prose-invert prose-p:font-sans prose-p:leading-relaxed prose-headings:font-serif prose-a:text-secondary hover:prose-a:text-secondary/80 max-w-none prose-img:rounded-2xl prose-img:shadow-sm"
+          className="prose prose-lg md:prose-xl dark:prose-invert prose-p:font-sans prose-p:leading-relaxed prose-headings:font-serif prose-a:text-primary hover:prose-a:text-[var(--color-primary-hover)] max-w-none prose-img:rounded-2xl prose-img:shadow-sm"
         >
           <Markdown>{post.content}</Markdown>
         </div>

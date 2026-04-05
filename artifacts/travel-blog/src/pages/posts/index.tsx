@@ -192,7 +192,7 @@ export default function PostsPage() {
                   )}
                   {post.location && (
                     <div className="absolute top-3 left-3 bg-background/95 backdrop-blur text-foreground text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
-                      <MapPin className="w-3.5 h-3.5 text-secondary" />{" "}
+                      <MapPin className="w-3.5 h-3.5 text-primary" />{" "}
                       {post.location}
                     </div>
                   )}
@@ -220,7 +220,7 @@ export default function PostsPage() {
                   </div>
 
                   <div>
-                    <h2 className="text-3xl font-serif font-bold group-hover:text-secondary transition-colors text-foreground leading-tight">
+                    <h2 className="text-3xl font-serif font-bold group-hover:text-primary transition-colors text-foreground leading-tight">
                       <Link
                         href={`/posts/${post.slug}`}
                         data-testid={`link-post-title-${post.id}`}
@@ -235,7 +235,7 @@ export default function PostsPage() {
 
                   <Link
                     href={`/posts/${post.slug}`}
-                    className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-secondary transition-colors uppercase tracking-wider font-sans"
+                    className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-[var(--color-primary-hover)] transition-colors uppercase tracking-wider font-sans"
                     data-testid={`link-read-post-${post.id}`}
                   >
                     {t("readDispatch")}{" "}
