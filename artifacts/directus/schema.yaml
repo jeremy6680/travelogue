@@ -1833,46 +1833,6 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: posts
-    field: external_url
-    type: string
-    meta:
-      collection: posts
-      conditions: null
-      display: null
-      display_options: null
-      field: external_url
-      group: null
-      hidden: false
-      interface: input
-      note: Optional external article URL. When set, this post points to writing hosted elsewhere.
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 7
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: external_url
-      table: posts
-      data_type: character varying
-      default_value: null
-      max_length: 2048
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: posts
     field: trip_id
     type: integer
     meta:
@@ -2481,6 +2441,48 @@ fields:
       has_auto_increment: false
       foreign_key_table: media_assets
       foreign_key_column: id
+  - collection: posts
+    field: external_url
+    type: string
+    meta:
+      collection: posts
+      conditions: null
+      display: null
+      display_options: null
+      field: external_url
+      group: null
+      hidden: false
+      interface: input
+      note: >-
+        Optional external article URL. When set, this post points to writing
+        hosted elsewhere.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: external_url
+      table: posts
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: trips
     field: id
     type: integer
@@ -3504,7 +3506,7 @@ relations:
       column: trip_id
       foreign_key_table: trips
       foreign_key_column: id
-      constraint_name: posts_trip_id_fkey
+      constraint_name: posts_trip_id_trips_id_fk
       on_update: CASCADE
       on_delete: SET NULL
   - collection: posts
@@ -3525,7 +3527,7 @@ relations:
       column: trip_id
       foreign_key_table: trips
       foreign_key_column: id
-      constraint_name: posts_trip_id_trips_id_fk
+      constraint_name: posts_trip_id_fkey
       on_update: CASCADE
       on_delete: SET NULL
   - collection: posts
@@ -3611,4 +3613,25 @@ relations:
       foreign_key_column: id
       constraint_name: trips_cover_image_id_foreign
       on_update: NO ACTION
+      on_delete: SET NULL
+  - collection: trips
+    field: journey_id
+    related_collection: journeys
+    meta:
+      junction_field: null
+      many_collection: trips
+      many_field: journey_id
+      one_allowed_collections: null
+      one_collection: journeys
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: trips
+      column: journey_id
+      foreign_key_table: journeys
+      foreign_key_column: id
+      constraint_name: trips_journey_id_journeys_id_fk
+      on_update: CASCADE
       on_delete: SET NULL
