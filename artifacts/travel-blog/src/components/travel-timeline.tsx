@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import type { Journey, Post, Trip } from "@/lib/travel-types";
@@ -15,7 +15,7 @@ import {
   ArrowUpDown,
   PlaneTakeoff,
   Car,
-  Milestone,
+  Filter,
 } from "lucide-react";
 import {
   Select,
@@ -25,7 +25,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useI18n } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import {
   formatAccomodationLabels,
   formatTravelReasonLabel,
@@ -522,7 +531,249 @@ function renderTripCard(
   );
 }
 
+interface FiltersPanelProps {
+  className?: string;
+  countLabel: string;
+  locale: ReturnType<typeof useI18n>["locale"];
+  sortOrder: "newest" | "oldest";
+  filterTrip: string;
+  filterRegion: string;
+  filterTransport: string;
+  filterCompanion: string;
+  filterReason: string;
+  filterYear: string;
+  tripCountryOptions: TripCountryOption[];
+  regionOptions: RegionOption[];
+  transportOptions: string[];
+  companionOptions: FacetOption[];
+  reasonOptions: FacetOption[];
+  yearOptions: string[];
+  onTripChange: (value: string) => void;
+  onRegionChange: (value: string) => void;
+  onTransportChange: (value: string) => void;
+  onCompanionChange: (value: string) => void;
+  onReasonChange: (value: string) => void;
+  onYearChange: (value: string) => void;
+  onSortToggle: () => void;
+  onClear: () => void;
+  formatTransport: (value: string) => string;
+  t: ReturnType<typeof useI18n>["t"];
+}
+
+function FiltersPanel({
+  className,
+  countLabel,
+  locale,
+  sortOrder,
+  filterTrip,
+  filterRegion,
+  filterTransport,
+  filterCompanion,
+  filterReason,
+  filterYear,
+  tripCountryOptions,
+  regionOptions,
+  transportOptions,
+  companionOptions,
+  reasonOptions,
+  yearOptions,
+  onTripChange,
+  onRegionChange,
+  onTransportChange,
+  onCompanionChange,
+  onReasonChange,
+  onYearChange,
+  onSortToggle,
+  onClear,
+  formatTransport,
+  t,
+}: FiltersPanelProps) {
+  const hasActiveFilters =
+    filterTrip !== "all" ||
+    filterRegion !== "all" ||
+    filterTransport !== "all" ||
+    filterCompanion !== "all" ||
+    filterReason !== "all" ||
+    filterYear !== "all";
+
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border border-border/60 bg-card/90 p-5 shadow-sm",
+        className,
+      )}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-mono uppercase tracking-[0.24em] text-muted-foreground">
+            {t("passportTitle")}
+          </p>
+          <h2 className="mt-2 font-serif text-2xl font-bold text-foreground">
+            Filtres
+          </h2>
+        </div>
+        <div className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-mono text-muted-foreground">
+          {countLabel}
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-4">
+        <div className="space-y-2">
+          <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+            Zone
+          </p>
+          <Select value={filterRegion} onValueChange={onRegionChange}>
+            <SelectTrigger className="w-full" data-testid="select-filter-region">
+              <SelectValue placeholder={t("allRegions")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allRegions")}</SelectItem>
+              {regionOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+            Pays
+          </p>
+          <Select value={filterTrip} onValueChange={onTripChange}>
+            <SelectTrigger className="w-full" data-testid="select-filter-trip">
+              <SelectValue placeholder={t("allTrips")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allTrips")}</SelectItem>
+              {tripCountryOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {yearOptions.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+              Année
+            </p>
+            <Select value={filterYear} onValueChange={onYearChange}>
+              <SelectTrigger className="w-full" data-testid="select-filter-year">
+                <SelectValue placeholder={t("allYears")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("allYears")}</SelectItem>
+                {yearOptions.map((year) => (
+                  <SelectItem key={year} value={year}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {companionOptions.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+              {t("companions")}
+            </p>
+            <Select value={filterCompanion} onValueChange={onCompanionChange}>
+              <SelectTrigger className="w-full" data-testid="select-filter-companion">
+                <SelectValue placeholder={t("companions")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("companions")}</SelectItem>
+                {companionOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label} ({option.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {reasonOptions.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+              {locale === "fr" ? "Raison" : "Reason"}
+            </p>
+            <Select value={filterReason} onValueChange={onReasonChange}>
+              <SelectTrigger className="w-full" data-testid="select-filter-reason">
+                <SelectValue placeholder={locale === "fr" ? "Raison du voyage" : "Reason for travel"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  {locale === "fr" ? "Raison du voyage" : "Reason for travel"}
+                </SelectItem>
+                {reasonOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {transportOptions.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+              Transport
+            </p>
+            <Select value={filterTransport} onValueChange={onTransportChange}>
+              <SelectTrigger className="w-full" data-testid="select-filter-transport">
+                <SelectValue placeholder={t("allTransport")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("allTransport")}</SelectItem>
+                {transportOptions.map((transport) => (
+                  <SelectItem key={transport} value={transport}>
+                    {formatTransport(transport)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-5 flex flex-col gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onSortToggle}
+          className="w-full justify-between"
+          data-testid="button-sort-order"
+        >
+          <span>{sortOrder === "newest" ? t("newestFirst") : t("oldestFirst")}</span>
+          <ArrowUpDown className="w-4 h-4" />
+        </Button>
+
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClear}
+            className="w-full"
+            data-testid="button-clear-filters"
+          >
+            {t("clearFilters")}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
+  const DESKTOP_BREAKPOINT = 1024;
+  const SIDEBAR_TOP_OFFSET = 96;
   const i18n = useI18n();
   const { countryName, formatCountLabel, formatDate, formatDistanceKm, locale, t } = i18n;
   const { data: journeys = [] } = useJourneysQuery();
@@ -535,6 +786,13 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const [filterReason, setFilterReason] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [desktopSidebarMode, setDesktopSidebarMode] = useState<"static" | "fixed" | "bottom">("static");
+  const [desktopSidebarWidth, setDesktopSidebarWidth] = useState<number>(280);
+  const [desktopSidebarHeight, setDesktopSidebarHeight] = useState<number>(0);
+  const desktopSidebarSlotRef = useRef<HTMLElement | null>(null);
+  const desktopSidebarPanelRef = useRef<HTMLDivElement | null>(null);
+  const timelineListRef = useRef<HTMLDivElement | null>(null);
 
   const transportOptions = useMemo(() => {
     const modes = new Set<string>();
@@ -684,6 +942,65 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
     sortOrder,
   ]);
 
+  const clearFilters = () => {
+    setFilterTrip("all");
+    setFilterRegion("all");
+    setFilterTransport("all");
+    setFilterCompanion("all");
+    setFilterReason("all");
+    setFilterYear("all");
+  };
+
+  const countLabel = formatCountLabel(filteredSorted.length);
+
+  useEffect(() => {
+    if (!showFilters) return;
+
+    const updateDesktopSidebar = () => {
+      const slot = desktopSidebarSlotRef.current;
+      const panel = desktopSidebarPanelRef.current;
+      const timeline = timelineListRef.current;
+
+      if (!slot || !panel || !timeline || window.innerWidth < DESKTOP_BREAKPOINT) {
+        setDesktopSidebarMode("static");
+        return;
+      }
+
+      const slotRect = slot.getBoundingClientRect();
+      const timelineRect = timeline.getBoundingClientRect();
+      const panelHeight = panel.offsetHeight;
+      const slotTop = window.scrollY + slotRect.top;
+      const timelineTop = window.scrollY + timelineRect.top;
+      const timelineBottom = window.scrollY + timelineRect.bottom;
+      const pinStart = timelineTop - SIDEBAR_TOP_OFFSET;
+      const pinEnd = timelineBottom - SIDEBAR_TOP_OFFSET - panelHeight;
+
+      setDesktopSidebarWidth(Math.round(slotRect.width));
+      setDesktopSidebarHeight(panelHeight);
+
+      if (window.scrollY < pinStart) {
+        setDesktopSidebarMode("static");
+        return;
+      }
+
+      if (window.scrollY >= pinEnd) {
+        setDesktopSidebarMode("bottom");
+        return;
+      }
+
+      setDesktopSidebarMode("fixed");
+    };
+
+    updateDesktopSidebar();
+    window.addEventListener("scroll", updateDesktopSidebar, { passive: true });
+    window.addEventListener("resize", updateDesktopSidebar);
+
+    return () => {
+      window.removeEventListener("scroll", updateDesktopSidebar);
+      window.removeEventListener("resize", updateDesktopSidebar);
+    };
+  }, [filteredSorted.length, showFilters]);
+
   if (isLoading) {
     return (
         <div className="py-20 text-center text-muted-foreground animate-pulse font-serif italic">
@@ -693,150 +1010,120 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className={cn("space-y-8", showFilters && "lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-10 lg:space-y-0")}>
       {showFilters && (
-        <div className="flex flex-wrap gap-3 items-center">
-          <Select value={filterTrip} onValueChange={setFilterTrip}>
-            <SelectTrigger className="w-48" data-testid="select-filter-trip">
-              <SelectValue placeholder={t("allTrips")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allTrips")}</SelectItem>
-              {tripCountryOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <>
+          <div className="flex items-center justify-between gap-3 lg:hidden">
+            <Sheet open={isMobileFiltersOpen} onOpenChange={setIsMobileFiltersOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Filter className="w-4 h-4" />
+                  Filtres
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[90vw] max-w-sm overflow-y-auto border-r border-border/60">
+                <SheetHeader className="mb-5 pr-8">
+                  <SheetTitle>Filtres du passeport</SheetTitle>
+                  <SheetDescription>
+                    Ajuste les critères pour tester une lecture différente de la timeline.
+                  </SheetDescription>
+                </SheetHeader>
+                <FiltersPanel
+                  countLabel={countLabel}
+                  locale={locale}
+                  sortOrder={sortOrder}
+                  filterTrip={filterTrip}
+                  filterRegion={filterRegion}
+                  filterTransport={filterTransport}
+                  filterCompanion={filterCompanion}
+                  filterReason={filterReason}
+                  filterYear={filterYear}
+                  tripCountryOptions={tripCountryOptions}
+                  regionOptions={regionOptions}
+                  transportOptions={transportOptions}
+                  companionOptions={companionOptions}
+                  reasonOptions={reasonOptions}
+                  yearOptions={yearOptions}
+                  onTripChange={setFilterTrip}
+                  onRegionChange={setFilterRegion}
+                  onTransportChange={setFilterTransport}
+                  onCompanionChange={setFilterCompanion}
+                  onReasonChange={setFilterReason}
+                  onYearChange={setFilterYear}
+                  onSortToggle={() =>
+                    setSortOrder((current) => (current === "newest" ? "oldest" : "newest"))
+                  }
+                  onClear={clearFilters}
+                  formatTransport={(value) => formatTransportLabel(value, i18n.locale)}
+                  t={t}
+                  className="border-none bg-transparent p-0 shadow-none"
+                />
+              </SheetContent>
+            </Sheet>
 
-          <Select value={filterRegion} onValueChange={setFilterRegion}>
-            <SelectTrigger className="w-44" data-testid="select-filter-region">
-              <SelectValue placeholder={t("allRegions")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allRegions")}</SelectItem>
-              {regionOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <div className="text-right">
+              <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+                Résultat
+              </p>
+              <p className="text-sm text-foreground">{countLabel}</p>
+            </div>
+          </div>
 
-          {transportOptions.length > 0 && (
-            <Select value={filterTransport} onValueChange={setFilterTransport}>
-              <SelectTrigger
-                className="w-44"
-                data-testid="select-filter-transport"
-              >
-                <SelectValue placeholder={t("allTransport")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allTransport")}</SelectItem>
-                {transportOptions.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {formatTransportLabel(t, i18n.locale)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {companionOptions.length > 0 && (
-            <Select value={filterCompanion} onValueChange={setFilterCompanion}>
-              <SelectTrigger className="w-52" data-testid="select-filter-companion">
-                <SelectValue placeholder={t("companions")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("companions")}</SelectItem>
-                {companionOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label} ({option.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {reasonOptions.length > 0 && (
-            <Select value={filterReason} onValueChange={setFilterReason}>
-              <SelectTrigger className="w-52" data-testid="select-filter-reason">
-                <SelectValue placeholder={locale === "fr" ? "Raison du voyage" : "Reason for travel"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  {locale === "fr" ? "Raison du voyage" : "Reason for travel"}
-                </SelectItem>
-                {reasonOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {yearOptions.length > 0 && (
-            <Select value={filterYear} onValueChange={setFilterYear}>
-              <SelectTrigger className="w-32" data-testid="select-filter-year">
-                <SelectValue placeholder={t("allYears")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allYears")}</SelectItem>
-                {yearOptions.map((y) => (
-                  <SelectItem key={y} value={y}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setSortOrder((s) => (s === "newest" ? "oldest" : "newest"))
-            }
-            className="flex items-center gap-2"
-            data-testid="button-sort-order"
+          <aside
+            ref={desktopSidebarSlotRef}
+            className="hidden lg:block self-start relative"
+            style={desktopSidebarHeight ? { minHeight: desktopSidebarHeight } : undefined}
           >
-            <ArrowUpDown className="w-4 h-4" />
-            {sortOrder === "newest" ? t("newestFirst") : t("oldestFirst")}
-          </Button>
-
-          {(filterTrip !== "all" ||
-            filterRegion !== "all" ||
-            filterTransport !== "all" ||
-            filterCompanion !== "all" ||
-            filterReason !== "all" ||
-            filterYear !== "all") && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setFilterTrip("all");
-                setFilterRegion("all");
-                setFilterTransport("all");
-                setFilterCompanion("all");
-                setFilterReason("all");
-                setFilterYear("all");
-              }}
-              className="text-muted-foreground"
-              data-testid="button-clear-filters"
+            <div
+              ref={desktopSidebarPanelRef}
+              className={cn(
+                desktopSidebarMode === "fixed" && "fixed z-30",
+                desktopSidebarMode === "bottom" && "absolute bottom-0 left-0 right-0",
+              )}
+              style={
+                desktopSidebarMode === "fixed"
+                  ? { top: SIDEBAR_TOP_OFFSET, width: desktopSidebarWidth }
+                  : undefined
+              }
             >
-              {t("clearFilters")}
-            </Button>
-          )}
-
-          <span className="text-sm text-muted-foreground font-mono ml-auto">
-            {formatCountLabel(filteredSorted.length)}
-          </span>
-        </div>
+              <FiltersPanel
+                countLabel={countLabel}
+                locale={locale}
+                sortOrder={sortOrder}
+                filterTrip={filterTrip}
+                filterRegion={filterRegion}
+                filterTransport={filterTransport}
+                filterCompanion={filterCompanion}
+                filterReason={filterReason}
+                filterYear={filterYear}
+                tripCountryOptions={tripCountryOptions}
+                regionOptions={regionOptions}
+                transportOptions={transportOptions}
+                companionOptions={companionOptions}
+                reasonOptions={reasonOptions}
+                yearOptions={yearOptions}
+                onTripChange={setFilterTrip}
+                onRegionChange={setFilterRegion}
+                onTransportChange={setFilterTransport}
+                onCompanionChange={setFilterCompanion}
+                onReasonChange={setFilterReason}
+                onYearChange={setFilterYear}
+                onSortToggle={() =>
+                  setSortOrder((current) => (current === "newest" ? "oldest" : "newest"))
+                }
+                onClear={clearFilters}
+                formatTransport={(value) => formatTransportLabel(value, i18n.locale)}
+                t={t}
+              />
+            </div>
+          </aside>
+        </>
       )}
 
-      <div className="relative border-l-2 border-primary/20 ml-4 md:ml-8 py-4 space-y-16">
+      <div
+        ref={timelineListRef}
+        className="relative border-l-2 border-primary/20 ml-4 md:ml-8 py-4 space-y-16 min-w-0"
+      >
         {filteredSorted.map((item, idx) => {
           return (
             <motion.div
