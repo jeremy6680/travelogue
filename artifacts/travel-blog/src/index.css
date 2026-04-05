@@ -44,11 +44,11 @@
 
 :root {
   /* Travelogue color system */
-  --color-primary: #4D2080;
-  --color-primary-hover: #361560;
-  --color-primary-lightest: #F0E8FF;
-  --color-primary-light: #EDE0FF;
-  --color-primary-mid: #8B50C0;
+  --color-primary: #14465A;
+  --color-primary-hover: #0D2E3C;
+  --color-primary-lightest: #EBF4F7;
+  --color-primary-light: #E0EEF3;
+  --color-primary-mid: #2E748A;
   --color-accent: #E8F000;
 
   --color-text: #1A1A1A;
@@ -62,8 +62,8 @@
   --color-border: #DDD6CD;
   --color-border-light: #E8E8E8;
 
-  --color-tag-bg: #EDE0FF;
-  --color-tag-text: #4D2080;
+  --color-tag-bg: #E0EEF3;
+  --color-tag-text: #14465A;
   --color-tag-featured-bg: #E8F000;
   --color-tag-featured-text: #1A1A1A;
 
@@ -79,7 +79,7 @@
   --popover-foreground: 0 0% 10%;
   --popover-border: 0 0% 91%;
 
-  --primary: 267 60% 31%;
+  --primary: 196 64% 22%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 0 0% 95%;
@@ -96,7 +96,7 @@
 
   --border: 0 0% 91%;
   --input: 0 0% 91%;
-  --ring: 267 60% 31%;
+  --ring: 196 64% 22%;
 
   --primary-border: var(--color-primary);
   --secondary-border: var(--color-border);
@@ -160,7 +160,7 @@
   a:not([class]) {
     color: var(--color-primary);
     text-decoration: underline;
-    text-decoration-color: rgba(77, 32, 128, 0.3);
+    text-decoration-color: rgba(20, 70, 90, 0.3);
   }
   a:not([class]):hover {
     color: var(--color-primary-hover);
