@@ -67,7 +67,7 @@ function getHeatmapIntensity(value: number, maxValue: number) {
 }
 
 export default function DataVizPage() {
-  const { locale, numberLocale, t, formatDistanceKm, formatDate } = useI18n();
+  const { locale, numberLocale, t, formatDate } = useI18n();
   const { data: trips = [], isLoading } = useTripsQuery();
   const { data: journeys = [] } = useJourneysQuery();
   const { data: posts = [] } = usePostsQuery();
@@ -274,8 +274,13 @@ export default function DataVizPage() {
     ]),
   );
 
+  const formatDistanceWithDots = (value: number) =>
+    `${Math.round(value)
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ".")} km`;
+
   const formatRoundedKm = (value: number) =>
-    `${Math.round(value).toLocaleString(numberLocale)} km`;
+    formatDistanceWithDots(value);
 
   const surfaceCards = [
     {
@@ -422,7 +427,22 @@ export default function DataVizPage() {
                     <CartesianGrid vertical={false} />
                     <XAxis dataKey="year" tickLine={false} axisLine={false} />
                     <YAxis tickLine={false} axisLine={false} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value) => (
+                            <>
+                              <span className="text-muted-foreground">
+                                {t("datavizDistanceSeries")} :
+                              </span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {formatDistanceWithDots(Number(value))}
+                              </span>
+                            </>
+                          )}
+                        />
+                      }
+                    />
                     <Area
                       type="monotone"
                       dataKey="distanceKm"
