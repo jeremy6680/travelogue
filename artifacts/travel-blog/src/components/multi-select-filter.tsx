@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -7,7 +8,8 @@ import { cn } from "@/lib/utils";
 
 type MultiSelectOption = {
   value: string;
-  label: string;
+  label: ReactNode;
+  triggerLabel?: string;
 };
 
 interface MultiSelectFilterProps {
@@ -33,7 +35,9 @@ export function MultiSelectFilter({
 }: MultiSelectFilterProps) {
   const selectedLabels = options
     .filter((option) => selectedValues.includes(option.value))
-    .map((option) => option.label);
+    .map((option) =>
+      option.triggerLabel ?? (typeof option.label === "string" ? option.label : option.value),
+    );
 
   const triggerLabel =
     selectedLabels.length === 0

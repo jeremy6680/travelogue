@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -38,6 +39,7 @@ import {
   getContinentKey,
   sortTransportValues,
 } from "@/lib/trip-options";
+import { getTripCities, tripMatchesKeyword } from "@/lib/travel-insights";
 
 const NICE_COORDINATES = { latitude: 43.7102, longitude: 7.262 };
 
@@ -511,7 +513,7 @@ function renderTripCard(
                     <MapPin className="w-6 h-6 text-primary/40" />
                   </div>
                 )}
-                <div>
+                <div className="pl-2">
                   <h5 className={cn("font-serif font-bold text-base", blogPostTitleHoverClass)}>
                     {post.title}
                   </h5>
@@ -539,18 +541,23 @@ interface FiltersPanelProps {
   filterCompanion: string[];
   filterReason: string[];
   filterYear: string[];
+  filterCity: string[];
+  searchQuery: string;
   tripCountryOptions: TripCountryOption[];
   regionOptions: RegionOption[];
   transportOptions: string[];
   companionOptions: FacetOption[];
   reasonOptions: FacetOption[];
   yearOptions: string[];
+  cityOptions: FacetOption[];
   onTripChange: (value: string[]) => void;
   onRegionChange: (value: string[]) => void;
   onTransportChange: (value: string[]) => void;
   onCompanionChange: (value: string[]) => void;
   onReasonChange: (value: string[]) => void;
   onYearChange: (value: string[]) => void;
+  onCityChange: (value: string[]) => void;
+  onSearchChange: (value: string) => void;
   onSortToggle: () => void;
   onClear: () => void;
   formatTransport: (value: string) => string;
@@ -568,18 +575,23 @@ function FiltersPanel({
   filterCompanion,
   filterReason,
   filterYear,
+  filterCity,
+  searchQuery,
   tripCountryOptions,
   regionOptions,
   transportOptions,
   companionOptions,
   reasonOptions,
   yearOptions,
+  cityOptions,
   onTripChange,
   onRegionChange,
   onTransportChange,
   onCompanionChange,
   onReasonChange,
   onYearChange,
+  onCityChange,
+  onSearchChange,
   onSortToggle,
   onClear,
   formatTransport,
@@ -591,7 +603,9 @@ function FiltersPanel({
     filterTransport.length > 0 ||
     filterCompanion.length > 0 ||
     filterReason.length > 0 ||
-    filterYear.length > 0;
+    filterYear.length > 0 ||
+    filterCity.length > 0 ||
+    searchQuery.trim().length > 0;
 
   return (
     <div
@@ -609,8 +623,28 @@ function FiltersPanel({
             Filtres
           </h2>
         </div>
-        <div className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-mono text-muted-foreground">
-          {countLabel}
+        <div className="flex flex-col items-end gap-3">
+          <div className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-mono text-muted-foreground">
+            {countLabel}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onSortToggle}
+            className="justify-between"
+            data-testid="button-sort-order"
+          >
+            <span>
+              {locale === "fr"
+                ? sortOrder === "newest"
+                  ? "Plus récents"
+                  : "Plus anciens"
+                : sortOrder === "newest"
+                  ? "Newest"
+                  : "Oldest"}
+            </span>
+            <ArrowUpDown className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
@@ -624,7 +658,15 @@ function FiltersPanel({
             placeholder={t("allRegions")}
             options={regionOptions.map((option) => ({
               value: option.value,
-              label: option.label,
+              label: (
+                <span className="flex items-center justify-between gap-3">
+                  <span>{option.label.replace(/\s*\(\d+\)\s*$/, "")}</span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                    {option.count}
+                  </span>
+                </span>
+              ),
+              triggerLabel: option.label.replace(/\s*\(\d+\)\s*$/, ""),
             }))}
             selectedValues={filterRegion}
             onChange={onRegionChange}
@@ -642,7 +684,15 @@ function FiltersPanel({
             placeholder={t("allTrips")}
             options={tripCountryOptions.map((option) => ({
               value: option.value,
-              label: option.label,
+              label: (
+                <span className="flex items-center justify-between gap-3">
+                  <span>{option.label.replace(/\s*\(\d+\)\s*$/, "")}</span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                    {option.count}
+                  </span>
+                </span>
+              ),
+              triggerLabel: option.label.replace(/\s*\(\d+\)\s*$/, ""),
             }))}
             selectedValues={filterTrip}
             onChange={onTripChange}
@@ -650,6 +700,34 @@ function FiltersPanel({
             data-testid="select-filter-trip"
           />
         </div>
+
+        {cityOptions.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+              Ville
+            </p>
+            <MultiSelectFilter
+              label="Ville"
+              placeholder={locale === "fr" ? "Villes" : "Cities"}
+              options={cityOptions.map((option) => ({
+                value: option.value,
+                label: (
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{option.label}</span>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                      {option.count}
+                    </span>
+                  </span>
+                ),
+                triggerLabel: option.label,
+              }))}
+              selectedValues={filterCity}
+              onChange={onCityChange}
+              className="w-full"
+              data-testid="select-filter-city"
+            />
+          </div>
+        )}
 
         {yearOptions.length > 0 && (
           <div className="space-y-2">
@@ -678,7 +756,15 @@ function FiltersPanel({
               placeholder={t("companions")}
               options={companionOptions.map((option) => ({
                 value: option.value,
-                label: `${option.label} (${option.count})`,
+                label: (
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{option.label}</span>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                      {option.count}
+                    </span>
+                  </span>
+                ),
+                triggerLabel: option.label,
               }))}
               selectedValues={filterCompanion}
               onChange={onCompanionChange}
@@ -698,7 +784,15 @@ function FiltersPanel({
               placeholder={locale === "fr" ? "Raison du voyage" : "Reason for travel"}
               options={reasonOptions.map((option) => ({
                 value: option.value,
-                label: option.label,
+                label: (
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{option.label.replace(/\s*\(\d+\)\s*$/, "")}</span>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                      {option.count}
+                    </span>
+                  </span>
+                ),
+                triggerLabel: option.label.replace(/\s*\(\d+\)\s*$/, ""),
               }))}
               selectedValues={filterReason}
               onChange={onReasonChange}
@@ -718,7 +812,8 @@ function FiltersPanel({
               placeholder={t("allTransport")}
               options={transportOptions.map((transport) => ({
                 value: transport,
-                label: formatTransport(transport),
+                label: <span>{formatTransport(transport)}</span>,
+                triggerLabel: formatTransport(transport),
               }))}
               selectedValues={filterTransport}
               onChange={onTransportChange}
@@ -727,20 +822,20 @@ function FiltersPanel({
             />
           </div>
         )}
+
+        <div className="space-y-2">
+          <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+            {locale === "fr" ? "Recherche" : "Search"}
+          </p>
+          <Input
+            value={searchQuery}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder={locale === "fr" ? "Mot-clé" : "Keyword"}
+            className="w-full"
+          />
+        </div>
       </div>
-
       <div className="mt-5 flex flex-col gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onSortToggle}
-          className="w-full justify-between"
-          data-testid="button-sort-order"
-        >
-          <span>{sortOrder === "newest" ? t("newestFirst") : t("oldestFirst")}</span>
-          <ArrowUpDown className="w-4 h-4" />
-        </Button>
-
         {hasActiveFilters && (
           <Button
             variant="ghost"
@@ -771,6 +866,8 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const [filterCompanion, setFilterCompanion] = useState<string[]>([]);
   const [filterReason, setFilterReason] = useState<string[]>([]);
   const [filterYear, setFilterYear] = useState<string[]>([]);
+  const [filterCity, setFilterCity] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [desktopSidebarMode, setDesktopSidebarMode] = useState<"static" | "fixed" | "bottom">("static");
@@ -825,6 +922,23 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
     [i18n.locale, locale, trips],
   );
 
+  const cityOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    for (const trip of trips) {
+      for (const city of new Set(getTripCities(trip))) {
+        counts.set(city, (counts.get(city) ?? 0) + 1);
+      }
+    }
+
+    return Array.from(counts.entries())
+      .map(([value, count]) => ({ value, label: value, count }))
+      .sort((left, right) => {
+        if (right.count !== left.count) return right.count - left.count;
+        return left.label.localeCompare(right.label, locale);
+      });
+  }, [locale, trips]);
+
   const filteredSorted = useMemo<TimelineItem[]>(() => {
     let list = [...trips];
     if (filterTrip.length > 0) {
@@ -870,6 +984,21 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
         (t) =>
           t.visitedAt &&
           filterYear.includes(new Date(t.visitedAt).getFullYear().toString()),
+      );
+    }
+    if (filterCity.length > 0) {
+      list = list.filter((trip) => {
+        const cities = getTripCities(trip);
+        return filterCity.every((city) => cities.includes(city));
+      });
+    }
+    if (searchQuery.trim()) {
+      list = list.filter((trip) =>
+        tripMatchesKeyword(
+          trip,
+          searchQuery,
+          posts.filter((post) => post.tripId === trip.id),
+        ),
       );
     }
     list.sort((a, b) => {
@@ -931,7 +1060,10 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
     filterCompanion,
     filterReason,
     filterYear,
+    filterCity,
+    searchQuery,
     sortOrder,
+    posts,
   ]);
 
   const clearFilters = () => {
@@ -941,6 +1073,8 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
     setFilterCompanion([]);
     setFilterReason([]);
     setFilterYear([]);
+    setFilterCity([]);
+    setSearchQuery("");
   };
 
   const countLabel = formatCountLabel(filteredSorted.length);
@@ -1030,18 +1164,23 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                   filterCompanion={filterCompanion}
                   filterReason={filterReason}
                   filterYear={filterYear}
+                  filterCity={filterCity}
+                  searchQuery={searchQuery}
                   tripCountryOptions={tripCountryOptions}
                   regionOptions={regionOptions}
                   transportOptions={transportOptions}
                   companionOptions={companionOptions}
                   reasonOptions={reasonOptions}
                   yearOptions={yearOptions}
+                  cityOptions={cityOptions}
                   onTripChange={setFilterTrip}
                   onRegionChange={setFilterRegion}
                   onTransportChange={setFilterTransport}
                   onCompanionChange={setFilterCompanion}
                   onReasonChange={setFilterReason}
                   onYearChange={setFilterYear}
+                  onCityChange={setFilterCity}
+                  onSearchChange={setSearchQuery}
                   onSortToggle={() =>
                     setSortOrder((current) => (current === "newest" ? "oldest" : "newest"))
                   }
@@ -1057,7 +1196,9 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
               <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
                 Résultat
               </p>
-              <p className="text-sm text-foreground">{countLabel}</p>
+              <p className="mt-1 inline-flex rounded-full bg-primary/10 px-3 py-1 text-sm text-foreground">
+                {countLabel}
+              </p>
             </div>
           </div>
 
@@ -1088,18 +1229,23 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                 filterCompanion={filterCompanion}
                 filterReason={filterReason}
                 filterYear={filterYear}
+                filterCity={filterCity}
+                searchQuery={searchQuery}
                 tripCountryOptions={tripCountryOptions}
                 regionOptions={regionOptions}
                 transportOptions={transportOptions}
                 companionOptions={companionOptions}
                 reasonOptions={reasonOptions}
                 yearOptions={yearOptions}
+                cityOptions={cityOptions}
                 onTripChange={setFilterTrip}
                 onRegionChange={setFilterRegion}
                 onTransportChange={setFilterTransport}
                 onCompanionChange={setFilterCompanion}
                 onReasonChange={setFilterReason}
                 onYearChange={setFilterYear}
+                onCityChange={setFilterCity}
+                onSearchChange={setSearchQuery}
                 onSortToggle={() =>
                   setSortOrder((current) => (current === "newest" ? "oldest" : "newest"))
                 }

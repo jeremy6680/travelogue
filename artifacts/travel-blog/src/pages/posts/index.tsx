@@ -10,7 +10,9 @@ import { motion } from "framer-motion";
 import { MapPin, Calendar, BookOpen, ArrowUpDown, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
+import { Input } from "@/components/ui/input";
 import { useI18n } from "@/lib/i18n";
+import { postMatchesKeyword } from "@/lib/travel-insights";
 
 function getFlagEmoji(code: string) {
   if (!code || code.length !== 2) return "";
@@ -46,11 +48,12 @@ function getCountryFilterOptions(
 }
 
 export default function PostsPage() {
-  const { countryName, formatCountLabel, formatDate, t } = useI18n();
+  const { countryName, formatCountLabel, formatDate, locale, t } = useI18n();
   const { data: posts = [], isLoading } = usePostsQuery();
   const { data: trips = [] } = useTripsQuery();
   const [filterTrips, setFilterTrips] = useState<string[]>([]);
   const [filterYears, setFilterYears] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   const tripCountryOptions = useMemo(
@@ -82,13 +85,19 @@ export default function PostsPage() {
           filterYears.includes(new Date(p.publishedAt).getFullYear().toString()),
       );
     }
+    if (searchQuery.trim()) {
+      list = list.filter((post) => {
+        const trip = trips.find((currentTrip) => currentTrip.id === post.tripId) ?? null;
+        return postMatchesKeyword(post, searchQuery, trip);
+      });
+    }
     list.sort((a, b) => {
       const da = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
       const db = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
       return sortOrder === "newest" ? db - da : da - db;
     });
     return list;
-  }, [posts, trips, filterTrips, filterYears, sortOrder]);
+  }, [posts, trips, filterTrips, filterYears, searchQuery, sortOrder]);
 
   return (
     <Layout>
@@ -110,7 +119,15 @@ export default function PostsPage() {
             placeholder={t("allTrips")}
             options={tripCountryOptions.map((option) => ({
               value: option.value,
-              label: option.label,
+              label: (
+                <span className="flex items-center justify-between gap-3">
+                  <span>{option.label.replace(/\s*\(\d+\)\s*$/, "")}</span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                    {option.count}
+                  </span>
+                </span>
+              ),
+              triggerLabel: option.label,
             }))}
             selectedValues={filterTrips}
             onChange={setFilterTrips}
@@ -125,10 +142,17 @@ export default function PostsPage() {
               options={yearOptions.map((year) => ({ value: year, label: year }))}
               selectedValues={filterYears}
               onChange={setFilterYears}
-              className="w-32"
+              className="w-40"
               data-testid="select-filter-year"
             />
           )}
+
+          <Input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder={locale === "fr" ? "Recherche mot-clé" : "Keyword search"}
+            className="w-48"
+          />
 
           <Button
             variant="outline"
@@ -143,13 +167,14 @@ export default function PostsPage() {
             {sortOrder === "newest" ? t("newestFirst") : t("oldestFirst")}
           </Button>
 
-          {(filterTrips.length > 0 || filterYears.length > 0) && (
+          {(filterTrips.length > 0 || filterYears.length > 0 || searchQuery.trim()) && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
                 setFilterTrips([]);
                 setFilterYears([]);
+                setSearchQuery("");
               }}
               className="text-muted-foreground"
               data-testid="button-clear-filters"
@@ -158,7 +183,7 @@ export default function PostsPage() {
             </Button>
           )}
 
-          <span className="text-sm text-muted-foreground font-mono ml-auto">
+          <span className="ml-auto inline-flex rounded-full bg-primary/10 px-3 py-1 text-sm text-foreground font-mono">
             {formatCountLabel(filtered.length)}
           </span>
         </div>
