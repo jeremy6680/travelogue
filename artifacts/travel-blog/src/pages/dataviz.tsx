@@ -280,9 +280,9 @@ export default function DataVizPage() {
       string,
       { reason: string; trips: number; totalDistanceKm: number; totalDurationDays: number }
     >();
-    const franceVsAbroadKm = new Map<
+    const nightsByZone = new Map<
       number,
-      { year: number; franceKm: number; internationalKm: number }
+      { year: number; franceNights: number; europeNights: number; worldNights: number }
     >();
     const continentNightStats = new Map<
       string,
@@ -337,19 +337,20 @@ export default function DataVizPage() {
         heatmap.set(heatmapKey, heatmapEntry);
       }
 
-      const kmEntry = franceVsAbroadKm.get(year) ?? {
+      const zoneEntry = nightsByZone.get(year) ?? {
         year,
-        franceKm: 0,
-        internationalKm: 0,
+        franceNights: 0,
+        europeNights: 0,
+        worldNights: 0,
       };
-      if (distanceKm != null) {
-        if (trip.countryCode.toUpperCase() === "FR") {
-          kmEntry.franceKm += distanceKm;
-        } else {
-          kmEntry.internationalKm += distanceKm;
-        }
+      if (trip.countryCode.toUpperCase() === "FR") {
+        zoneEntry.franceNights += nights;
+      } else if (continentKey === "europe") {
+        zoneEntry.europeNights += nights;
+      } else {
+        zoneEntry.worldNights += nights;
       }
-      franceVsAbroadKm.set(year, kmEntry);
+      nightsByZone.set(year, zoneEntry);
 
       if (trip.countryCode.toUpperCase() !== "FR") {
         const continentEntry = continentStats.get(continentKey) ?? {
@@ -440,7 +441,7 @@ export default function DataVizPage() {
     const yearlyDistanceRows = Array.from(yearlyDistance.values()).sort(
       (left, right) => left.year - right.year,
     );
-    const franceVsAbroadRows = Array.from(franceVsAbroadKm.values()).sort(
+    const nightsByZoneRows = Array.from(nightsByZone.values()).sort(
       (left, right) => left.year - right.year,
     );
     const transportDistanceRows = Array.from(transportDistance.values())
@@ -552,7 +553,7 @@ export default function DataVizPage() {
       companionCount: companionCounts.size,
       transportModes: transportDistance.size,
       yearlyDistanceRows,
-      franceVsAbroadRows,
+      nightsByZoneRows,
       transportDistanceRows,
       companionRows,
       accommodationKeys,
@@ -587,14 +588,18 @@ export default function DataVizPage() {
     ]),
   );
 
-  const franceVsAbroadConfig = {
-    franceKm: {
+  const nightsByZoneConfig = {
+    franceNights: {
       label: locale === "fr" ? "France" : "France",
       color: "#2563eb",
     },
-    internationalKm: {
-      label: locale === "fr" ? "Étranger" : "Abroad",
+    europeNights: {
+      label: locale === "fr" ? "Europe" : "Europe",
       color: "#f97316",
+    },
+    worldNights: {
+      label: locale === "fr" ? "Monde" : "World",
+      color: "#0f766e",
     },
   };
 
@@ -1038,41 +1043,56 @@ export default function DataVizPage() {
             <CardHeader>
               <CardTitle>
                 {locale === "fr"
-                  ? "Kilomètres France vs étranger"
-                  : "France vs abroad kilometers"}
+                  ? "Nuits en France, en Europe, dans le monde"
+                  : "Nights in France, Europe, and the world"}
               </CardTitle>
               <CardDescription>
                 {locale === "fr"
-                  ? "Comparaison année après année des kilomètres estimés parcourus en France et à l'étranger."
-                  : "Year-by-year comparison of estimated kilometers traveled in France and abroad."}
+                  ? "Comparaison année après année des nuits passées en France, en Europe hors France et dans le reste du monde."
+                  : "Year-by-year comparison of nights spent in France, in Europe outside France, and in the rest of the world."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {analytics.franceVsAbroadRows.length > 0 ? (
+              {analytics.nightsByZoneRows.length > 0 ? (
                 <ChartContainer
-                  config={franceVsAbroadConfig}
+                  config={nightsByZoneConfig}
                   className="h-[360px] w-full aspect-auto"
                 >
-                  <BarChart data={analytics.franceVsAbroadRows} margin={{ left: 12, right: 12 }}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="year" tickLine={false} axisLine={false} />
-                    <YAxis tickLine={false} axisLine={false} />
+                  <BarChart
+                    data={analytics.nightsByZoneRows}
+                    layout="vertical"
+                    margin={{ left: 12, right: 12 }}
+                  >
+                    <CartesianGrid horizontal={false} />
+                    <YAxis
+                      dataKey="year"
+                      type="category"
+                      tickLine={false}
+                      axisLine={false}
+                      width={48}
+                    />
+                    <XAxis type="number" tickLine={false} axisLine={false} />
                     <ChartTooltip
                       content={
                         <ChartTooltipContent
                           formatter={(value, name) => (
                             <>
                               <span className="text-muted-foreground">
-                                {String(name) === "franceKm"
+                                {String(name) === "franceNights"
                                   ? locale === "fr"
                                     ? "France :"
                                     : "France:"
-                                  : locale === "fr"
-                                    ? "Étranger :"
-                                    : "Abroad:"}
+                                  : String(name) === "europeNights"
+                                    ? locale === "fr"
+                                      ? "Europe :"
+                                      : "Europe:"
+                                    : locale === "fr"
+                                      ? "Monde :"
+                                      : "World:"}
                               </span>
                               <span className="font-mono font-medium tabular-nums text-foreground">
-                                {formatDistanceWithDots(Number(value))}
+                                {Math.round(Number(value)).toLocaleString(numberLocale)}{" "}
+                                {locale === "fr" ? "nuits" : "nights"}
                               </span>
                             </>
                           )}
@@ -1080,8 +1100,9 @@ export default function DataVizPage() {
                       }
                     />
                     <ChartLegend content={<ChartLegendContent />} />
-                    <Bar dataKey="franceKm" fill="#2563eb" radius={6} />
-                    <Bar dataKey="internationalKm" fill="#f97316" radius={6} />
+                    <Bar dataKey="franceNights" stackId="nights" fill="#2563eb" radius={6} />
+                    <Bar dataKey="europeNights" stackId="nights" fill="#f97316" radius={6} />
+                    <Bar dataKey="worldNights" stackId="nights" fill="#0f766e" radius={6} />
                   </BarChart>
                 </ChartContainer>
               ) : (
