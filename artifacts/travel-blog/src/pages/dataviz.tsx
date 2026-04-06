@@ -9,6 +9,7 @@ import {
   Cell,
   Pie,
   PieChart,
+  Rectangle,
   Scatter,
   ScatterChart,
   Tooltip as RechartsTooltip,
@@ -639,6 +640,56 @@ export default function DataVizPage() {
   const formatRoundedKm = (value: number) =>
     formatDistanceWithDots(value);
 
+  const getStackedNightRadius = (
+    row: { franceNights: number; europeNights: number; worldNights: number },
+    key: "franceNights" | "europeNights" | "worldNights",
+  ) => {
+    const orderedKeys: Array<"franceNights" | "europeNights" | "worldNights"> = [
+      "franceNights",
+      "europeNights",
+      "worldNights",
+    ];
+    const visibleKeys = orderedKeys.filter((currentKey) => Number(row[currentKey]) > 0);
+    const firstKey = visibleKeys[0];
+    const lastKey = visibleKeys[visibleKeys.length - 1];
+
+    if (!firstKey || !lastKey || row[key] <= 0) {
+      return 0;
+    }
+
+    if (firstKey === key && lastKey === key) {
+      return [6, 6, 6, 6] as const;
+    }
+
+    if (firstKey === key) {
+      return [6, 0, 0, 6] as const;
+    }
+
+    if (lastKey === key) {
+      return [0, 6, 6, 0] as const;
+    }
+
+    return 0;
+  };
+
+  const renderNightSegment =
+    (key: "franceNights" | "europeNights" | "worldNights") =>
+    (props: {
+      payload: { franceNights: number; europeNights: number; worldNights: number };
+      x?: number;
+      y?: number;
+      width?: number;
+      height?: number;
+      fill?: string;
+    }) => (
+      <Rectangle
+        {...props}
+        radius={getStackedNightRadius(props.payload, key) as
+          | number
+          | [number, number, number, number]}
+      />
+    );
+
   const surfaceCards = [
     {
       title: t("datavizTotalDistance"),
@@ -1104,14 +1155,19 @@ export default function DataVizPage() {
                       dataKey="franceNights"
                       stackId="nights"
                       fill="#2563eb"
-                      radius={[6, 0, 0, 6]}
+                      shape={renderNightSegment("franceNights")}
                     />
-                    <Bar dataKey="europeNights" stackId="nights" fill="#f97316" />
+                    <Bar
+                      dataKey="europeNights"
+                      stackId="nights"
+                      fill="#f97316"
+                      shape={renderNightSegment("europeNights")}
+                    />
                     <Bar
                       dataKey="worldNights"
                       stackId="nights"
                       fill="#0f766e"
-                      radius={[0, 6, 6, 0]}
+                      shape={renderNightSegment("worldNights")}
                     />
                   </BarChart>
                 </ChartContainer>
