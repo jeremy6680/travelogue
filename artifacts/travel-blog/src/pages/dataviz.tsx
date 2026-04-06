@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Area,
@@ -32,6 +32,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -68,18 +76,180 @@ function getHeatmapIntensity(value: number, maxValue: number) {
   return "bg-primary/20 text-foreground";
 }
 
+function getFacetOptions(values: string[][], locale: string) {
+  const counts = new Map<string, number>();
+
+  for (const group of values) {
+    for (const value of new Set(group.map((item) => item.trim()).filter(Boolean))) {
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(counts.entries())
+    .map(([value, count]) => ({ value, count }))
+    .sort((left, right) => {
+      if (right.count !== left.count) return right.count - left.count;
+      return left.value.localeCompare(right.value, locale);
+    });
+}
+
 export default function DataVizPage() {
-  const { locale, numberLocale, t, formatDate } = useI18n();
+  const { locale, numberLocale, t, formatDate, countryName } = useI18n();
   const { data: trips = [] } = useTripsQuery();
   const { data: journeys = [] } = useJourneysQuery();
   const { data: posts = [] } = usePostsQuery();
+  const [filterZone, setFilterZone] = useState("all");
+  const [filterCountry, setFilterCountry] = useState("all");
+  const [filterYear, setFilterYear] = useState("all");
+  const [filterCompanion, setFilterCompanion] = useState("all");
+  const [filterReason, setFilterReason] = useState("all");
+  const [filterTransport, setFilterTransport] = useState("all");
+
+  const zoneOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    for (const trip of trips) {
+      const countryCode = trip.countryCode.toUpperCase();
+      counts.set("france", countryCode === "FR" ? (counts.get("france") ?? 0) + 1 : counts.get("france") ?? 0);
+      counts.set(
+        "international",
+        countryCode !== "FR"
+          ? (counts.get("international") ?? 0) + 1
+          : (counts.get("international") ?? 0),
+      );
+
+      const continentKey = getContinentKey(trip.countryCode);
+      if (continentKey) {
+        const value = `continent:${continentKey}`;
+        counts.set(value, (counts.get(value) ?? 0) + 1);
+      }
+    }
+
+    return Array.from(counts.entries())
+      .filter(([, count]) => count > 0)
+      .map(([value, count]) => {
+        if (value === "france") {
+          return { value, label: `${t("france")} (${count})` };
+        }
+        if (value === "international") {
+          return { value, label: `${t("international")} (${count})` };
+        }
+        const continentKey = value.replace("continent:", "") as keyof typeof CONTINENT_OPTIONS;
+        return {
+          value,
+          label: `${CONTINENT_OPTIONS[continentKey].label[locale]} (${count})`,
+        };
+      });
+  }, [locale, t, trips]);
+
+  const countryOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    for (const trip of trips) {
+      const code = trip.countryCode.toUpperCase();
+      counts.set(code, (counts.get(code) ?? 0) + 1);
+    }
+
+    return Array.from(counts.entries())
+      .map(([code, count]) => ({
+        value: code,
+        label: `${countryName(code)} (${count})`,
+      }))
+      .sort((left, right) => left.label.localeCompare(right.label, locale));
+  }, [countryName, locale, trips]);
+
+  const yearOptions = useMemo(() => {
+    const years = new Set<string>();
+    for (const trip of trips) {
+      years.add(new Date(trip.visitedAt).getFullYear().toString());
+    }
+    return Array.from(years).sort((left, right) => Number(right) - Number(left));
+  }, [trips]);
+
+  const companionOptions = useMemo(
+    () => getFacetOptions(trips.map((trip) => trip.travelCompanions), locale),
+    [locale, trips],
+  );
+
+  const reasonOptions = useMemo(
+    () => getFacetOptions(trips.map((trip) => trip.reasonForTravel), locale),
+    [locale, trips],
+  );
+
+  const transportOptions = useMemo(
+    () =>
+      getFacetOptions(
+        trips.map((trip) => [...trip.transportationTo, ...trip.transportationOnSite]),
+        locale,
+      ),
+    [locale, trips],
+  );
+
+  const filteredTrips = useMemo(
+    () =>
+      trips.filter((trip) => {
+        if (filterZone !== "all") {
+          const countryCode = trip.countryCode.toUpperCase();
+          if (filterZone === "france" && countryCode !== "FR") return false;
+          if (filterZone === "international" && countryCode === "FR") return false;
+          if (
+            filterZone.startsWith("continent:") &&
+            getContinentKey(trip.countryCode) !== filterZone.replace("continent:", "")
+          ) {
+            return false;
+          }
+        }
+
+        if (filterCountry !== "all" && trip.countryCode.toUpperCase() !== filterCountry) {
+          return false;
+        }
+
+        if (
+          filterYear !== "all" &&
+          new Date(trip.visitedAt).getFullYear().toString() !== filterYear
+        ) {
+          return false;
+        }
+
+        if (
+          filterCompanion !== "all" &&
+          !trip.travelCompanions.includes(filterCompanion)
+        ) {
+          return false;
+        }
+
+        if (filterReason !== "all" && !trip.reasonForTravel.includes(filterReason)) {
+          return false;
+        }
+
+        if (
+          filterTransport !== "all" &&
+          ![...trip.transportationTo, ...trip.transportationOnSite].includes(filterTransport)
+        ) {
+          return false;
+        }
+
+        return true;
+      }),
+    [
+      filterCompanion,
+      filterCountry,
+      filterReason,
+      filterTransport,
+      filterYear,
+      filterZone,
+      trips,
+    ],
+  );
 
   const analytics = useMemo(() => {
-    const tripPoints = getTripAnalyticsPoints(trips, journeys);
+    const tripPoints = getTripAnalyticsPoints(filteredTrips, journeys);
+    const filteredTripIds = new Set(filteredTrips.map((trip) => trip.id));
     const postsByTripId = new Map<number, number>();
 
     for (const post of posts) {
       if (post.tripId == null) continue;
+      if (!filteredTripIds.has(post.tripId)) continue;
       postsByTripId.set(post.tripId, (postsByTripId.get(post.tripId) ?? 0) + 1);
     }
 
@@ -331,7 +501,7 @@ export default function DataVizPage() {
       heatmapRows,
       maxHeatmapCount,
     };
-  }, [journeys, locale, numberLocale, posts, trips]);
+  }, [filteredTrips, journeys, locale, numberLocale, posts]);
 
   const transportConfig = Object.fromEntries(
     analytics.transportDistanceRows.map((row, index) => [
@@ -445,6 +615,126 @@ export default function DataVizPage() {
               </Card>
             </motion.div>
           ))}
+        </section>
+
+        <section className="flex flex-wrap items-center gap-3">
+          <Select value={filterZone} onValueChange={setFilterZone}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder={locale === "fr" ? "Zones" : "Regions"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{locale === "fr" ? "Zones" : "Regions"}</SelectItem>
+              {zoneOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterCountry} onValueChange={setFilterCountry}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder={locale === "fr" ? "Voyages" : "Trips"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{locale === "fr" ? "Voyages" : "Trips"}</SelectItem>
+              {countryOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterYear} onValueChange={setFilterYear}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder={locale === "fr" ? "Années" : "Years"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{locale === "fr" ? "Années" : "Years"}</SelectItem>
+              {yearOptions.map((year) => (
+                <SelectItem key={year} value={year}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterCompanion} onValueChange={setFilterCompanion}>
+            <SelectTrigger className="w-44">
+              <SelectValue
+                placeholder={
+                  locale === "fr" ? "Compagnons de route" : "Companions"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {locale === "fr" ? "Compagnons de route" : "Companions"}
+              </SelectItem>
+              {companionOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.value} ({option.count})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterReason} onValueChange={setFilterReason}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder={locale === "fr" ? "Raisons" : "Reasons"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{locale === "fr" ? "Raisons" : "Reasons"}</SelectItem>
+              {reasonOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {formatTravelReasonLabel(option.value, locale)} ({option.count})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterTransport} onValueChange={setFilterTransport}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder={locale === "fr" ? "Transports" : "Transport"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {locale === "fr" ? "Transports" : "Transport"}
+              </SelectItem>
+              {transportOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {formatTransportLabel(option.value, locale)} ({option.count})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {(filterZone !== "all" ||
+            filterCountry !== "all" ||
+            filterYear !== "all" ||
+            filterCompanion !== "all" ||
+            filterReason !== "all" ||
+            filterTransport !== "all") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFilterZone("all");
+                setFilterCountry("all");
+                setFilterYear("all");
+                setFilterCompanion("all");
+                setFilterReason("all");
+                setFilterTransport("all");
+              }}
+            >
+              {t("clearFilters")}
+            </Button>
+          )}
+
+          <span className="ml-auto text-sm text-muted-foreground font-mono">
+            {filteredTrips.length.toLocaleString(numberLocale)} {t("statTrips").toLowerCase()}
+          </span>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">
