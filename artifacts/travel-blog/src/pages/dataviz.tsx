@@ -63,6 +63,17 @@ const CHART_COLORS = [
 ];
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index);
+const TRANSPORT_EMISSION_FACTORS_KG_PER_KM: Record<string, number> = {
+  plane: 0.255,
+  "own car": 0.192,
+  "rental car": 0.192,
+  train: 0.014,
+  tram: 0.003,
+  metro: 0.004,
+  boat: 0.12,
+  motorbike: 0.103,
+  bicycle: 0,
+};
 
 function getHeatmapIntensity(value: number, maxValue: number) {
   if (value <= 0 || maxValue <= 0) {
@@ -268,6 +279,10 @@ export default function DataVizPage() {
       string,
       { mode: string; distanceKm: number; trips: number }
     >();
+    const yearlyCarbonByMode = new Map<
+      number,
+      { year: number; totalKg: number; modes: Map<string, number> }
+    >();
     const companionCounts = new Map<string, number>();
     const continentStats = new Map<
       string,
@@ -279,7 +294,13 @@ export default function DataVizPage() {
     >();
     const reasonStats = new Map<
       string,
-      { reason: string; trips: number; totalDistanceKm: number; totalDurationDays: number }
+      {
+        reason: string;
+        trips: number;
+        totalDistanceKm: number;
+        totalDurationDays: number;
+        totalCarbonKg: number;
+      }
     >();
     const nightsByZone = new Map<
       number,
@@ -394,23 +415,8 @@ export default function DataVizPage() {
         accommodationByYear.set(year, yearEntry);
       }
 
-      const uniqueReasons = [...new Set(trip.reasonForTravel.filter(Boolean))];
-      for (const reason of uniqueReasons) {
-        const reasonEntry = reasonStats.get(reason) ?? {
-          reason,
-          trips: 0,
-          totalDistanceKm: 0,
-          totalDurationDays: 0,
-        };
-        reasonEntry.trips += 1;
-        reasonEntry.totalDurationDays += durationDays;
-        if (distanceKm != null) {
-          reasonEntry.totalDistanceKm += distanceKm;
-        }
-        reasonStats.set(reason, reasonEntry);
-      }
-
       const travelModes = [...new Set(trip.transportationTo.filter(Boolean))];
+      let tripCarbonKg = 0;
       if (distanceKm != null && travelModes.length > 0) {
         const share = distanceKm / travelModes.length;
         for (const mode of travelModes) {
@@ -422,7 +428,37 @@ export default function DataVizPage() {
           modeEntry.distanceKm += share;
           modeEntry.trips += 1;
           transportDistance.set(mode, modeEntry);
+
+          const emissionFactor = TRANSPORT_EMISSION_FACTORS_KG_PER_KM[mode] ?? 0;
+          const carbonEntry = yearlyCarbonByMode.get(year) ?? {
+            year,
+            totalKg: 0,
+            modes: new Map<string, number>(),
+          };
+          const modeKg = share * emissionFactor;
+          tripCarbonKg += modeKg;
+          carbonEntry.totalKg += modeKg;
+          carbonEntry.modes.set(mode, (carbonEntry.modes.get(mode) ?? 0) + modeKg);
+          yearlyCarbonByMode.set(year, carbonEntry);
         }
+      }
+
+      const uniqueReasons = [...new Set(trip.reasonForTravel.filter(Boolean))];
+      for (const reason of uniqueReasons) {
+        const reasonEntry = reasonStats.get(reason) ?? {
+          reason,
+          trips: 0,
+          totalDistanceKm: 0,
+          totalDurationDays: 0,
+          totalCarbonKg: 0,
+        };
+        reasonEntry.trips += 1;
+        reasonEntry.totalDurationDays += durationDays;
+        if (distanceKm != null) {
+          reasonEntry.totalDistanceKm += distanceKm;
+        }
+        reasonEntry.totalCarbonKg += tripCarbonKg;
+        reasonStats.set(reason, reasonEntry);
       }
 
       if (distanceKm != null) {
@@ -452,6 +488,32 @@ export default function DataVizPage() {
         ...row,
         label: formatTransportLabel(row.mode, locale),
       }));
+    const carbonModes = Array.from(
+      new Set(
+        Array.from(yearlyCarbonByMode.values()).flatMap((entry) =>
+          Array.from(entry.modes.keys()),
+        ),
+      ),
+    ).sort((left, right) =>
+      formatTransportLabel(left, locale).localeCompare(
+        formatTransportLabel(right, locale),
+        locale,
+      ),
+    );
+    const carbonRows = Array.from(yearlyCarbonByMode.values())
+      .sort((left, right) => left.year - right.year)
+      .map((entry) => {
+        const row: Record<string, number | string> = {
+          year: entry.year,
+          totalKg: entry.totalKg,
+        };
+
+        for (const mode of carbonModes) {
+          row[mode] = Number((entry.modes.get(mode) ?? 0).toFixed(1));
+        }
+
+        return row;
+      });
     const companionRows = Array.from(companionCounts.entries())
       .map(([name, tripsCount]) => ({ name, tripsCount }))
       .sort((left, right) => right.tripsCount - left.tripsCount)
@@ -512,6 +574,7 @@ export default function DataVizPage() {
         label: formatTravelReasonLabel(row.reason, locale),
         averageDistanceKm: row.trips > 0 ? row.totalDistanceKm / row.trips : 0,
         averageDurationDays: row.trips > 0 ? row.totalDurationDays / row.trips : 0,
+        averageCarbonKg: row.trips > 0 ? row.totalCarbonKg / row.trips : 0,
       }))
       .sort((left, right) => right.averageDistanceKm - left.averageDistanceKm);
     const scatterRows = Array.from(scatterByContinent.entries()).map(
@@ -556,6 +619,8 @@ export default function DataVizPage() {
       yearlyDistanceRows,
       nightsByZoneRows,
       transportDistanceRows,
+      carbonModes,
+      carbonRows,
       companionRows,
       accommodationKeys,
       accommodationRows,
@@ -625,6 +690,13 @@ export default function DataVizPage() {
     },
   };
 
+  const carbonReasonConfig = {
+    averageCarbonKg: {
+      label: locale === "fr" ? "Empreinte moyenne" : "Average footprint",
+      color: "#0f766e",
+    },
+  };
+
   const scatterConfig = Object.fromEntries(
     analytics.scatterRows.map((row, index) => [
       row.continent,
@@ -637,8 +709,29 @@ export default function DataVizPage() {
       .toString()
       .replace(/\B(?=(\d{3})+(?!\d))/g, ".")} km`;
 
+  const carbonConfig = Object.fromEntries(
+    analytics.carbonModes.map((mode, index) => [
+      mode,
+      {
+        label: formatTransportLabel(mode, locale),
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      },
+    ]),
+  );
+
   const formatRoundedKm = (value: number) =>
     formatDistanceWithDots(value);
+
+  const formatCarbonLabel = (valueKg: number) => {
+    if (valueKg >= 1000) {
+      return `${(valueKg / 1000).toLocaleString(numberLocale, {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      })} tCO2e`;
+    }
+
+    return `${Math.round(valueKg).toLocaleString(numberLocale)} kgCO2e`;
+  };
 
   const getStackedNightRadius = (
     row: { franceNights: number; europeNights: number; worldNights: number },
@@ -1012,7 +1105,126 @@ export default function DataVizPage() {
               )}
             </CardContent>
           </Card>
+        </section>
 
+        <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>
+                {locale === "fr" ? "Empreinte carbone estimée" : "Estimated carbon footprint"}
+              </CardTitle>
+              <CardDescription>
+                {locale === "fr"
+                  ? "Estimation annuelle des émissions liées aux trajets, répartie par mode de transport."
+                  : "Yearly estimate of travel emissions, broken down by transport mode."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.carbonRows.length > 0 ? (
+                <ChartContainer
+                  config={carbonConfig}
+                  className="h-[340px] w-full aspect-auto"
+                >
+                  <BarChart data={analytics.carbonRows} margin={{ left: 12, right: 12 }}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="year" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value, name) => (
+                            <>
+                              <span className="text-muted-foreground">
+                                {formatTransportLabel(String(name), locale)} :
+                              </span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {formatCarbonLabel(Number(value))}
+                              </span>
+                            </>
+                          )}
+                        />
+                      }
+                    />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    {analytics.carbonModes.map((mode, index) => (
+                      <Bar
+                        key={mode}
+                        dataKey={mode}
+                        stackId="carbon"
+                        fill={CHART_COLORS[index % CHART_COLORS.length]}
+                        radius={index === analytics.carbonModes.length - 1 ? [6, 6, 0, 0] : 0}
+                      />
+                    ))}
+                  </BarChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>
+                {locale === "fr"
+                  ? "Empreinte carbone selon la raison du voyage"
+                  : "Carbon footprint by reason for travel"}
+              </CardTitle>
+              <CardDescription>
+                {locale === "fr"
+                  ? "Comparaison de l'empreinte carbone moyenne par voyage selon la raison du déplacement."
+                  : "Comparison of average carbon footprint per trip by travel reason."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.reasonRows.length > 0 ? (
+                <ChartContainer
+                  config={carbonReasonConfig}
+                  className="h-[340px] w-full aspect-auto"
+                >
+                  <BarChart
+                    data={analytics.reasonRows}
+                    layout="vertical"
+                    margin={{ left: 12, right: 16 }}
+                  >
+                    <CartesianGrid horizontal={false} />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      tickLine={false}
+                      axisLine={false}
+                      width={128}
+                    />
+                    <XAxis type="number" tickLine={false} axisLine={false} />
+                    <ChartTooltip
+                      cursor={false}
+                      content={
+                        <ChartTooltipContent
+                          hideLabel
+                          formatter={(value) => (
+                            <>
+                              <span className="text-muted-foreground">
+                                {locale === "fr" ? "Empreinte moyenne :" : "Average footprint:"}
+                              </span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {formatCarbonLabel(Number(value))}
+                              </span>
+                            </>
+                          )}
+                        />
+                      }
+                    />
+                    <Bar dataKey="averageCarbonKg" fill="#0f766e" radius={8} />
+                  </BarChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-2">
           <Card className="border-border/60">
             <CardHeader>
               <CardTitle>{t("datavizCompanions")}</CardTitle>
@@ -1389,7 +1601,7 @@ export default function DataVizPage() {
           </Card>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+        <section className="grid gap-6 xl:grid-cols-[1.35fr_1.15fr]">
           <Card className="border-border/60">
             <CardHeader>
               <CardTitle>{t("datavizScatter")}</CardTitle>
@@ -1477,13 +1689,16 @@ export default function DataVizPage() {
             <CardContent>
               {analytics.heatmapRows.length > 0 ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-[auto_repeat(12,minmax(0,1fr))] gap-2 text-xs">
+                  <div className="grid grid-cols-[auto_repeat(12,minmax(0,1fr))_minmax(2.75rem,max-content)] gap-2 text-xs">
                     <div />
                     {MONTHS.map((month) => (
                       <div key={month} className="text-center text-muted-foreground">
                         {formatDate(new Date(Date.UTC(2024, month, 1)), "monthYear").slice(0, 3)}
                       </div>
                     ))}
+                    <div className="text-center text-muted-foreground">
+                      {locale === "fr" ? "Total" : "Total"}
+                    </div>
                     {analytics.heatmapRows.map((row) => (
                       <div key={row.year} className="contents">
                         <div className="pr-2 text-sm font-medium text-foreground">
@@ -1503,6 +1718,11 @@ export default function DataVizPage() {
                             {month.count > 0 ? month.count : ""}
                           </div>
                         ))}
+                        <div className="flex items-center justify-center rounded-md bg-primary/10 px-2 text-xs font-semibold text-foreground">
+                          {row.months
+                            .reduce((sum, month) => sum + month.count, 0)
+                            .toLocaleString(numberLocale)}
+                        </div>
                       </div>
                     ))}
                   </div>
