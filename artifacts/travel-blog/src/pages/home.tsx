@@ -2,6 +2,7 @@ import { Layout } from "@/components/layout";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePhotosQuery, usePostsQuery, useStatsQuery } from "@/lib/directus";
 import { getPostHref, isExternalPost } from "@/lib/post-links";
+import { blogPostTitleHoverClass } from "@/lib/post-title-hover";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
@@ -242,12 +243,13 @@ export default function Home() {
                       {formatDate(post.publishedAt, "short")}
                     </span>
                   )}
-                  <h3 className="font-serif font-bold text-xl text-foreground group-hover:text-primary transition-colors leading-snug">
+                  <h3 className="font-serif font-bold text-xl text-foreground leading-snug">
                     {isExternalPost(post) ? (
                       <a
                         href={getPostHref(post)}
                         target="_blank"
                         rel="noreferrer"
+                        className={blogPostTitleHoverClass}
                         data-testid={`link-post-title-${post.id}`}
                       >
                         {post.title}
@@ -255,6 +257,7 @@ export default function Home() {
                     ) : (
                       <Link
                         href={getPostHref(post)}
+                        className={blogPostTitleHoverClass}
                         data-testid={`link-post-title-${post.id}`}
                       >
                         {post.title}
