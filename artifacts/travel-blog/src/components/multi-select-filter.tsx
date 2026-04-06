@@ -3,7 +3,6 @@ import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 type MultiSelectOption = {
@@ -84,8 +83,8 @@ export function MultiSelectFilter({
           )}
         </div>
 
-        <ScrollArea className="max-h-72">
-          <div className="space-y-1 p-2">
+        <div className="max-h-72 overflow-y-auto p-2">
+          <div className="space-y-1">
             {options.map((option) => {
               const checked = selectedValues.includes(option.value);
 
@@ -108,7 +107,7 @@ export function MultiSelectFilter({
               );
             })}
           </div>
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );

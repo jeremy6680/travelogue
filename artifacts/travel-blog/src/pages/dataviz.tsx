@@ -1100,9 +1100,19 @@ export default function DataVizPage() {
                       }
                     />
                     <ChartLegend content={<ChartLegendContent />} />
-                    <Bar dataKey="franceNights" stackId="nights" fill="#2563eb" radius={6} />
-                    <Bar dataKey="europeNights" stackId="nights" fill="#f97316" radius={6} />
-                    <Bar dataKey="worldNights" stackId="nights" fill="#0f766e" radius={6} />
+                    <Bar
+                      dataKey="franceNights"
+                      stackId="nights"
+                      fill="#2563eb"
+                      radius={[6, 0, 0, 6]}
+                    />
+                    <Bar dataKey="europeNights" stackId="nights" fill="#f97316" />
+                    <Bar
+                      dataKey="worldNights"
+                      stackId="nights"
+                      fill="#0f766e"
+                      radius={[0, 6, 6, 0]}
+                    />
                   </BarChart>
                 </ChartContainer>
               ) : (
