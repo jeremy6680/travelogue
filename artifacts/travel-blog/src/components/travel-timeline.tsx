@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { getPostHref, isExternalPost } from "@/lib/post-links";
+import { blogPostTitleHoverClass } from "@/lib/post-title-hover";
 import type { Journey, Post, Trip } from "@/lib/travel-types";
 import { motion } from "framer-motion";
 import { differenceInCalendarDays } from "date-fns";
@@ -517,7 +518,7 @@ function renderTripCard(
                   </div>
                 )}
                 <div>
-                  <h5 className="font-serif font-bold text-base group-hover:text-secondary transition-colors text-foreground">
+                  <h5 className={cn("font-serif font-bold text-base", blogPostTitleHoverClass)}>
                     {post.title}
                   </h5>
                   <p className="text-sm text-muted-foreground line-clamp-1 mt-1">

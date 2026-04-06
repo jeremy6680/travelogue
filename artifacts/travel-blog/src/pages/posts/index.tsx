@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { getPostHref, isExternalPost } from "@/lib/post-links";
+import { blogPostTitleHoverClass } from "@/lib/post-title-hover";
 import type { Trip } from "@/lib/travel-types";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -221,12 +222,13 @@ export default function PostsPage() {
                   </div>
 
                   <div>
-                    <h2 className="text-3xl font-serif font-bold group-hover:text-primary transition-colors text-foreground leading-tight">
+                    <h2 className="text-3xl font-serif font-bold text-foreground leading-tight">
                       {isExternalPost(post) ? (
                         <a
                           href={getPostHref(post)}
                           target="_blank"
                           rel="noreferrer"
+                          className={blogPostTitleHoverClass}
                           data-testid={`link-post-title-${post.id}`}
                         >
                           {post.title}
@@ -234,6 +236,7 @@ export default function PostsPage() {
                       ) : (
                         <Link
                           href={getPostHref(post)}
+                          className={blogPostTitleHoverClass}
                           data-testid={`link-post-title-${post.id}`}
                         >
                           {post.title}
