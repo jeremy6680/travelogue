@@ -8,14 +8,8 @@ import type { Trip } from "@/lib/travel-types";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { MapPin, Calendar, BookOpen, ArrowUpDown, Filter } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { useI18n } from "@/lib/i18n";
 
 function getFlagEmoji(code: string) {
@@ -55,8 +49,8 @@ export default function PostsPage() {
   const { countryName, formatCountLabel, formatDate, t } = useI18n();
   const { data: posts = [], isLoading } = usePostsQuery();
   const { data: trips = [] } = useTripsQuery();
-  const [filterTrip, setFilterTrip] = useState<string>("all");
-  const [filterYear, setFilterYear] = useState<string>("all");
+  const [filterTrips, setFilterTrips] = useState<string[]>([]);
+  const [filterYears, setFilterYears] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   const tripCountryOptions = useMemo(
@@ -74,15 +68,19 @@ export default function PostsPage() {
 
   const filtered = useMemo(() => {
     let list = [...posts];
-    if (filterTrip !== "all") {
+    if (filterTrips.length > 0) {
       list = list.filter((post) => {
         const trip = trips.find((currentTrip) => currentTrip.id === post.tripId);
         const countryCode = trip?.countryCode ?? post.countryCode;
-        return countryCode?.toUpperCase() === filterTrip;
+        return countryCode ? filterTrips.includes(countryCode.toUpperCase()) : false;
       });
     }
-    if (filterYear !== "all") {
-      list = list.filter(p => p.publishedAt && new Date(p.publishedAt).getFullYear().toString() === filterYear);
+    if (filterYears.length > 0) {
+      list = list.filter(
+        (p) =>
+          p.publishedAt &&
+          filterYears.includes(new Date(p.publishedAt).getFullYear().toString()),
+      );
     }
     list.sort((a, b) => {
       const da = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
@@ -90,7 +88,7 @@ export default function PostsPage() {
       return sortOrder === "newest" ? db - da : da - db;
     });
     return list;
-  }, [posts, trips, filterTrip, filterYear, sortOrder]);
+  }, [posts, trips, filterTrips, filterYears, sortOrder]);
 
   return (
     <Layout>
@@ -107,32 +105,29 @@ export default function PostsPage() {
         {/* Filters */}
         <div className="flex flex-wrap gap-3 items-center">
           <Filter className="w-4 h-4 text-muted-foreground" />
-          <Select value={filterTrip} onValueChange={setFilterTrip}>
-            <SelectTrigger className="w-48" data-testid="select-filter-trip">
-              <SelectValue placeholder={t("allTrips")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allTrips")}</SelectItem>
-              {tripCountryOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectFilter
+            label={t("allTrips")}
+            placeholder={t("allTrips")}
+            options={tripCountryOptions.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+            selectedValues={filterTrips}
+            onChange={setFilterTrips}
+            className="w-48"
+            data-testid="select-filter-trip"
+          />
 
           {yearOptions.length > 0 && (
-            <Select value={filterYear} onValueChange={setFilterYear}>
-              <SelectTrigger className="w-32" data-testid="select-filter-year">
-                <SelectValue placeholder={t("allYears")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allYears")}</SelectItem>
-                {yearOptions.map((y) => (
-                  <SelectItem key={y} value={y}>{y}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiSelectFilter
+              label={t("allYears")}
+              placeholder={t("allYears")}
+              options={yearOptions.map((year) => ({ value: year, label: year }))}
+              selectedValues={filterYears}
+              onChange={setFilterYears}
+              className="w-32"
+              data-testid="select-filter-year"
+            />
           )}
 
           <Button
@@ -148,11 +143,14 @@ export default function PostsPage() {
             {sortOrder === "newest" ? t("newestFirst") : t("oldestFirst")}
           </Button>
 
-          {(filterTrip !== "all" || filterYear !== "all") && (
+          {(filterTrips.length > 0 || filterYears.length > 0) && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { setFilterTrip("all"); setFilterYear("all"); }}
+              onClick={() => {
+                setFilterTrips([]);
+                setFilterYears([]);
+              }}
               className="text-muted-foreground"
               data-testid="button-clear-filters"
             >

@@ -18,14 +18,8 @@ import {
   Car,
   Filter,
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { MultiSelectFilter } from "@/components/multi-select-filter";
 import {
   Sheet,
   SheetContent,
@@ -539,24 +533,24 @@ interface FiltersPanelProps {
   countLabel: string;
   locale: ReturnType<typeof useI18n>["locale"];
   sortOrder: "newest" | "oldest";
-  filterTrip: string;
-  filterRegion: string;
-  filterTransport: string;
-  filterCompanion: string;
-  filterReason: string;
-  filterYear: string;
+  filterTrip: string[];
+  filterRegion: string[];
+  filterTransport: string[];
+  filterCompanion: string[];
+  filterReason: string[];
+  filterYear: string[];
   tripCountryOptions: TripCountryOption[];
   regionOptions: RegionOption[];
   transportOptions: string[];
   companionOptions: FacetOption[];
   reasonOptions: FacetOption[];
   yearOptions: string[];
-  onTripChange: (value: string) => void;
-  onRegionChange: (value: string) => void;
-  onTransportChange: (value: string) => void;
-  onCompanionChange: (value: string) => void;
-  onReasonChange: (value: string) => void;
-  onYearChange: (value: string) => void;
+  onTripChange: (value: string[]) => void;
+  onRegionChange: (value: string[]) => void;
+  onTransportChange: (value: string[]) => void;
+  onCompanionChange: (value: string[]) => void;
+  onReasonChange: (value: string[]) => void;
+  onYearChange: (value: string[]) => void;
   onSortToggle: () => void;
   onClear: () => void;
   formatTransport: (value: string) => string;
@@ -592,12 +586,12 @@ function FiltersPanel({
   t,
 }: FiltersPanelProps) {
   const hasActiveFilters =
-    filterTrip !== "all" ||
-    filterRegion !== "all" ||
-    filterTransport !== "all" ||
-    filterCompanion !== "all" ||
-    filterReason !== "all" ||
-    filterYear !== "all";
+    filterTrip.length > 0 ||
+    filterRegion.length > 0 ||
+    filterTransport.length > 0 ||
+    filterCompanion.length > 0 ||
+    filterReason.length > 0 ||
+    filterYear.length > 0;
 
   return (
     <div
@@ -625,38 +619,36 @@ function FiltersPanel({
           <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
             Zone
           </p>
-          <Select value={filterRegion} onValueChange={onRegionChange}>
-            <SelectTrigger className="w-full" data-testid="select-filter-region">
-              <SelectValue placeholder={t("allRegions")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allRegions")}</SelectItem>
-              {regionOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectFilter
+            label="Zone"
+            placeholder={t("allRegions")}
+            options={regionOptions.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+            selectedValues={filterRegion}
+            onChange={onRegionChange}
+            className="w-full"
+            data-testid="select-filter-region"
+          />
         </div>
 
         <div className="space-y-2">
           <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
             Pays
           </p>
-          <Select value={filterTrip} onValueChange={onTripChange}>
-            <SelectTrigger className="w-full" data-testid="select-filter-trip">
-              <SelectValue placeholder={t("allTrips")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allTrips")}</SelectItem>
-              {tripCountryOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectFilter
+            label="Pays"
+            placeholder={t("allTrips")}
+            options={tripCountryOptions.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+            selectedValues={filterTrip}
+            onChange={onTripChange}
+            className="w-full"
+            data-testid="select-filter-trip"
+          />
         </div>
 
         {yearOptions.length > 0 && (
@@ -664,19 +656,15 @@ function FiltersPanel({
             <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
               Année
             </p>
-            <Select value={filterYear} onValueChange={onYearChange}>
-              <SelectTrigger className="w-full" data-testid="select-filter-year">
-                <SelectValue placeholder={t("allYears")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allYears")}</SelectItem>
-                {yearOptions.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiSelectFilter
+              label={locale === "fr" ? "Année" : "Year"}
+              placeholder={t("allYears")}
+              options={yearOptions.map((year) => ({ value: year, label: year }))}
+              selectedValues={filterYear}
+              onChange={onYearChange}
+              className="w-full"
+              data-testid="select-filter-year"
+            />
           </div>
         )}
 
@@ -685,19 +673,18 @@ function FiltersPanel({
             <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
               {t("companions")}
             </p>
-            <Select value={filterCompanion} onValueChange={onCompanionChange}>
-              <SelectTrigger className="w-full" data-testid="select-filter-companion">
-                <SelectValue placeholder={t("companions")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("companions")}</SelectItem>
-                {companionOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label} ({option.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiSelectFilter
+              label={t("companions")}
+              placeholder={t("companions")}
+              options={companionOptions.map((option) => ({
+                value: option.value,
+                label: `${option.label} (${option.count})`,
+              }))}
+              selectedValues={filterCompanion}
+              onChange={onCompanionChange}
+              className="w-full"
+              data-testid="select-filter-companion"
+            />
           </div>
         )}
 
@@ -706,21 +693,18 @@ function FiltersPanel({
             <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
               {locale === "fr" ? "Raison" : "Reason"}
             </p>
-            <Select value={filterReason} onValueChange={onReasonChange}>
-              <SelectTrigger className="w-full" data-testid="select-filter-reason">
-                <SelectValue placeholder={locale === "fr" ? "Raison du voyage" : "Reason for travel"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  {locale === "fr" ? "Raison du voyage" : "Reason for travel"}
-                </SelectItem>
-                {reasonOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiSelectFilter
+              label={locale === "fr" ? "Raison" : "Reason"}
+              placeholder={locale === "fr" ? "Raison du voyage" : "Reason for travel"}
+              options={reasonOptions.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+              selectedValues={filterReason}
+              onChange={onReasonChange}
+              className="w-full"
+              data-testid="select-filter-reason"
+            />
           </div>
         )}
 
@@ -729,19 +713,18 @@ function FiltersPanel({
             <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
               Transport
             </p>
-            <Select value={filterTransport} onValueChange={onTransportChange}>
-              <SelectTrigger className="w-full" data-testid="select-filter-transport">
-                <SelectValue placeholder={t("allTransport")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allTransport")}</SelectItem>
-                {transportOptions.map((transport) => (
-                  <SelectItem key={transport} value={transport}>
-                    {formatTransport(transport)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiSelectFilter
+              label="Transport"
+              placeholder={t("allTransport")}
+              options={transportOptions.map((transport) => ({
+                value: transport,
+                label: formatTransport(transport),
+              }))}
+              selectedValues={filterTransport}
+              onChange={onTransportChange}
+              className="w-full"
+              data-testid="select-filter-transport"
+            />
           </div>
         )}
       </div>
@@ -782,12 +765,12 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const { data: journeys = [] } = useJourneysQuery();
   const { data: trips = [], isLoading } = useTripsQuery();
   const { data: posts = [] } = usePostsQuery();
-  const [filterTrip, setFilterTrip] = useState<string>("all");
-  const [filterRegion, setFilterRegion] = useState<string>("all");
-  const [filterTransport, setFilterTransport] = useState<string>("all");
-  const [filterCompanion, setFilterCompanion] = useState<string>("all");
-  const [filterReason, setFilterReason] = useState<string>("all");
-  const [filterYear, setFilterYear] = useState<string>("all");
+  const [filterTrip, setFilterTrip] = useState<string[]>([]);
+  const [filterRegion, setFilterRegion] = useState<string[]>([]);
+  const [filterTransport, setFilterTransport] = useState<string[]>([]);
+  const [filterCompanion, setFilterCompanion] = useState<string[]>([]);
+  const [filterReason, setFilterReason] = useState<string[]>([]);
+  const [filterYear, setFilterYear] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [desktopSidebarMode, setDesktopSidebarMode] = useState<"static" | "fixed" | "bottom">("static");
@@ -844,43 +827,49 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
 
   const filteredSorted = useMemo<TimelineItem[]>(() => {
     let list = [...trips];
-    if (filterTrip !== "all") {
-      list = list.filter((trip) => trip.countryCode.toUpperCase() === filterTrip);
+    if (filterTrip.length > 0) {
+      list = list.filter((trip) => filterTrip.includes(trip.countryCode.toUpperCase()));
     }
-    if (filterRegion !== "all") {
+    if (filterRegion.length > 0) {
       list = list.filter((trip) => {
-        if (filterRegion === "france") {
-          return trip.countryCode.toUpperCase() === "FR";
-        }
+        return filterRegion.some((region) => {
+          if (region === "france") {
+            return trip.countryCode.toUpperCase() === "FR";
+          }
 
-        if (filterRegion === "international") {
-          return trip.countryCode.toUpperCase() !== "FR";
-        }
+          if (region === "international") {
+            return trip.countryCode.toUpperCase() !== "FR";
+          }
 
-        if (filterRegion.startsWith("continent:")) {
-          return getContinentKey(trip.countryCode) === filterRegion.replace("continent:", "");
-        }
+          if (region.startsWith("continent:")) {
+            return getContinentKey(trip.countryCode) === region.replace("continent:", "");
+          }
 
-        return true;
+          return false;
+        });
       });
     }
-    if (filterTransport !== "all") {
+    if (filterTransport.length > 0) {
       list = list.filter((t) => {
         const modes = [...t.transportationTo, ...t.transportationOnSite];
-        return modes.includes(filterTransport);
+        return filterTransport.every((transport) => modes.includes(transport));
       });
     }
-    if (filterCompanion !== "all") {
-      list = list.filter((trip) => trip.travelCompanions.includes(filterCompanion));
+    if (filterCompanion.length > 0) {
+      list = list.filter((trip) =>
+        filterCompanion.every((companion) => trip.travelCompanions.includes(companion)),
+      );
     }
-    if (filterReason !== "all") {
-      list = list.filter((trip) => trip.reasonForTravel.includes(filterReason));
+    if (filterReason.length > 0) {
+      list = list.filter((trip) =>
+        filterReason.every((reason) => trip.reasonForTravel.includes(reason)),
+      );
     }
-    if (filterYear !== "all") {
+    if (filterYear.length > 0) {
       list = list.filter(
         (t) =>
           t.visitedAt &&
-          new Date(t.visitedAt).getFullYear().toString() === filterYear,
+          filterYear.includes(new Date(t.visitedAt).getFullYear().toString()),
       );
     }
     list.sort((a, b) => {
@@ -946,12 +935,12 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   ]);
 
   const clearFilters = () => {
-    setFilterTrip("all");
-    setFilterRegion("all");
-    setFilterTransport("all");
-    setFilterCompanion("all");
-    setFilterReason("all");
-    setFilterYear("all");
+    setFilterTrip([]);
+    setFilterRegion([]);
+    setFilterTransport([]);
+    setFilterCompanion([]);
+    setFilterReason([]);
+    setFilterYear([]);
   };
 
   const countLabel = formatCountLabel(filteredSorted.length);

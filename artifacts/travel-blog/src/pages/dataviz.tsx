@@ -33,13 +33,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -98,12 +92,12 @@ export default function DataVizPage() {
   const { data: trips = [] } = useTripsQuery();
   const { data: journeys = [] } = useJourneysQuery();
   const { data: posts = [] } = usePostsQuery();
-  const [filterZone, setFilterZone] = useState("all");
-  const [filterCountry, setFilterCountry] = useState("all");
-  const [filterYear, setFilterYear] = useState("all");
-  const [filterCompanion, setFilterCompanion] = useState("all");
-  const [filterReason, setFilterReason] = useState("all");
-  const [filterTransport, setFilterTransport] = useState("all");
+  const [filterZone, setFilterZone] = useState<string[]>([]);
+  const [filterCountry, setFilterCountry] = useState<string[]>([]);
+  const [filterYear, setFilterYear] = useState<string[]>([]);
+  const [filterCompanion, setFilterCompanion] = useState<string[]>([]);
+  const [filterReason, setFilterReason] = useState<string[]>([]);
+  const [filterTransport, setFilterTransport] = useState<string[]>([]);
 
   const zoneOptions = useMemo(() => {
     const counts = new Map<string, number>();
@@ -188,43 +182,54 @@ export default function DataVizPage() {
   const filteredTrips = useMemo(
     () =>
       trips.filter((trip) => {
-        if (filterZone !== "all") {
+        if (filterZone.length > 0) {
           const countryCode = trip.countryCode.toUpperCase();
-          if (filterZone === "france" && countryCode !== "FR") return false;
-          if (filterZone === "international" && countryCode === "FR") return false;
-          if (
-            filterZone.startsWith("continent:") &&
-            getContinentKey(trip.countryCode) !== filterZone.replace("continent:", "")
-          ) {
+          const matchesZone = filterZone.some((zone) => {
+            if (zone === "france") return countryCode === "FR";
+            if (zone === "international") return countryCode !== "FR";
+            if (zone.startsWith("continent:")) {
+              return getContinentKey(trip.countryCode) === zone.replace("continent:", "");
+            }
+            return false;
+          });
+          if (!matchesZone) {
             return false;
           }
         }
 
-        if (filterCountry !== "all" && trip.countryCode.toUpperCase() !== filterCountry) {
-          return false;
-        }
-
         if (
-          filterYear !== "all" &&
-          new Date(trip.visitedAt).getFullYear().toString() !== filterYear
+          filterCountry.length > 0 &&
+          !filterCountry.includes(trip.countryCode.toUpperCase())
         ) {
           return false;
         }
 
         if (
-          filterCompanion !== "all" &&
-          !trip.travelCompanions.includes(filterCompanion)
+          filterYear.length > 0 &&
+          !filterYear.includes(new Date(trip.visitedAt).getFullYear().toString())
         ) {
           return false;
         }
 
-        if (filterReason !== "all" && !trip.reasonForTravel.includes(filterReason)) {
+        if (
+          filterCompanion.length > 0 &&
+          !filterCompanion.every((companion) => trip.travelCompanions.includes(companion))
+        ) {
           return false;
         }
 
         if (
-          filterTransport !== "all" &&
-          ![...trip.transportationTo, ...trip.transportationOnSite].includes(filterTransport)
+          filterReason.length > 0 &&
+          !filterReason.every((reason) => trip.reasonForTravel.includes(reason))
+        ) {
+          return false;
+        }
+
+        if (
+          filterTransport.length > 0 &&
+          !filterTransport.every((transport) =>
+            [...trip.transportationTo, ...trip.transportationOnSite].includes(transport),
+          )
         ) {
           return false;
         }
@@ -618,114 +623,85 @@ export default function DataVizPage() {
         </section>
 
         <section className="flex flex-wrap items-center gap-3">
-          <Select value={filterZone} onValueChange={setFilterZone}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder={locale === "fr" ? "Zones" : "Regions"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{locale === "fr" ? "Zones" : "Regions"}</SelectItem>
-              {zoneOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectFilter
+            label={locale === "fr" ? "Zones" : "Regions"}
+            placeholder={locale === "fr" ? "Zones" : "Regions"}
+            options={zoneOptions}
+            selectedValues={filterZone}
+            onChange={setFilterZone}
+            className="w-36"
+          />
 
-          <Select value={filterCountry} onValueChange={setFilterCountry}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder={locale === "fr" ? "Voyages" : "Trips"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{locale === "fr" ? "Voyages" : "Trips"}</SelectItem>
-              {countryOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectFilter
+            label={locale === "fr" ? "Voyages" : "Trips"}
+            placeholder={locale === "fr" ? "Voyages" : "Trips"}
+            options={countryOptions}
+            selectedValues={filterCountry}
+            onChange={setFilterCountry}
+            className="w-36"
+          />
 
-          <Select value={filterYear} onValueChange={setFilterYear}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder={locale === "fr" ? "Années" : "Years"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{locale === "fr" ? "Années" : "Years"}</SelectItem>
-              {yearOptions.map((year) => (
-                <SelectItem key={year} value={year}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectFilter
+            label={locale === "fr" ? "Années" : "Years"}
+            placeholder={locale === "fr" ? "Années" : "Years"}
+            options={yearOptions.map((year) => ({ value: year, label: year }))}
+            selectedValues={filterYear}
+            onChange={setFilterYear}
+            className="w-32"
+          />
 
-          <Select value={filterCompanion} onValueChange={setFilterCompanion}>
-            <SelectTrigger className="w-44">
-              <SelectValue
-                placeholder={
-                  locale === "fr" ? "Compagnons de route" : "Companions"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">
-                {locale === "fr" ? "Compagnons de route" : "Companions"}
-              </SelectItem>
-              {companionOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.value} ({option.count})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectFilter
+            label={locale === "fr" ? "Compagnons de route" : "Companions"}
+            placeholder={locale === "fr" ? "Compagnons de route" : "Companions"}
+            options={companionOptions.map((option) => ({
+              value: option.value,
+              label: `${option.value} (${option.count})`,
+            }))}
+            selectedValues={filterCompanion}
+            onChange={setFilterCompanion}
+            className="w-44"
+          />
 
-          <Select value={filterReason} onValueChange={setFilterReason}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder={locale === "fr" ? "Raisons" : "Reasons"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{locale === "fr" ? "Raisons" : "Reasons"}</SelectItem>
-              {reasonOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {formatTravelReasonLabel(option.value, locale)} ({option.count})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectFilter
+            label={locale === "fr" ? "Raisons" : "Reasons"}
+            placeholder={locale === "fr" ? "Raisons" : "Reasons"}
+            options={reasonOptions.map((option) => ({
+              value: option.value,
+              label: `${formatTravelReasonLabel(option.value, locale)} (${option.count})`,
+            }))}
+            selectedValues={filterReason}
+            onChange={setFilterReason}
+            className="w-36"
+          />
 
-          <Select value={filterTransport} onValueChange={setFilterTransport}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder={locale === "fr" ? "Transports" : "Transport"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">
-                {locale === "fr" ? "Transports" : "Transport"}
-              </SelectItem>
-              {transportOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {formatTransportLabel(option.value, locale)} ({option.count})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectFilter
+            label={locale === "fr" ? "Transports" : "Transport"}
+            placeholder={locale === "fr" ? "Transports" : "Transport"}
+            options={transportOptions.map((option) => ({
+              value: option.value,
+              label: `${formatTransportLabel(option.value, locale)} (${option.count})`,
+            }))}
+            selectedValues={filterTransport}
+            onChange={setFilterTransport}
+            className="w-36"
+          />
 
-          {(filterZone !== "all" ||
-            filterCountry !== "all" ||
-            filterYear !== "all" ||
-            filterCompanion !== "all" ||
-            filterReason !== "all" ||
-            filterTransport !== "all") && (
+          {(filterZone.length > 0 ||
+            filterCountry.length > 0 ||
+            filterYear.length > 0 ||
+            filterCompanion.length > 0 ||
+            filterReason.length > 0 ||
+            filterTransport.length > 0) && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
-                setFilterZone("all");
-                setFilterCountry("all");
-                setFilterYear("all");
-                setFilterCompanion("all");
-                setFilterReason("all");
-                setFilterTransport("all");
+                setFilterZone([]);
+                setFilterCountry([]);
+                setFilterYear([]);
+                setFilterCompanion([]);
+                setFilterReason([]);
+                setFilterTransport([]);
               }}
             >
               {t("clearFilters")}
