@@ -127,8 +127,15 @@ const messages = {
     datavizCompanionsDesc:
       "Les personnes qui reviennent le plus souvent d'un voyage à l'autre.",
     datavizContinents: "Continents traversés",
+    datavizContinentsNoFrance: "Continents traversés hors France",
     datavizContinentsDesc:
       "Part des voyages par continent, avec le volume de déplacements associé.",
+    datavizAccommodationShare: "Hébergement dans le temps",
+    datavizAccommodationShareDesc:
+      "Part de chaque type d'hébergement par année, pour visualiser les bascules d'usage dans le temps.",
+    datavizReasons: "Raisons du voyage",
+    datavizReasonsDesc:
+      "Comparaison des raisons de départ selon la distance moyenne parcourue et la durée moyenne des séjours.",
     datavizScatter: "Distance vs durée",
     datavizScatterDesc:
       "Chaque point représente un voyage: plus la bulle est grande, plus il y a eu de récits publiés.",
@@ -139,6 +146,8 @@ const messages = {
       "Plus la case est dense, plus le mois a concentré de voyages.",
     datavizDistanceSeries: "Distance",
     datavizDurationSeries: "Durée",
+    datavizDistanceAverage: "Distance moyenne",
+    datavizDurationAverage: "Durée moyenne",
     datavizDaysLabel: "jours",
     datavizNoData: "Pas encore assez de données pour afficher ce graphique.",
   },
@@ -255,8 +264,15 @@ const messages = {
     datavizCompanionsDesc:
       "The people who show up most often from one trip to the next.",
     datavizContinents: "Continents crossed",
+    datavizContinentsNoFrance: "Continents crossed outside France",
     datavizContinentsDesc:
       "Share of trips by continent, along with their associated travel volume.",
+    datavizAccommodationShare: "Accommodation over time",
+    datavizAccommodationShareDesc:
+      "Share of each accommodation type by year to make usage shifts visible over time.",
+    datavizReasons: "Reasons for travel",
+    datavizReasonsDesc:
+      "A comparison of travel reasons against average distance traveled and average trip duration.",
     datavizScatter: "Distance vs duration",
     datavizScatterDesc:
       "Each point is a trip: larger bubbles mean more published dispatches.",
@@ -267,6 +283,8 @@ const messages = {
       "Darker cells indicate months with more trips.",
     datavizDistanceSeries: "Distance",
     datavizDurationSeries: "Duration",
+    datavizDistanceAverage: "Average distance",
+    datavizDurationAverage: "Average duration",
     datavizDaysLabel: "days",
     datavizNoData: "There is not enough data yet to render this chart.",
   },

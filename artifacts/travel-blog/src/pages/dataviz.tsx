@@ -36,6 +36,8 @@ import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { useI18n } from "@/lib/i18n";
 import {
   CONTINENT_OPTIONS,
+  formatAccomodationLabel,
+  formatTravelReasonLabel,
   formatTransportLabel,
   getContinentKey,
 } from "@/lib/trip-options";
@@ -68,7 +70,7 @@ function getHeatmapIntensity(value: number, maxValue: number) {
 
 export default function DataVizPage() {
   const { locale, numberLocale, t, formatDate } = useI18n();
-  const { data: trips = [], isLoading } = useTripsQuery();
+  const { data: trips = [] } = useTripsQuery();
   const { data: journeys = [] } = useJourneysQuery();
   const { data: posts = [] } = usePostsQuery();
 
@@ -89,6 +91,14 @@ export default function DataVizPage() {
     const continentStats = new Map<
       string,
       { continent: string; trips: number; distanceKm: number }
+    >();
+    const accommodationByYear = new Map<
+      number,
+      { year: number; total: number; counts: Map<string, number> }
+    >();
+    const reasonStats = new Map<
+      string,
+      { reason: string; trips: number; totalDistanceKm: number; totalDurationDays: number }
     >();
     const yearlyDistance = new Map<
       number,
@@ -133,19 +143,54 @@ export default function DataVizPage() {
       heatmapEntry.count += 1;
       heatmap.set(heatmapKey, heatmapEntry);
 
-      const continentEntry = continentStats.get(continentKey) ?? {
-        continent: continentKey,
-        trips: 0,
-        distanceKm: 0,
-      };
-      continentEntry.trips += 1;
-      if (distanceKm != null) {
-        continentEntry.distanceKm += distanceKm;
+      if (trip.countryCode.toUpperCase() !== "FR") {
+        const continentEntry = continentStats.get(continentKey) ?? {
+          continent: continentKey,
+          trips: 0,
+          distanceKm: 0,
+        };
+        continentEntry.trips += 1;
+        if (distanceKm != null) {
+          continentEntry.distanceKm += distanceKm;
+        }
+        continentStats.set(continentKey, continentEntry);
       }
-      continentStats.set(continentKey, continentEntry);
 
       for (const companion of new Set(trip.travelCompanions)) {
         companionCounts.set(companion, (companionCounts.get(companion) ?? 0) + 1);
+      }
+
+      const uniqueAccomodations = [...new Set(trip.accomodation.filter(Boolean))];
+      if (uniqueAccomodations.length > 0) {
+        const yearEntry = accommodationByYear.get(year) ?? {
+          year,
+          total: 0,
+          counts: new Map<string, number>(),
+        };
+        yearEntry.total += 1;
+        for (const accomodation of uniqueAccomodations) {
+          yearEntry.counts.set(
+            accomodation,
+            (yearEntry.counts.get(accomodation) ?? 0) + 1,
+          );
+        }
+        accommodationByYear.set(year, yearEntry);
+      }
+
+      const uniqueReasons = [...new Set(trip.reasonForTravel.filter(Boolean))];
+      for (const reason of uniqueReasons) {
+        const reasonEntry = reasonStats.get(reason) ?? {
+          reason,
+          trips: 0,
+          totalDistanceKm: 0,
+          totalDurationDays: 0,
+        };
+        reasonEntry.trips += 1;
+        reasonEntry.totalDurationDays += durationDays;
+        if (distanceKm != null) {
+          reasonEntry.totalDistanceKm += distanceKm;
+        }
+        reasonStats.set(reason, reasonEntry);
       }
 
       const travelModes = [...new Set(trip.transportationTo.filter(Boolean))];
@@ -191,6 +236,30 @@ export default function DataVizPage() {
       .map(([name, tripsCount]) => ({ name, tripsCount }))
       .sort((left, right) => right.tripsCount - left.tripsCount)
       .slice(0, 8);
+    const accommodationKeys = Array.from(
+      new Set(
+        Array.from(accommodationByYear.values()).flatMap((entry) =>
+          Array.from(entry.counts.keys()),
+        ),
+      ),
+    ).sort((left, right) =>
+      formatAccomodationLabel(left, locale).localeCompare(
+        formatAccomodationLabel(right, locale),
+        locale,
+      ),
+    );
+    const accommodationRows = Array.from(accommodationByYear.values())
+      .sort((left, right) => left.year - right.year)
+      .map((entry) => {
+        const row: Record<string, number | string> = {
+          year: entry.year,
+        };
+        for (const key of accommodationKeys) {
+          const count = entry.counts.get(key) ?? 0;
+          row[key] = entry.total > 0 ? Number(((count / entry.total) * 100).toFixed(1)) : 0;
+        }
+        return row;
+      });
     const continentRows = Array.from(continentStats.values())
       .sort((left, right) => right.trips - left.trips)
       .map((row) => ({
@@ -204,6 +273,14 @@ export default function DataVizPage() {
                 locale
               ],
       }));
+    const reasonRows = Array.from(reasonStats.values())
+      .map((row) => ({
+        ...row,
+        label: formatTravelReasonLabel(row.reason, locale),
+        averageDistanceKm: row.trips > 0 ? row.totalDistanceKm / row.trips : 0,
+        averageDurationDays: row.trips > 0 ? row.totalDurationDays / row.trips : 0,
+      }))
+      .sort((left, right) => right.averageDistanceKm - left.averageDistanceKm);
     const scatterRows = Array.from(scatterByContinent.entries()).map(
       ([continent, values]) => ({
         continent,
@@ -246,7 +323,10 @@ export default function DataVizPage() {
       yearlyDistanceRows,
       transportDistanceRows,
       companionRows,
+      accommodationKeys,
+      accommodationRows,
       continentRows,
+      reasonRows,
       scatterRows,
       heatmapRows,
       maxHeatmapCount,
@@ -266,6 +346,27 @@ export default function DataVizPage() {
       { label: row.label, color: CHART_COLORS[index % CHART_COLORS.length] },
     ]),
   );
+
+  const accommodationConfig = Object.fromEntries(
+    analytics.accommodationKeys.map((key, index) => [
+      key,
+      {
+        label: formatAccomodationLabel(key, locale),
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      },
+    ]),
+  );
+
+  const reasonConfig = {
+    averageDistanceKm: {
+      label: t("datavizDistanceAverage"),
+      color: "#2563eb",
+    },
+    averageDurationDays: {
+      label: t("datavizDurationAverage"),
+      color: "#f97316",
+    },
+  };
 
   const scatterConfig = Object.fromEntries(
     analytics.scatterRows.map((row, index) => [
@@ -498,7 +599,7 @@ export default function DataVizPage() {
 
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>{t("datavizContinents")}</CardTitle>
+              <CardTitle>{t("datavizContinentsNoFrance")}</CardTitle>
               <CardDescription>{t("datavizContinentsDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -526,6 +627,156 @@ export default function DataVizPage() {
                     <ChartTooltip content={<ChartTooltipContent nameKey="continent" />} />
                     <ChartLegend content={<ChartLegendContent nameKey="continent" />} />
                   </PieChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-2">
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>{t("datavizAccommodationShare")}</CardTitle>
+              <CardDescription>{t("datavizAccommodationShareDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.accommodationRows.length > 0 ? (
+                <ChartContainer
+                  config={accommodationConfig}
+                  className="h-[360px] w-full aspect-auto"
+                >
+                  <AreaChart
+                    data={analytics.accommodationRows}
+                    stackOffset="expand"
+                    margin={{ left: 12, right: 12 }}
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="year" tickLine={false} axisLine={false} />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `${Math.round(Number(value))}%`}
+                    />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value, name) => (
+                            <>
+                              <span className="text-muted-foreground">
+                                {formatAccomodationLabel(String(name), locale)} :
+                              </span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {Number(value).toLocaleString(numberLocale, {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 1,
+                                })}
+                                %
+                              </span>
+                            </>
+                          )}
+                        />
+                      }
+                    />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    {analytics.accommodationKeys.map((key, index) => (
+                      <Area
+                        key={key}
+                        type="monotone"
+                        dataKey={key}
+                        stackId="accommodation"
+                        stroke={CHART_COLORS[index % CHART_COLORS.length]}
+                        fill={CHART_COLORS[index % CHART_COLORS.length]}
+                        fillOpacity={0.45}
+                      />
+                    ))}
+                  </AreaChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>{t("datavizReasons")}</CardTitle>
+              <CardDescription>{t("datavizReasonsDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.reasonRows.length > 0 ? (
+                <ChartContainer
+                  config={reasonConfig}
+                  className="h-[360px] w-full aspect-auto"
+                >
+                  <BarChart data={analytics.reasonRows} margin={{ left: 12, right: 12 }}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      tickLine={false}
+                      axisLine={false}
+                      interval={0}
+                      angle={-18}
+                      textAnchor="end"
+                      height={64}
+                    />
+                    <YAxis yAxisId="distance" tickLine={false} axisLine={false} />
+                    <YAxis
+                      yAxisId="duration"
+                      orientation="right"
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value, name) => {
+                            if (String(name) === "averageDistanceKm") {
+                              return (
+                                <>
+                                  <span className="text-muted-foreground">
+                                    {t("datavizDistanceAverage")} :
+                                  </span>
+                                  <span className="font-mono font-medium tabular-nums text-foreground">
+                                    {formatDistanceWithDots(Number(value))}
+                                  </span>
+                                </>
+                              );
+                            }
+
+                            return (
+                              <>
+                                <span className="text-muted-foreground">
+                                  {t("datavizDurationAverage")} :
+                                </span>
+                                <span className="font-mono font-medium tabular-nums text-foreground">
+                                  {Number(value).toLocaleString(numberLocale, {
+                                    minimumFractionDigits: 1,
+                                    maximumFractionDigits: 1,
+                                  })}{" "}
+                                  {t("datavizDaysLabel")}
+                                </span>
+                              </>
+                            );
+                          }}
+                        />
+                      }
+                    />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Bar
+                      yAxisId="distance"
+                      dataKey="averageDistanceKm"
+                      fill="#2563eb"
+                      radius={6}
+                    />
+                    <Bar
+                      yAxisId="duration"
+                      dataKey="averageDurationDays"
+                      fill="#f97316"
+                      radius={6}
+                    />
+                  </BarChart>
                 </ChartContainer>
               ) : (
                 <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
