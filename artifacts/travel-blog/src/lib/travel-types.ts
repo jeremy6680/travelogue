@@ -33,6 +33,10 @@ export interface Post {
   content: string | null;
   excerpt: string;
   externalUrl: string | null;
+  category: string | null;
+  tags: string[];
+  featuredOnHome: boolean;
+  featuredHomeOrder: number | null;
   coverImageUrl: string | null;
   coverImage: MediaAsset | null;
   gallery: GalleryImage[] | null;
@@ -52,6 +56,10 @@ export interface CreatePostBody {
   content?: string | null;
   excerpt: string;
   externalUrl?: string | null;
+  category?: string | null;
+  tags?: string[] | string | null;
+  featuredOnHome?: boolean;
+  featuredHomeOrder?: number | null;
   coverImageId?: number | null;
   coverImageUrl?: string | null;
   gallery?: GalleryImage[] | null;
@@ -69,6 +77,10 @@ export interface UpdatePostBody {
   content?: string | null;
   excerpt?: string;
   externalUrl?: string | null;
+  category?: string | null;
+  tags?: string[] | string | null;
+  featuredOnHome?: boolean;
+  featuredHomeOrder?: number | null;
   coverImageId?: number | null;
   coverImageUrl?: string | null;
   gallery?: GalleryImage[] | null;

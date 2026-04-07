@@ -42,6 +42,7 @@ import {
   formatTransportLabels,
   formatTravelReasonLabels,
 } from "@/lib/trip-options";
+import { normalizeTagList } from "@/lib/post-taxonomy";
 import {
   Trash2,
   Edit2,
@@ -638,6 +639,12 @@ export default function AdminPage() {
       content: (formData.get("content") as string) || null,
       excerpt: formData.get("excerpt") as string,
       externalUrl: (formData.get("externalUrl") as string) || null,
+      category: (formData.get("category") as string) || null,
+      tags: normalizeTagList((formData.get("tags") as string) || null),
+      featuredOnHome: formData.get("featuredOnHome") === "on",
+      featuredHomeOrder: formData.get("featuredHomeOrder")
+        ? Number(formData.get("featuredHomeOrder"))
+        : null,
       coverImageId: formData.get("coverImageId")
         ? Number(formData.get("coverImageId"))
         : null,
@@ -1023,6 +1030,7 @@ export default function AdminPage() {
             </h2>
 
             <form
+              key={editingPost ? `post-${editingPost.id}` : "post-new"}
               onSubmit={handlePostSubmit}
               className="bg-card p-6 rounded-2xl border space-y-4 shadow-sm"
             >
@@ -1061,6 +1069,44 @@ export default function AdminPage() {
                   type="url"
                   placeholder="URL de l'article externe (optionnel)"
                   defaultValue={editingPost?.externalUrl || ""}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    name="category"
+                    placeholder="Catégorie (optionnel)"
+                    defaultValue={editingPost?.category || ""}
+                  />
+                  <Input
+                    name="tags"
+                    placeholder="Tags séparés par des virgules"
+                    defaultValue={editingPost?.tags.join(", ") || ""}
+                  />
+                </div>
+                <div className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-xl border border-dashed px-3 py-3">
+                  <input
+                    id="featuredOnHome"
+                    name="featuredOnHome"
+                    type="checkbox"
+                    defaultChecked={editingPost?.featuredOnHome ?? false}
+                    className="h-4 w-4"
+                  />
+                  <label
+                    htmlFor="featuredOnHome"
+                    className="text-sm text-foreground"
+                  >
+                    Mettre en avant sur la home
+                  </label>
+                  <span className="text-xs text-muted-foreground col-start-2">
+                    Si plusieurs articles sont cochés, l’ordre ci-dessous décide
+                    lesquels remontent en premier.
+                  </span>
+                </div>
+                <Input
+                  name="featuredHomeOrder"
+                  type="number"
+                  min="1"
+                  placeholder="Ordre de mise en avant sur la home (optionnel)"
+                  defaultValue={editingPost?.featuredHomeOrder ?? ""}
                 />
                 <select
                   name="coverImageId"
@@ -1159,7 +1205,10 @@ export default function AdminPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setEditingPost(null)}
+                    onClick={() => {
+                      setEditingPost(null);
+                      resetPostFormState();
+                    }}
                   >
                     Annuler
                   </Button>
@@ -1181,6 +1230,21 @@ export default function AdminPage() {
                     {post.externalUrl && (
                       <p className="text-xs text-muted-foreground">
                         Article externe
+                      </p>
+                    )}
+                    {(post.category || post.tags.length > 0) && (
+                      <p className="text-xs text-muted-foreground">
+                        {[post.category, ...post.tags]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
+                    {post.featuredOnHome && (
+                      <p className="text-xs text-amber-700">
+                        Mis en avant sur la home
+                        {post.featuredHomeOrder != null
+                          ? ` · ordre ${post.featuredHomeOrder}`
+                          : ""}
                       </p>
                     )}
                     {post.coverImage && (

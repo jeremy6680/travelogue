@@ -38,6 +38,7 @@ import {
   getContinentKey,
   normalizeMultiValueField,
 } from "@/lib/trip-options";
+import { normalizeTagList } from "@/lib/post-taxonomy";
 
 type DirectusGalleryImage = GalleryImage;
 
@@ -66,6 +67,10 @@ type DirectusPost = {
   content: string | null;
   excerpt: string;
   external_url?: string | null;
+  category?: string | null;
+  tags?: string[] | string | null;
+  featured_on_home?: boolean | null;
+  featured_home_order?: number | null;
   cover_image_url: string | null;
   featured_image_id?: number | null;
   featured_image?: DirectusMediaAsset | null;
@@ -168,6 +173,10 @@ const POST_FIELDS = [
   "content",
   "excerpt",
   "external_url",
+  "category",
+  "tags",
+  "featured_on_home",
+  "featured_home_order",
   "cover_image_url",
   "featured_image_id",
   { featured_image: [...MEDIA_ASSET_FIELDS] },
@@ -226,6 +235,7 @@ const LEGACY_POST_FIELDS = [
   "slug",
   "content",
   "excerpt",
+  "external_url",
   "cover_image_url",
   "gallery",
   "latitude",
@@ -329,6 +339,10 @@ function mapPost(post: DirectusPost): Post {
     content: post.content,
     excerpt: post.excerpt,
     externalUrl: post.external_url ?? null,
+    category: post.category ?? null,
+    tags: normalizeTagList(post.tags),
+    featuredOnHome: Boolean(post.featured_on_home),
+    featuredHomeOrder: post.featured_home_order ?? null,
     coverImageUrl: post.cover_image_url,
     coverImage: mapMediaAsset(post.featured_image),
     gallery: post.gallery?.map(mapGalleryImage) ?? null,
@@ -449,6 +463,10 @@ function mapCreatePostInput(data: CreatePostBody | UpdatePostBody) {
     content: data.content || null,
     excerpt: data.excerpt,
     external_url: data.externalUrl,
+    category: data.category,
+    tags: normalizeTagList(data.tags),
+    featured_on_home: data.featuredOnHome ?? false,
+    featured_home_order: data.featuredHomeOrder,
     cover_image_url: data.coverImageUrl,
     featured_image_id: data.coverImageId,
     gallery: data.gallery,
