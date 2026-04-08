@@ -8,6 +8,7 @@ import {
   jsonb,
   varchar,
   date,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { mediaAssetsTable } from "./media-assets";
 import { createInsertSchema } from "drizzle-zod";
@@ -22,6 +23,10 @@ export const postsTable = pgTable("posts", {
   content: text("content"),
   excerpt: text("excerpt").notNull(),
   externalUrl: varchar("external_url", { length: 2048 }),
+  category: varchar("category", { length: 80 }),
+  tags: jsonb("tags").$type<string[]>().default([]).notNull(),
+  featuredOnHome: boolean("featured_on_home").default(false).notNull(),
+  featuredHomeOrder: integer("featured_home_order"),
   coverImageUrl: varchar("cover_image_url", { length: 2048 }),
   gallery: jsonb("gallery").$type<{
     assetId?: number | null;

@@ -1,11 +1,14 @@
 import { Layout } from "@/components/layout";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
-import { usePhotosQuery, usePostsQuery, useStatsQuery } from "@/lib/directus";
+import { usePhotosQuery, usePostsQuery, useStatsQuery, useTripsQuery } from "@/lib/directus";
 import { getPostHref, isExternalPost } from "@/lib/post-links";
+import { getPostCountryCode } from "@/lib/post-taxonomy";
 import { blogPostTitleHoverClass } from "@/lib/post-title-hover";
+import { getHomeFeaturedPosts } from "@/lib/post-taxonomy";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
+  AlertTriangle,
   MapPin,
   Calendar,
   BookOpen,
@@ -74,9 +77,21 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.5, delay },
 });
 
+function getFlagEmoji(code: string) {
+  if (!code || code.length !== 2) return "";
+
+  return String.fromCodePoint(
+    ...code
+      .toUpperCase()
+      .split("")
+      .map((char) => 127397 + char.charCodeAt(0)),
+  );
+}
+
 export default function Home() {
-  const { formatDate, t } = useI18n();
+  const { countryName, formatDate, locale, t } = useI18n();
   const { data: allPosts = [] } = usePostsQuery();
+  const { data: trips = [] } = useTripsQuery();
   const { data: stats } = useStatsQuery();
   const { data: dbPhotos = [] } = usePhotosQuery();
   const gridPhotos = dbPhotos.length > 0 ? dbPhotos : FALLBACK_PHOTOS;
@@ -88,13 +103,8 @@ export default function Home() {
   });
 
   // 3 most recent published posts
-  const recentPosts = [...allPosts]
-    .filter((p) => p.publishedAt)
-    .sort(
-      (a, b) =>
-        new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime(),
-    )
-    .slice(0, 3);
+  const recentPosts = getHomeFeaturedPosts(allPosts, 3);
+  const hasCustomFeaturedPosts = allPosts.some((post) => post.featuredOnHome);
 
   function handleContact(e: React.FormEvent) {
     e.preventDefault();
@@ -187,10 +197,16 @@ export default function Home() {
           <motion.div {...fadeUp()} className="flex items-end justify-between">
             <div>
               <p className="text-xs uppercase font-mono tracking-widest text-muted-foreground mb-2">
-                {t("latestWriting")}
+                {hasCustomFeaturedPosts
+                  ? formatDate(new Date(), "monthYear")
+                  : t("latestWriting")}
               </p>
               <h2 className="text-4xl font-serif font-bold text-foreground">
-                {t("recentDispatches")}
+                {hasCustomFeaturedPosts
+                  ? locale === "fr"
+                    ? "Articles mis en avant"
+                    : "Featured Stories"
+                  : t("recentDispatches")}
               </h2>
             </div>
             <Link
@@ -202,96 +218,115 @@ export default function Home() {
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {recentPosts.map((post, i) => (
-              <motion.article
-                key={post.id}
-                {...fadeUp(i * 0.1)}
-                className="group bg-card rounded-2xl border border-border/50 overflow-hidden shadow-sm hover:shadow-md hover:border-border transition-all duration-300 flex flex-col"
-                data-testid={`card-post-${post.id}`}
-              >
-                <div className="aspect-[4/3] bg-muted overflow-hidden relative">
-                  {post.coverImage || post.coverImageUrl ? (
-                    <img
-                      src={
-                        getMediaAssetImageUrl(post.coverImage, {
-                          width: 960,
-                          height: 720,
-                          crop: "fill",
-                        }) ??
-                        post.coverImageUrl ??
-                        ""
-                      }
-                      alt={post.coverImage?.alt ?? post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-primary/5">
-                      <BookOpen className="w-10 h-10 text-primary/20" />
+            {recentPosts.map((post, i) => {
+              const countryCode = getPostCountryCode(post, trips);
+
+              return (
+                <motion.article
+                  key={post.id}
+                  {...fadeUp(i * 0.1)}
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-sm transition-all duration-300 hover:border-border hover:shadow-md"
+                  data-testid={`card-post-${post.id}`}
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                    {post.coverImage || post.coverImageUrl ? (
+                      <img
+                        src={
+                          getMediaAssetImageUrl(post.coverImage, {
+                            width: 960,
+                            height: 720,
+                            crop: "fill",
+                          }) ??
+                          post.coverImageUrl ??
+                          ""
+                        }
+                        alt={post.coverImage?.alt ?? post.title}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-primary/5">
+                        <BookOpen className="h-10 w-10 text-primary/20" />
+                      </div>
+                    )}
+                    {post.location && (
+                      <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-background/90 px-2.5 py-1 text-xs text-foreground shadow-sm backdrop-blur">
+                        <MapPin className="h-3 w-3 text-primary" />
+                        {post.location}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col space-y-4 p-5">
+                    <div className="flex flex-wrap items-center gap-3 text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                      {post.publishedAt && (
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(post.publishedAt, "short")}
+                        </span>
+                      )}
+                      {countryCode && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-lightest)] px-2.5 py-1 text-foreground">
+                          <span>{getFlagEmoji(countryCode)}</span>
+                          <span>{countryName(countryCode)}</span>
+                        </span>
+                      )}
                     </div>
-                  )}
-                  {post.location && (
-                    <div className="absolute top-3 left-3 bg-background/90 backdrop-blur text-foreground text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                      <MapPin className="w-3 h-3 text-primary" />{" "}
-                      {post.location}
-                    </div>
-                  )}
-                </div>
-                <div className="p-5 flex flex-col flex-1 space-y-3">
-                  {post.publishedAt && (
-                    <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <Calendar className="w-3 h-3" />
-                      {formatDate(post.publishedAt, "short")}
-                    </span>
-                  )}
-                  <h3 className="font-serif font-bold text-xl text-foreground leading-snug">
+                    <h3 className="font-serif text-[1.35rem] font-bold leading-snug text-foreground md:text-2xl">
+                      {isExternalPost(post) ? (
+                        <a
+                          href={getPostHref(post)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={blogPostTitleHoverClass}
+                          data-testid={`link-post-title-${post.id}`}
+                        >
+                          {post.title}
+                        </a>
+                      ) : (
+                        <Link
+                          href={getPostHref(post)}
+                          className={blogPostTitleHoverClass}
+                          data-testid={`link-post-title-${post.id}`}
+                        >
+                          {post.title}
+                        </Link>
+                      )}
+                    </h3>
+                    <p className="flex-1 text-sm text-muted-foreground line-clamp-3">
+                      {post.excerpt}
+                    </p>
+                    {isExternalPost(post) && (
+                      <div className="inline-flex max-w-fit items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                        <p className="leading-none">
+                          {locale === "fr"
+                            ? "Article externe - vous allez quitter Travelogue."
+                            : "External article - you are leaving Travelogue."}
+                        </p>
+                      </div>
+                    )}
                     {isExternalPost(post) ? (
                       <a
                         href={getPostHref(post)}
                         target="_blank"
                         rel="noreferrer"
-                        className={blogPostTitleHoverClass}
-                        data-testid={`link-post-title-${post.id}`}
+                        className="mt-auto inline-flex w-fit items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-primary/90"
                       >
-                        {post.title}
+                        {t("readExternalArticle")}
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </a>
                     ) : (
                       <Link
                         href={getPostHref(post)}
-                        className={blogPostTitleHoverClass}
-                        data-testid={`link-post-title-${post.id}`}
+                        className="mt-auto inline-flex w-fit items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-primary/90"
                       >
-                        {post.title}
+                        {t("readDispatch")}
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
                     )}
-                  </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2 flex-1">
-                    {post.excerpt}
-                  </p>
-                  {isExternalPost(post) && (
-                    <p className="inline-flex items-center rounded-full border border-border/70 px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-muted-foreground w-fit">
-                      {t("externalArticle")}
-                    </p>
-                  )}
-                  {isExternalPost(post) ? (
-                    <a
-                      href={getPostHref(post)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs font-bold uppercase tracking-wider text-primary hover:text-[var(--color-primary-hover)] transition-colors inline-flex items-center gap-1 mt-auto"
-                    >
-                      {t("readExternalArticle")} <ArrowRight className="w-3.5 h-3.5" />
-                    </a>
-                  ) : (
-                    <Link
-                      href={getPostHref(post)}
-                      className="text-xs font-bold uppercase tracking-wider text-primary hover:text-[var(--color-primary-hover)] transition-colors inline-flex items-center gap-1 mt-auto"
-                    >
-                      {t("readDispatch")} <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  )}
-                </div>
-              </motion.article>
-            ))}
+                  </div>
+                </motion.article>
+              );
+            })}
           </div>
         </section>
 
