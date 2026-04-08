@@ -31,7 +31,7 @@ function Router() {
       <Route path="/posts/:slug" component={PostDetail} />
       <Route path="/trips" component={TripsPage} />
       <Route path="/admin" component={AdminPage} />
-      <Route path="/galleries/:slug" component={GalleryPage} />
+      <Route path="/galeries/:slug" component={GalleryPage} />
       <Route component={NotFound} />
     </Switch>
   );
