@@ -9,6 +9,7 @@ import PostsPage from "@/pages/posts/index";
 import PostDetail from "@/pages/posts/detail";
 import TripsPage from "@/pages/trips/index";
 import AdminPage from "@/pages/admin";
+import GalleryPage from "@/pages/gallery";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/posts/:slug" component={PostDetail} />
       <Route path="/trips" component={TripsPage} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/galleries/:slug" component={GalleryPage} />
       <Route component={NotFound} />
     </Switch>
   );
