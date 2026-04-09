@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { CountryFlag } from "@/components/country-flag";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { getPostHref, isExternalPost } from "@/lib/post-links";
@@ -41,8 +43,6 @@ import {
   sortTransportValues,
 } from "@/lib/trip-options";
 import { getTripCities, tripMatchesKeyword } from "@/lib/travel-insights";
-import { getCountryFlagEmoji } from "@/lib/travel-countries";
-
 function formatLengthOfStay(
   t: ReturnType<typeof useI18n>["t"],
   formatDaysLabel: ReturnType<typeof useI18n>["formatDaysLabel"],
@@ -58,7 +58,8 @@ interface TravelTimelineProps {
 
 type TripCountryOption = {
   value: string;
-  label: string;
+  label: ReactNode;
+  text: string;
   count: number;
 };
 type RegionOption = {
@@ -98,12 +99,22 @@ function getCountryFilterOptions(
   return Array.from(counts.entries())
     .map(([code, count]) => ({
       value: code,
-      label: `${getCountryFlagEmoji(code)} ${countryName(code)} (${count})`,
+      text: countryName(code),
+      label: (
+        <span className="flex items-center gap-2">
+          <CountryFlag
+            code={code}
+            countryName={countryName(code)}
+            className="h-3.5 w-5 rounded-[2px] object-cover"
+          />
+          <span>{countryName(code)} ({count})</span>
+        </span>
+      ),
       count,
     }))
     .sort((left, right) => {
       if (right.count !== left.count) return right.count - left.count;
-      return left.label.localeCompare(right.label, "fr");
+      return left.text.localeCompare(right.text, "fr");
     });
 }
 
@@ -228,9 +239,11 @@ function renderTripCard(
       <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
         <div>
           <h3 className="font-serif text-3xl font-bold flex items-center gap-3 text-foreground">
-            <span className="text-4xl" aria-hidden="true">
-              {getCountryFlagEmoji(trip.countryCode)}
-            </span>
+            <CountryFlag
+              code={trip.countryCode}
+              countryName={countryName(trip.countryCode)}
+              className="h-7 w-10 rounded-sm object-cover"
+            />
             {countryName(trip.countryCode)}
           </h3>
           <p className="text-sm text-muted-foreground font-mono mt-2 uppercase tracking-wider">
@@ -563,13 +576,20 @@ function FiltersPanel({
               value: option.value,
               label: (
                 <span className="flex items-center justify-between gap-3">
-                  <span>{option.label.replace(/\s*\(\d+\)\s*$/, "")}</span>
+                  <span className="flex items-center gap-2">
+                    <CountryFlag
+                      code={option.value}
+                      countryName={option.text}
+                      className="h-3.5 w-5 rounded-[2px] object-cover"
+                    />
+                    <span>{option.text}</span>
+                  </span>
                   <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
                     {option.count}
                   </span>
                 </span>
               ),
-              triggerLabel: option.label.replace(/\s*\(\d+\)\s*$/, ""),
+              triggerLabel: option.text,
             }))}
             selectedValues={filterTrip}
             onChange={onTripChange}

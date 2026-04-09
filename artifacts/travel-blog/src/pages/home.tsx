@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout";
+import { CountryFlag } from "@/components/country-flag";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import {
   usePhotosQuery,
@@ -29,7 +30,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/lib/i18n";
-import { getCountryFlagEmoji } from "@/lib/travel-countries";
 
 const FALLBACK_PHOTOS = [
   {
@@ -265,7 +265,11 @@ export default function Home() {
                         )}
                         {countryCode && (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-lightest)] px-2.5 py-1 text-foreground">
-                            <span>{getCountryFlagEmoji(countryCode)}</span>
+                            <CountryFlag
+                              code={countryCode}
+                              countryName={countryName(countryCode)}
+                              className="h-3.5 w-5 rounded-[2px] object-cover"
+                            />
                             <span>{countryName(countryCode)}</span>
                           </span>
                         )}

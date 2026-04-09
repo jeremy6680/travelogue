@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40" role="img" aria-labelledby="title">
+  <title>Scotland flag</title>
+  <rect width="60" height="40" fill="#0065bd"/>
+  <polygon points="0,0 6,0 60,34 60,40 54,40 0,6" fill="#ffffff"/>
+  <polygon points="60,0 54,0 0,34 0,40 6,40 60,6" fill="#ffffff"/>
+</svg>

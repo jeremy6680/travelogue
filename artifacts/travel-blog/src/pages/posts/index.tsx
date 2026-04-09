@@ -14,6 +14,7 @@ import {
   Tag,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { CountryFlag } from "@/components/country-flag";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,6 @@ import { usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { useI18n } from "@/lib/i18n";
 import { getPostHref, isExternalPost } from "@/lib/post-links";
 import { blogPostTitleHoverClass } from "@/lib/post-title-hover";
-import { getCountryFlagEmoji } from "@/lib/travel-countries";
 import {
   getPostCountryCode,
   getPostTrip,
@@ -50,12 +50,12 @@ function buildCountryOptions(
   return Array.from(counts.entries())
     .map(([code, count]) => ({
       value: code,
-      label: `${getCountryFlagEmoji(code)} ${countryName(code)}`,
+      text: countryName(code),
       count,
     }))
     .sort((left, right) => {
       if (right.count !== left.count) return right.count - left.count;
-      return left.label.localeCompare(right.label, "fr");
+      return left.text.localeCompare(right.text, "fr");
     });
 }
 
@@ -243,13 +243,20 @@ export default function PostsPage() {
               value: option.value,
               label: (
                 <span className="flex items-center justify-between gap-3">
-                  <span>{option.label}</span>
+                  <span className="flex items-center gap-2">
+                    <CountryFlag
+                      code={option.value}
+                      countryName={option.text}
+                      className="h-3.5 w-5 rounded-[2px] object-cover"
+                    />
+                    <span>{option.text}</span>
+                  </span>
                   <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">
                     {option.count}
                   </span>
                 </span>
               ),
-              triggerLabel: option.label,
+              triggerLabel: option.text,
             }))}
             selectedValues={filterCountries}
             onChange={(values) => {
@@ -433,7 +440,11 @@ export default function PostsPage() {
                             onClick={() => setSingleCountryFilter(countryCode)}
                             className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-lightest)] px-2.5 py-1 text-foreground transition-colors hover:bg-[var(--color-primary-light)]"
                           >
-                            <span>{getCountryFlagEmoji(countryCode)}</span>
+                            <CountryFlag
+                              code={countryCode}
+                              countryName={countryName(countryCode)}
+                              className="h-3.5 w-5 rounded-[2px] object-cover"
+                            />
                             <span>{countryName(countryCode)}</span>
                           </button>
                         )}

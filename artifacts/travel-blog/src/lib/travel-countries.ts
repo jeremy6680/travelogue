@@ -12,6 +12,12 @@ const CUSTOM_FLAG_EMOJIS: Record<string, string> = {
   XW: "🏴",
 };
 
+const CUSTOM_FLAG_ASSETS: Record<string, string> = {
+  XE: "/flags/england.svg",
+  XS: "/flags/scotland.svg",
+  XW: "/flags/wales.svg",
+};
+
 const MAP_COUNTRY_CODE_ALIASES: Record<string, string> = {
   XE: "GB",
   XS: "GB",
@@ -38,6 +44,10 @@ export function getCountryFlagEmoji(code: string) {
   return String.fromCodePoint(
     ...normalizedCode.split("").map((char) => 127397 + char.charCodeAt(0)),
   );
+}
+
+export function getCountryFlagAsset(code: string) {
+  return CUSTOM_FLAG_ASSETS[code.toUpperCase()] ?? null;
 }
 
 export function getAtlasCountryCode(code: string) {
