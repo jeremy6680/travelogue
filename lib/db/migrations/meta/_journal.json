@@ -43,6 +43,27 @@
       "when": 1775053119169,
       "tag": "0005_trip_multiselect_filters",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775054119169,
+      "tag": "0006_external_posts",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1775055119169,
+      "tag": "0007_post_taxonomy_and_home_feature",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1775056119169,
+      "tag": "0008_photo_locations",
+      "breakpoints": true
     }
   ]
 }
