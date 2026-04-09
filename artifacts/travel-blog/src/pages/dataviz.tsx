@@ -7,6 +7,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   Rectangle,
@@ -17,7 +19,15 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
-import { BarChart3, CircleHelp, Globe, Grid3X3, TrendingUp, Users } from "lucide-react";
+import {
+  ArrowUpDown,
+  BarChart3,
+  CircleHelp,
+  Globe,
+  Grid3X3,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { Layout } from "@/components/layout";
 import {
   ChartContainer,
@@ -122,6 +132,24 @@ function getDecadeLabel(startYear: number, locale: string) {
   return locale === "fr" ? `${startYear}s` : `${startYear}s`;
 }
 
+function getVisitedCitiesList(visitedCities: string, locale: string) {
+  const uniqueCities = new Map<string, string>();
+
+  for (const rawCity of visitedCities.split(",")) {
+    const city = rawCity.trim();
+    if (!city) continue;
+    const cityKey = city.toLocaleLowerCase(locale);
+    if (!uniqueCities.has(cityKey)) {
+      uniqueCities.set(cityKey, city);
+    }
+  }
+
+  return Array.from(uniqueCities.entries()).map(([key, city]) => ({ key, city }));
+}
+
+type CountrySortKey = "nights" | "trips";
+type SortDirection = "asc" | "desc";
+
 export default function DataVizPage() {
   const { locale, numberLocale, t, formatDate, countryName } = useI18n();
   const { data: trips = [] } = useTripsQuery();
@@ -133,6 +161,10 @@ export default function DataVizPage() {
   const [filterCompanion, setFilterCompanion] = useState<string[]>([]);
   const [filterReason, setFilterReason] = useState<string[]>([]);
   const [filterTransport, setFilterTransport] = useState<string[]>([]);
+  const [countrySort, setCountrySort] = useState<{
+    key: CountrySortKey;
+    direction: SortDirection;
+  }>({ key: "nights", direction: "desc" });
 
   const zoneOptions = useMemo(() => {
     const counts = new Map<string, number>();
@@ -345,6 +377,12 @@ export default function DataVizPage() {
       number,
       { periodStart: number; label: string; counts: Map<string, number> }
     >();
+    const cityVisitsByPeriod = new Map<
+      number,
+      { periodStart: number; label: string; counts: Map<string, number> }
+    >();
+    const cityTotalVisits = new Map<string, number>();
+    const cityLabels = new Map<string, string>();
     const yearlyDistance = new Map<
       number,
       { year: number; distanceKm: number; trips: number; posts: number }
@@ -473,6 +511,7 @@ export default function DataVizPage() {
       }
 
       const travelModes = [...new Set(trip.transportationTo.filter(Boolean))];
+      const uniqueVisitedCities = getVisitedCitiesList(trip.visitedCities, locale);
       if (countryCode !== "FR") {
         const periodCountryEntry = topCountriesByPeriod.get(periodStart) ?? {
           periodStart,
@@ -484,6 +523,22 @@ export default function DataVizPage() {
           (periodCountryEntry.counts.get(countryCode) ?? 0) + 1,
         );
         topCountriesByPeriod.set(periodStart, periodCountryEntry);
+      }
+
+      if (uniqueVisitedCities.length > 0) {
+        const periodCityEntry = cityVisitsByPeriod.get(periodStart) ?? {
+          periodStart,
+          label: getDecadeLabel(periodStart, locale),
+          counts: new Map<string, number>(),
+        };
+
+        for (const { key, city } of uniqueVisitedCities) {
+          cityLabels.set(key, cityLabels.get(key) ?? city);
+          cityTotalVisits.set(key, (cityTotalVisits.get(key) ?? 0) + 1);
+          periodCityEntry.counts.set(key, (periodCityEntry.counts.get(key) ?? 0) + 1);
+        }
+
+        cityVisitsByPeriod.set(periodStart, periodCityEntry);
       }
 
       let tripCarbonKg = 0;
@@ -617,10 +672,8 @@ export default function DataVizPage() {
         return row;
       });
     const nightsByCountryRows = Array.from(nightsByCountry.values())
-      .sort((left, right) => right.nights - left.nights)
-      .map((row, index) => ({
+      .map((row) => ({
         ...row,
-        rank: index + 1,
         country: countryName(row.countryCode),
       }));
     const topCountriesByPeriodRows = Array.from(topCountriesByPeriod.values())
@@ -639,6 +692,37 @@ export default function DataVizPage() {
           })
           .slice(0, 5),
       }));
+    const cityCumulativeSeries = Array.from(cityTotalVisits.entries())
+      .map(([cityKey, visits]) => ({
+        cityKey,
+        city: cityLabels.get(cityKey) ?? cityKey,
+        visits,
+      }))
+      .sort((left, right) => {
+        if (right.visits !== left.visits) return right.visits - left.visits;
+        return left.city.localeCompare(right.city, locale);
+      })
+      .slice(0, 10)
+      .map((entry, index) => ({
+        ...entry,
+        dataKey: `city_${index + 1}`,
+      }));
+    const cityCumulativeRows = Array.from(cityVisitsByPeriod.values())
+      .sort((left, right) => left.periodStart - right.periodStart)
+      .reduce<Array<Record<string, number | string>>>((rows, period) => {
+        const previousRow = rows.at(-1);
+        const row: Record<string, number | string> = {
+          period: period.label,
+        };
+
+        for (const series of cityCumulativeSeries) {
+          const previousValue = Number(previousRow?.[series.dataKey] ?? 0);
+          row[series.dataKey] = previousValue + (period.counts.get(series.cityKey) ?? 0);
+        }
+
+        rows.push(row);
+        return rows;
+      }, []);
     const continentRows = Array.from(continentStats.values())
       .sort((left, right) => right.trips - left.trips)
       .map((row) => ({
@@ -724,6 +808,8 @@ export default function DataVizPage() {
       accommodationRows,
       nightsByCountryRows,
       topCountriesByPeriodRows,
+      cityCumulativeSeries,
+      cityCumulativeRows,
       continentRows,
       continentNightRows,
       reasonRows,
@@ -804,6 +890,16 @@ export default function DataVizPage() {
     ]),
   );
 
+  const cityCumulativeConfig = Object.fromEntries(
+    analytics.cityCumulativeSeries.map((series, index) => [
+      series.dataKey,
+      {
+        label: series.city,
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      },
+    ]),
+  );
+
   const formatDistanceWithDots = (value: number) =>
     `${Math.round(value)
       .toString()
@@ -822,6 +918,24 @@ export default function DataVizPage() {
   const formatRoundedKm = (value: number) =>
     formatDistanceWithDots(value);
 
+  const sortedNightsByCountryRows = useMemo(() => {
+    const direction = countrySort.direction === "asc" ? 1 : -1;
+
+    return [...analytics.nightsByCountryRows]
+      .sort((left, right) => {
+        const valueDiff =
+          countrySort.key === "nights" ? left.nights - right.nights : left.trips - right.trips;
+        if (valueDiff !== 0) return valueDiff * direction;
+        return left.country.localeCompare(right.country, locale);
+      })
+      .map((row, index) => ({
+        ...row,
+        rank: index + 1,
+      }));
+  }, [analytics.nightsByCountryRows, countrySort, locale]);
+
+  const nightsByZoneChartHeight = Math.max(820, analytics.nightsByZoneRows.length * 40);
+
   const formatPercent = (value: number) =>
     `${Number(value).toLocaleString(numberLocale, {
       minimumFractionDigits: 0,
@@ -837,6 +951,34 @@ export default function DataVizPage() {
     }
 
     return `${Math.round(valueKg).toLocaleString(numberLocale)} kgCO2e`;
+  };
+
+  const toggleCountrySort = (key: CountrySortKey) => {
+    setCountrySort((current) => {
+      if (current.key === key) {
+        return {
+          key,
+          direction: current.direction === "desc" ? "asc" : "desc",
+        };
+      }
+
+      return {
+        key,
+        direction: "desc",
+      };
+    });
+  };
+
+  const getSortLabel = (key: CountrySortKey) => {
+    if (countrySort.key !== key) {
+      return locale === "fr" ? "Trier" : "Sort";
+    }
+
+    if (countrySort.direction === "desc") {
+      return locale === "fr" ? "Tri décroissant" : "Descending sort";
+    }
+
+    return locale === "fr" ? "Tri croissant" : "Ascending sort";
   };
 
   const getStackedNightRadius = (
@@ -1628,7 +1770,8 @@ export default function DataVizPage() {
               {analytics.nightsByZoneRows.length > 0 ? (
                 <ChartContainer
                   config={nightsByZoneConfig}
-                  className="h-[820px] w-full aspect-auto"
+                  className="w-full aspect-auto"
+                  style={{ height: nightsByZoneChartHeight }}
                 >
                   <BarChart
                     data={analytics.nightsByZoneRows}
@@ -1639,6 +1782,7 @@ export default function DataVizPage() {
                     <YAxis
                       dataKey="year"
                       type="category"
+                      interval={0}
                       tickLine={false}
                       axisLine={false}
                       width={48}
@@ -1919,6 +2063,69 @@ export default function DataVizPage() {
         <section className="grid gap-6">
           <Card className="border-border/60">
             <CardHeader>
+              <CardTitle>
+                {locale === "fr"
+                  ? "Cumul des 10 villes les plus visitées"
+                  : "Cumulative top 10 most visited cities"}
+              </CardTitle>
+              <CardDescription>
+                {locale === "fr"
+                  ? "Évolution cumulative par décennie des 10 villes les plus visitées sur la sélection en cours."
+                  : "Cumulative decade-by-decade growth for the 10 most visited cities in the current selection."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.cityCumulativeRows.length > 0 ? (
+                <ChartContainer
+                  config={cityCumulativeConfig}
+                  className="h-[380px] w-full aspect-auto"
+                >
+                  <LineChart
+                    data={analytics.cityCumulativeRows}
+                    margin={{ top: 12, right: 20, bottom: 8, left: 8 }}
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="period" tickLine={false} axisLine={false} />
+                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value, name) => (
+                            <>
+                              <span className="text-muted-foreground">
+                                {cityCumulativeConfig[String(name)]?.label} :
+                              </span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {Number(value).toLocaleString(numberLocale)}{" "}
+                                {locale === "fr" ? "visites" : "visits"}
+                              </span>
+                            </>
+                          )}
+                        />
+                      }
+                    />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    {analytics.cityCumulativeSeries.map((series, index) => (
+                      <Line
+                        key={series.dataKey}
+                        type="monotone"
+                        dataKey={series.dataKey}
+                        stroke={CHART_COLORS[index % CHART_COLORS.length]}
+                        strokeWidth={2.5}
+                        dot={{ r: 3 }}
+                        activeDot={{ r: 5 }}
+                      />
+                    ))}
+                  </LineChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardHeader>
               <CardTitle>{t("datavizScatter")}</CardTitle>
               <CardDescription>{t("datavizScatterDesc")}</CardDescription>
             </CardHeader>
@@ -2004,22 +2211,40 @@ export default function DataVizPage() {
             </CardHeader>
             <CardContent>
               {analytics.nightsByCountryRows.length > 0 ? (
-                <div className="pr-4">
+                <ScrollArea className="h-[520px] pr-4">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-12">#</TableHead>
                         <TableHead>{locale === "fr" ? "Pays" : "Country"}</TableHead>
                         <TableHead className="text-right">
-                          {locale === "fr" ? "Nuits" : "Nights"}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto h-8 px-2 text-right"
+                            onClick={() => toggleCountrySort("nights")}
+                            aria-label={`${locale === "fr" ? "Trier par nuits" : "Sort by nights"} · ${getSortLabel("nights")}`}
+                          >
+                            {locale === "fr" ? "Nuits" : "Nights"}
+                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                          </Button>
                         </TableHead>
                         <TableHead className="text-right">
-                          {locale === "fr" ? "Voyages" : "Trips"}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto h-8 px-2 text-right"
+                            onClick={() => toggleCountrySort("trips")}
+                            aria-label={`${locale === "fr" ? "Trier par voyages" : "Sort by trips"} · ${getSortLabel("trips")}`}
+                          >
+                            {locale === "fr" ? "Voyages" : "Trips"}
+                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                          </Button>
                         </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {analytics.nightsByCountryRows.map((row) => (
+                      {sortedNightsByCountryRows.map((row) => (
                         <TableRow key={row.countryCode}>
                           <TableCell className="text-muted-foreground">{row.rank}</TableCell>
                           <TableCell className="font-medium text-foreground">
@@ -2035,7 +2260,7 @@ export default function DataVizPage() {
                       ))}
                     </TableBody>
                   </Table>
-                </div>
+                </ScrollArea>
               ) : (
                 <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
               )}
