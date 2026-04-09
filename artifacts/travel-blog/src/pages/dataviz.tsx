@@ -45,7 +45,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -934,8 +933,6 @@ export default function DataVizPage() {
       }));
   }, [analytics.nightsByCountryRows, countrySort, locale]);
 
-  const nightsByZoneChartHeight = Math.max(820, analytics.nightsByZoneRows.length * 40);
-
   const formatPercent = (value: number) =>
     `${Number(value).toLocaleString(numberLocale, {
       minimumFractionDigits: 0,
@@ -1752,90 +1749,68 @@ export default function DataVizPage() {
           </Card>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <Card className="border-border/60">
             <CardHeader>
               <CardTitle>
-                {locale === "fr"
-                  ? "Nuits en France, en Europe, dans le monde"
-                  : "Nights in France, Europe, and the world"}
+                {locale === "fr" ? "Nuits par pays" : "Nights by country"}
               </CardTitle>
               <CardDescription>
                 {locale === "fr"
-                  ? "Comparaison année après année des nuits passées en France, en Europe hors France et dans le reste du monde."
-                  : "Year-by-year comparison of nights spent in France, in Europe outside France, and in the rest of the world."}
+                  ? "Classement complet des nuits passées dans chaque pays, sur la sélection en cours."
+                  : "Full ranking of nights spent in each country for the current selection."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {analytics.nightsByZoneRows.length > 0 ? (
-                <ChartContainer
-                  config={nightsByZoneConfig}
-                  className="w-full aspect-auto"
-                  style={{ height: nightsByZoneChartHeight }}
-                >
-                  <BarChart
-                    data={analytics.nightsByZoneRows}
-                    layout="vertical"
-                    margin={{ left: 12, right: 12 }}
-                  >
-                    <CartesianGrid horizontal={false} />
-                    <YAxis
-                      dataKey="year"
-                      type="category"
-                      interval={0}
-                      tickLine={false}
-                      axisLine={false}
-                      width={48}
-                    />
-                    <XAxis type="number" tickLine={false} axisLine={false} />
-                    <ChartTooltip
-                      content={
-                        <ChartTooltipContent
-                          formatter={(value, name) => (
-                            <>
-                              <span className="text-muted-foreground">
-                                {String(name) === "franceNights"
-                                  ? locale === "fr"
-                                    ? "France :"
-                                    : "France:"
-                                  : String(name) === "europeNights"
-                                    ? locale === "fr"
-                                      ? "Europe :"
-                                      : "Europe:"
-                                    : locale === "fr"
-                                      ? "Monde :"
-                                      : "World:"}
-                              </span>
-                              <span className="font-mono font-medium tabular-nums text-foreground">
-                                {Math.round(Number(value)).toLocaleString(numberLocale)}{" "}
-                                {locale === "fr" ? "nuits" : "nights"}
-                              </span>
-                            </>
-                          )}
-                        />
-                      }
-                    />
-                    <ChartLegend content={<ChartLegendContent />} />
-                    <Bar
-                      dataKey="franceNights"
-                      stackId="nights"
-                      fill="#2563eb"
-                      shape={renderNightSegment("franceNights")}
-                    />
-                    <Bar
-                      dataKey="europeNights"
-                      stackId="nights"
-                      fill="#f97316"
-                      shape={renderNightSegment("europeNights")}
-                    />
-                    <Bar
-                      dataKey="worldNights"
-                      stackId="nights"
-                      fill="#0f766e"
-                      shape={renderNightSegment("worldNights")}
-                    />
-                  </BarChart>
-                </ChartContainer>
+              {analytics.nightsByCountryRows.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">#</TableHead>
+                      <TableHead>{locale === "fr" ? "Pays" : "Country"}</TableHead>
+                      <TableHead className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ml-auto h-8 px-2 text-right"
+                          onClick={() => toggleCountrySort("nights")}
+                          aria-label={`${locale === "fr" ? "Trier par nuits" : "Sort by nights"} · ${getSortLabel("nights")}`}
+                        >
+                          {locale === "fr" ? "Nuits" : "Nights"}
+                          <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                        </Button>
+                      </TableHead>
+                      <TableHead className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ml-auto h-8 px-2 text-right"
+                          onClick={() => toggleCountrySort("trips")}
+                          aria-label={`${locale === "fr" ? "Trier par voyages" : "Sort by trips"} · ${getSortLabel("trips")}`}
+                        >
+                          {locale === "fr" ? "Voyages" : "Trips"}
+                          <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                        </Button>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedNightsByCountryRows.map((row) => (
+                      <TableRow key={row.countryCode}>
+                        <TableCell className="text-muted-foreground">{row.rank}</TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          {row.country}
+                        </TableCell>
+                        <TableCell className="text-right font-mono tabular-nums">
+                          {row.nights.toLocaleString(numberLocale)}
+                        </TableCell>
+                        <TableCell className="text-right font-mono tabular-nums">
+                          {row.trips.toLocaleString(numberLocale)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               ) : (
                 <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
               )}
@@ -2197,76 +2172,7 @@ export default function DataVizPage() {
           </Card>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <Card className="border-border/60">
-            <CardHeader>
-              <CardTitle>
-                {locale === "fr" ? "Nuits par pays" : "Nights by country"}
-              </CardTitle>
-              <CardDescription>
-                {locale === "fr"
-                  ? "Classement complet des nuits passées dans chaque pays, sur la sélection en cours."
-                  : "Full ranking of nights spent in each country for the current selection."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {analytics.nightsByCountryRows.length > 0 ? (
-                <ScrollArea className="h-[520px] pr-4">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">#</TableHead>
-                        <TableHead>{locale === "fr" ? "Pays" : "Country"}</TableHead>
-                        <TableHead className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="ml-auto h-8 px-2 text-right"
-                            onClick={() => toggleCountrySort("nights")}
-                            aria-label={`${locale === "fr" ? "Trier par nuits" : "Sort by nights"} · ${getSortLabel("nights")}`}
-                          >
-                            {locale === "fr" ? "Nuits" : "Nights"}
-                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-                          </Button>
-                        </TableHead>
-                        <TableHead className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="ml-auto h-8 px-2 text-right"
-                            onClick={() => toggleCountrySort("trips")}
-                            aria-label={`${locale === "fr" ? "Trier par voyages" : "Sort by trips"} · ${getSortLabel("trips")}`}
-                          >
-                            {locale === "fr" ? "Voyages" : "Trips"}
-                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-                          </Button>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sortedNightsByCountryRows.map((row) => (
-                        <TableRow key={row.countryCode}>
-                          <TableCell className="text-muted-foreground">{row.rank}</TableCell>
-                          <TableCell className="font-medium text-foreground">
-                            {row.country}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums">
-                            {row.nights.toLocaleString(numberLocale)}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums">
-                            {row.trips.toLocaleString(numberLocale)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </ScrollArea>
-              ) : (
-                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
-              )}
-            </CardContent>
-          </Card>
-
+        <section className="grid gap-6">
           <Card className="border-border/60">
             <CardHeader>
               <CardTitle>
