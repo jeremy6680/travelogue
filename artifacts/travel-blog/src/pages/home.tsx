@@ -1,6 +1,11 @@
 import { Layout } from "@/components/layout";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
-import { usePhotosQuery, usePostsQuery, useStatsQuery, useTripsQuery } from "@/lib/directus";
+import {
+  usePhotosQuery,
+  usePostsQuery,
+  useStatsQuery,
+  useTripsQuery,
+} from "@/lib/directus";
 import { getPostHref, isExternalPost } from "@/lib/post-links";
 import { getPostCountryCode } from "@/lib/post-taxonomy";
 import { blogPostTitleHoverClass } from "@/lib/post-title-hover";
@@ -221,7 +226,9 @@ export default function Home() {
             {recentPosts.map((post, i) => {
               const countryCode = getPostCountryCode(post, trips);
               const category = post.category?.trim() || null;
-              const tags = post.tags.filter((tag): tag is string => Boolean(tag?.trim()));
+              const tags = post.tags.filter((tag): tag is string =>
+                Boolean(tag?.trim()),
+              );
 
               return (
                 <motion.article
@@ -433,22 +440,28 @@ export default function Home() {
             </div>
             <div className="space-y-4 text-muted-foreground font-serif leading-relaxed text-lg">
               <p>
-                Je suis un voyageur, un auteur et un éternel adepte du sac trop
-                plein, convaincu que les meilleures conversations naissent dans
-                les trains de nuit et les restaurants que personne ne connaît
-                encore.
+                Le premier vol, j'avais un an. Je ne m'en souviens pas, mais
+                d'une certaine façon, ça n'a jamais vraiment arrêté.
               </p>
               <p>
-                Ce blog est ma manière de ralentir et de vraiment me souvenir
-                des lieux traversés : la lumière, les odeurs, les gens, les
-                maladresses de langage. C'est avant tout une mémoire
-                personnelle.
+                Travelogue est l'endroit où j'archive tout ça — photos, textes,
+                statistiques, souvenirs. Moins un blog de voyage qu'une mémoire
+                personnelle qu'on peut feuilleter.
               </p>
-              <p>Basé, pour l'instant, là où part le prochain vol.</p>
+              <p>
+                J'aime autant le chaos lumineux et sonore d'une grande ville que
+                l'immensité d'un paysage qui ne ressemble à rien d'autre. Je
+                voyage seul, avec Hine, avec des amis, en famille. Chaque
+                configuration change le regard.
+              </p>
+              <p>
+                Basé à Nice. Certainement en train de planifier la prochaine
+                destination.
+              </p>
             </div>
             <div className="flex items-center gap-4 pt-2">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/jey06/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
@@ -458,7 +471,7 @@ export default function Home() {
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href="https://twitter.com"
+                href="https://x.com/tweetsbyjey"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
