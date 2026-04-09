@@ -17,7 +17,7 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
-import { BarChart3, Globe, Grid3X3, TrendingUp, Users } from "lucide-react";
+import { BarChart3, CircleHelp, Globe, Grid3X3, TrendingUp, Users } from "lucide-react";
 import { Layout } from "@/components/layout";
 import {
   ChartContainer,
@@ -44,6 +44,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -588,10 +594,10 @@ export default function DataVizPage() {
     const companionRows = Array.from(companionCounts.entries())
       .map(([name, tripsCount]) => ({ name, tripsCount }))
       .sort((left, right) => right.tripsCount - left.tripsCount)
-      .slice(0, 8);
-    const companionDistanceRows = Array.from(companionDistance.values()).sort(
-      (left, right) => right.distanceKm - left.distanceKm,
-    );
+      .slice(0, 10);
+    const companionDistanceRows = Array.from(companionDistance.values())
+      .sort((left, right) => right.distanceKm - left.distanceKm)
+      .slice(0, 10);
     const accommodationKeys = Array.from(
       new Set(
         Array.from(accommodationByPeriod.values()).flatMap((entry) =>
@@ -1116,10 +1122,6 @@ export default function DataVizPage() {
             className="w-36"
           />
 
-          <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
-            {locale === "fr" ? "Raisons : filtre en OU" : "Reasons: OR filter"}
-          </span>
-
           <MultiSelectFilter
             label={locale === "fr" ? "Transports" : "Transport"}
             placeholder={locale === "fr" ? "Transports" : "Transport"}
@@ -1162,9 +1164,49 @@ export default function DataVizPage() {
             </Button>
           )}
 
-          <span className="ml-auto inline-flex rounded-full bg-primary/10 px-3 py-1 text-sm text-foreground font-mono">
-            {filteredTrips.length.toLocaleString(numberLocale)} {t("statTrips").toLowerCase()}
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                    aria-label={
+                      locale === "fr"
+                        ? "Afficher la logique des filtres"
+                        : "Show filter logic"
+                    }
+                  >
+                    <CircleHelp className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  align="end"
+                  className="max-w-[320px] space-y-2 px-4 py-3 text-left leading-relaxed"
+                >
+                  <p className="font-semibold">
+                    {locale === "fr" ? "Logique des filtres" : "Filter logic"}
+                  </p>
+                  <p>
+                    {locale === "fr"
+                      ? "Filtres en OU : Zones, Voyages, Années, Raisons."
+                      : "OR filters: Regions, Trips, Years, Reasons."}
+                  </p>
+                  <p>
+                    {locale === "fr"
+                      ? "Filtres en ET : Compagnons de route, Transports."
+                      : "AND filters: Companions, Transport."}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-sm text-foreground font-mono">
+              {filteredTrips.length.toLocaleString(numberLocale)} {t("statTrips").toLowerCase()}
+            </span>
+          </div>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">
@@ -1615,7 +1657,7 @@ export default function DataVizPage() {
               {analytics.nightsByZoneRows.length > 0 ? (
                 <ChartContainer
                   config={nightsByZoneConfig}
-                  className="h-[360px] w-full aspect-auto"
+                  className="h-[460px] w-full aspect-auto"
                 >
                   <BarChart
                     data={analytics.nightsByZoneRows}
@@ -1991,7 +2033,7 @@ export default function DataVizPage() {
             </CardHeader>
             <CardContent>
               {analytics.nightsByCountryRows.length > 0 ? (
-                <ScrollArea className="h-[420px] pr-4">
+                <div className="pr-4">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -2022,7 +2064,7 @@ export default function DataVizPage() {
                       ))}
                     </TableBody>
                   </Table>
-                </ScrollArea>
+                </div>
               ) : (
                 <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
               )}
@@ -2044,11 +2086,11 @@ export default function DataVizPage() {
             </CardHeader>
             <CardContent>
               {analytics.transportByCountryRows.length > 0 ? (
-                <ScrollArea className="h-[420px] pr-4">
+                <div className="pr-4">
                   <ChartContainer
                     config={transportByCountryConfig}
                     style={{
-                      height: `${Math.max(340, analytics.transportByCountryRows.length * 42)}px`,
+                      height: `${Math.max(420, analytics.transportByCountryRows.length * 44)}px`,
                     }}
                     className="w-full aspect-auto"
                   >
@@ -2093,7 +2135,7 @@ export default function DataVizPage() {
                       ))}
                     </BarChart>
                   </ChartContainer>
-                </ScrollArea>
+                </div>
               ) : (
                 <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
               )}
