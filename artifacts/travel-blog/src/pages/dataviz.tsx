@@ -477,16 +477,18 @@ export default function DataVizPage() {
       }
 
       const travelModes = [...new Set(trip.transportationTo.filter(Boolean))];
-      const periodCountryEntry = topCountriesByPeriod.get(periodStart) ?? {
-        periodStart,
-        label: getDecadeLabel(periodStart, locale),
-        counts: new Map<string, number>(),
-      };
-      periodCountryEntry.counts.set(
-        countryCode,
-        (periodCountryEntry.counts.get(countryCode) ?? 0) + 1,
-      );
-      topCountriesByPeriod.set(periodStart, periodCountryEntry);
+      if (countryCode !== "FR") {
+        const periodCountryEntry = topCountriesByPeriod.get(periodStart) ?? {
+          periodStart,
+          label: getDecadeLabel(periodStart, locale),
+          counts: new Map<string, number>(),
+        };
+        periodCountryEntry.counts.set(
+          countryCode,
+          (periodCountryEntry.counts.get(countryCode) ?? 0) + 1,
+        );
+        topCountriesByPeriod.set(periodStart, periodCountryEntry);
+      }
 
       let tripCarbonKg = 0;
       if (distanceKm != null && travelModes.length > 0) {
@@ -1630,7 +1632,7 @@ export default function DataVizPage() {
               {analytics.nightsByZoneRows.length > 0 ? (
                 <ChartContainer
                   config={nightsByZoneConfig}
-                  className="h-[620px] w-full aspect-auto"
+                  className="h-[820px] w-full aspect-auto"
                 >
                   <BarChart
                     data={analytics.nightsByZoneRows}
@@ -2048,13 +2050,13 @@ export default function DataVizPage() {
             <CardHeader>
               <CardTitle>
                 {locale === "fr"
-                  ? "Pays les plus visités par décennie"
+                  ? "Pays les plus visités par décennie hors France"
                   : "Most visited countries by decade"}
               </CardTitle>
               <CardDescription>
                 {locale === "fr"
-                  ? "Top 5 des pays les plus visités pour chaque décennie de la sélection en cours."
-                  : "Top 5 most visited countries for each decade in the current selection."}
+                  ? "Top 5 des pays les plus visités pour chaque décennie de la sélection en cours, hors France."
+                  : "Top 5 most visited countries for each decade in the current selection, excluding France."}
               </CardDescription>
             </CardHeader>
             <CardContent>
