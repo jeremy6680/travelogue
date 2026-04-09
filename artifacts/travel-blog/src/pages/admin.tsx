@@ -836,6 +836,8 @@ export default function AdminPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const linkedTrip = findTripById(formData.get("tripId"));
+    const latitudeInput = formData.get("latitude") as string;
+    const longitudeInput = formData.get("longitude") as string;
     const data = {
       mediaAssetId: formData.get("mediaAssetId")
         ? Number(formData.get("mediaAssetId"))
@@ -848,6 +850,9 @@ export default function AdminPage() {
         (formData.get("countryCode") as string) ||
         linkedTrip?.countryCode ||
         null,
+      location: (formData.get("location") as string) || null,
+      latitude: latitudeInput ? Number(latitudeInput) : null,
+      longitude: longitudeInput ? Number(longitudeInput) : null,
       displayOrder: formData.get("displayOrder")
         ? Number(formData.get("displayOrder"))
         : 0,
@@ -2121,6 +2126,30 @@ export default function AdminPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <Input
+                name="location"
+                placeholder="Ville / géoloc (optionnel)"
+                defaultValue={editingPhoto?.location || ""}
+              />
+              <p className="text-xs text-muted-foreground">
+                Le code pays aide le géocodage; la ville ou le lieu permet de placer le pin plus précisément.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  name="latitude"
+                  type="number"
+                  step="any"
+                  placeholder="Latitude"
+                  defaultValue={editingPhoto?.latitude ?? ""}
+                />
+                <Input
+                  name="longitude"
+                  type="number"
+                  step="any"
+                  placeholder="Longitude"
+                  defaultValue={editingPhoto?.longitude ?? ""}
+                />
               </div>
               <Input
                 name="displayOrder"

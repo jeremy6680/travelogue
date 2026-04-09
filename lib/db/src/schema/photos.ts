@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, varchar, real } from "drizzle-orm/pg-core";
 import { mediaAssetsTable } from "./media-assets";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -15,6 +15,9 @@ export const photosTable = pgTable("photos", {
   link: varchar("link", { length: 2048 }),
   tripId: integer("trip_id").references(() => tripsTable.id, { onDelete: "set null", onUpdate: "cascade" }),
   countryCode: varchar("country_code", { length: 2 }).references(() => countriesTable.code, { onDelete: "set null", onUpdate: "cascade" }),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
+  location: varchar("location", { length: 255 }),
   displayOrder: integer("display_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

@@ -1613,7 +1613,7 @@ fields:
       translations: null
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: country_code
       table: photos
@@ -1632,6 +1632,128 @@ fields:
       foreign_key_table: countries
       foreign_key_column: code
   - collection: photos
+    field: latitude
+    type: float
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: latitude
+      group: null
+      hidden: false
+      interface: input
+      note: Coordonnée facultative. Calculée depuis le lieu si laissée vide.
+      options:
+        step: any
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: latitude
+      table: photos
+      data_type: real
+      default_value: null
+      max_length: null
+      numeric_precision: 24
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: photos
+    field: longitude
+    type: float
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: longitude
+      group: null
+      hidden: false
+      interface: input
+      note: Coordonnée facultative. Calculée depuis le lieu si laissée vide.
+      options:
+        step: any
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: longitude
+      table: photos
+      data_type: real
+      default_value: null
+      max_length: null
+      numeric_precision: 24
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: photos
+    field: location
+    type: string
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: location
+      group: null
+      hidden: false
+      interface: travelogue-location-geocode
+      note: Géocode le lieu en tenant compte du code pays et garde latitude/longitude éditables.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: location
+      table: photos
+      data_type: character varying
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: photos
     field: display_order
     type: integer
     meta:
@@ -1648,7 +1770,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 5
+      sort: 7
       special: null
       translations: null
       validation: null
@@ -1688,7 +1810,7 @@ fields:
       readonly: true
       required: false
       searchable: true
-      sort: 6
+      sort: 8
       special: null
       translations: null
       validation: null
@@ -1728,7 +1850,7 @@ fields:
       readonly: true
       required: false
       searchable: true
-      sort: 7
+      sort: 9
       special: null
       translations: null
       validation: null

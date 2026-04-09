@@ -86,6 +86,11 @@ export default {
       return globalMatches;
     };
 
+    const getSiblingValue = (fieldName) => {
+      const target = (findSiblingInputs(fieldName) ?? [])[0];
+      return String(target?.value ?? "").trim();
+    };
+
     const pushValueIntoSiblingInput = (fieldName, value) => {
       const targets = findSiblingInputs(fieldName) ?? [];
 
@@ -121,8 +126,9 @@ export default {
       statusTone.value = "neutral";
 
       try {
+        const countryCode = getSiblingValue("country_code");
         const response = await api.get("/location-geocode", {
-          params: { q: location },
+          params: { q: location, countryCode },
         });
 
         const coordinates = response?.data?.data ?? null;

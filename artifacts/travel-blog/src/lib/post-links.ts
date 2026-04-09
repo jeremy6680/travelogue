@@ -2,7 +2,7 @@ import type { MapPin, Post } from "@/lib/travel-types";
 
 type PostLike =
   | Pick<Post, "slug" | "externalUrl">
-  | Pick<MapPin, "slug" | "externalUrl">;
+  | Pick<MapPin, "href">;
 
 function normalizeExternalUrl(value: string | null | undefined) {
   const trimmed = value?.trim();
@@ -20,9 +20,18 @@ function normalizeExternalUrl(value: string | null | undefined) {
 }
 
 export function getPostHref(post: PostLike) {
+  if ("href" in post) {
+    return post.href ?? "#";
+  }
+
   return normalizeExternalUrl(post.externalUrl) ?? `/posts/${post.slug}`;
 }
 
 export function isExternalPost(post: PostLike) {
-  return Boolean(normalizeExternalUrl(post.externalUrl));
+  const href =
+    "href" in post
+      ? post.href
+      : normalizeExternalUrl(post.externalUrl) ?? `/posts/${post.slug}`;
+
+  return Boolean(href && /^[a-z]+:\/\//i.test(href));
 }

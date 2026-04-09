@@ -135,6 +135,9 @@ type DirectusPhoto = {
   link: string | null;
   trip_id: number | null;
   country_code: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  location: string | null;
   display_order: number;
   created_at: string;
   updated_at: string;
@@ -224,6 +227,9 @@ const PHOTO_FIELDS = [
   "link",
   "trip_id",
   "country_code",
+  "latitude",
+  "longitude",
+  "location",
   "display_order",
   "created_at",
   "updated_at",
@@ -412,6 +418,9 @@ function mapPhoto(photo: DirectusPhoto): Photo {
     link: photo.link,
     tripId: photo.trip_id,
     countryCode: photo.country_code,
+    latitude: photo.latitude,
+    longitude: photo.longitude,
+    location: photo.location,
     displayOrder: photo.display_order,
     createdAt: photo.created_at,
     updatedAt: photo.updated_at,
@@ -420,17 +429,33 @@ function mapPhoto(photo: DirectusPhoto): Photo {
 
 function mapPin(post: Post): MapPin {
   return {
-    id: post.id,
+    id: `post-${post.id}`,
+    kind: "post",
     title: post.title,
-    slug: post.slug,
     excerpt: post.excerpt,
-    externalUrl: post.externalUrl,
+    href: post.externalUrl ?? `/posts/${post.slug}`,
     coverImageUrl: post.coverImageUrl,
     coverImage: post.coverImage,
     latitude: post.latitude ?? 0,
     longitude: post.longitude ?? 0,
     location: post.location,
     publishedAt: post.publishedAt,
+  };
+}
+
+function mapPhotoPin(photo: Photo): MapPin {
+  return {
+    id: `photo-${photo.id}`,
+    kind: "photo",
+    title: photo.caption?.trim() || "Photo",
+    excerpt: photo.caption?.trim() || "",
+    href: photo.link,
+    coverImageUrl: photo.url,
+    coverImage: photo.mediaAsset,
+    latitude: photo.latitude ?? 0,
+    longitude: photo.longitude ?? 0,
+    location: photo.location,
+    publishedAt: null,
   };
 }
 
@@ -525,6 +550,9 @@ function mapCreatePhotoInput(data: CreatePhotoBody | UpdatePhotoBody) {
     link: data.link,
     trip_id: data.tripId,
     country_code: data.countryCode,
+    latitude: data.latitude,
+    longitude: data.longitude,
+    location: data.location,
     display_order: data.displayOrder,
   };
 }
@@ -735,40 +763,78 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
 }
 
 export async function fetchMapPins(): Promise<MapPin[]> {
-  const posts = await requestWithFallback(
-    () =>
-      directus.request(
-        readItems("posts", {
-          filter: {
-            _and: [{ latitude: { _nnull: true } }, { longitude: { _nnull: true } }],
-          },
-          fields: [...POST_FIELDS],
-          limit: -1,
-        }),
-      ),
-    () =>
-      directus.request(
-        readItems("posts", {
-          filter: {
-            _and: [{ latitude: { _nnull: true } }, { longitude: { _nnull: true } }],
-          },
-          fields: [
-            "id",
-            "title",
-            "slug",
-            "excerpt",
-            "cover_image_url",
-            "latitude",
-            "longitude",
-            "location",
-            "published_at",
-          ],
-          limit: -1,
-        }),
-      ),
-  );
+  const [posts, photos] = await Promise.all([
+    requestWithFallback(
+      () =>
+        directus.request(
+          readItems("posts", {
+            filter: {
+              _and: [{ latitude: { _nnull: true } }, { longitude: { _nnull: true } }],
+            },
+            fields: [...POST_FIELDS],
+            limit: -1,
+          }),
+        ),
+      () =>
+        directus.request(
+          readItems("posts", {
+            filter: {
+              _and: [{ latitude: { _nnull: true } }, { longitude: { _nnull: true } }],
+            },
+            fields: [
+              "id",
+              "title",
+              "slug",
+              "excerpt",
+              "cover_image_url",
+              "latitude",
+              "longitude",
+              "location",
+              "published_at",
+            ],
+            limit: -1,
+          }),
+        ),
+    ),
+    requestWithFallback(
+      () =>
+        directus.request(
+          readItems("photos", {
+            filter: {
+              _and: [{ latitude: { _nnull: true } }, { longitude: { _nnull: true } }],
+            },
+            fields: [...PHOTO_FIELDS],
+            limit: -1,
+          }),
+        ),
+      () =>
+        directus.request(
+          readItems("photos", {
+            filter: {
+              _and: [{ latitude: { _nnull: true } }, { longitude: { _nnull: true } }],
+            },
+            fields: [
+              "id",
+              "url",
+              "caption",
+              "link",
+              "media_asset_id",
+              "trip_id",
+              "country_code",
+              "latitude",
+              "longitude",
+              "location",
+              "display_order",
+              "created_at",
+              "updated_at",
+            ],
+            limit: -1,
+          }),
+        ),
+    ),
+  ]);
 
-  return posts.map(mapPost).map(mapPin);
+  return [...posts.map(mapPost).map(mapPin), ...photos.map(mapPhoto).map(mapPhotoPin)];
 }
 
 export async function fetchStats(): Promise<TravelStats> {

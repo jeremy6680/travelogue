@@ -210,6 +210,9 @@ export interface Photo {
   link: string | null;
   tripId: number | null;
   countryCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  location: string | null;
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -222,6 +225,9 @@ export interface CreatePhotoBody {
   link?: string | null;
   tripId?: number | null;
   countryCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  location?: string | null;
   displayOrder?: number;
 }
 
@@ -232,6 +238,9 @@ export interface UpdatePhotoBody {
   link?: string | null;
   tripId?: number | null;
   countryCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  location?: string | null;
   displayOrder?: number;
 }
 
@@ -266,11 +275,11 @@ export interface UpdateMediaAssetBody {
 }
 
 export interface MapPin {
-  id: number;
+  id: string;
+  kind: "post" | "photo";
   title: string;
-  slug: string;
   excerpt: string;
-  externalUrl: string | null;
+  href: string | null;
   coverImageUrl: string | null;
   coverImage: MediaAsset | null;
   latitude: number;

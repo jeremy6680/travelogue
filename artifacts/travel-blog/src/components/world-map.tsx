@@ -26,7 +26,7 @@ export function WorldMap() {
   const { t } = useI18n();
   const { data: pins = [] } = useMapPinsQuery();
   const { data: trips = [] } = useTripsQuery();
-  const [activePin, setActivePin] = useState<number | null>(null);
+  const [activePin, setActivePin] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState<[number, number]>([10, 20]);
   const [popoverPos, setPopoverPos] = useState<{ x: number; y: number } | null>(null);
@@ -53,7 +53,7 @@ export function WorldMap() {
 
   const activeData = pins.find(p => p.id === activePin);
 
-  const handlePinClick = (e: React.MouseEvent, pinId: number) => {
+  const handlePinClick = (e: React.MouseEvent, pinId: string) => {
     e.stopPropagation();
     const newPinId = pinId === activePin ? null : pinId;
     setActivePin(newPinId);
@@ -237,34 +237,37 @@ export function WorldMap() {
               </div>
             )}
             <h4 className="font-serif font-bold text-base leading-tight text-foreground pr-4">{activeData.title}</h4>
+            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+              {activeData.excerpt || (activeData.kind === "photo" ? t("photoFallbackAlt") : "")}
+            </p>
             {activeData.location && (
               <p className="text-xs text-muted-foreground flex items-center gap-1 font-mono uppercase tracking-wider mt-1">
                 <MapPin className="w-3 h-3" /> {activeData.location}
               </p>
             )}
-            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{activeData.excerpt}</p>
-            {isExternalPost(activeData) && (
+            {activeData.kind === "post" && isExternalPost(activeData) && (
               <p className="mt-3 inline-flex items-center rounded-full border border-border/70 px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
                 {t("externalArticle")}
               </p>
             )}
-            {isExternalPost(activeData) ? (
-              <a
-                href={getPostHref(activeData)}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block mt-3 text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors"
-              >
-                {t("readExternalArticle")} &rarr;
-              </a>
-            ) : (
-              <Link
-                href={getPostHref(activeData)}
-                className="inline-block mt-3 text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors"
-              >
-                {t("readMore")} &rarr;
-              </Link>
-            )}
+            {activeData.href &&
+              (isExternalPost(activeData) ? (
+                <a
+                  href={getPostHref(activeData)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block mt-3 text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors"
+                >
+                  {activeData.kind === "photo" ? t("viewPhotoLink") : t("readExternalArticle")} &rarr;
+                </a>
+              ) : (
+                <Link
+                  href={getPostHref(activeData)}
+                  className="inline-block mt-3 text-xs font-bold uppercase tracking-wider text-primary hover:text-secondary transition-colors"
+                >
+                  {activeData.kind === "photo" ? t("viewPhotoLink") : t("readMore")} &rarr;
+                </Link>
+              ))}
           </div>
         );
       })()}

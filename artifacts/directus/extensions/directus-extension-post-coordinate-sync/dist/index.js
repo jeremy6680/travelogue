@@ -1,4 +1,4 @@
-const POSTS_COLLECTION = "posts";
+const LOCATABLE_COLLECTIONS = new Set(["posts", "photos"]);
 const GEOCODER_URL = "https://nominatim.openstreetmap.org/search";
 const geocodeCache = new Map();
 
@@ -15,30 +15,40 @@ function isEmptyString(value) {
   return value === undefined || value === null || String(value).trim() === "";
 }
 
-async function getExistingPost(database, keys) {
+function normalizeCountryCode(countryCode) {
+  const normalized = String(countryCode ?? "").trim().toLowerCase();
+  return /^[a-z]{2}$/.test(normalized) ? normalized : "";
+}
+
+async function getExistingItem(database, collection, keys) {
   const id = Array.isArray(keys) ? keys[0] : keys;
   if (!id) return null;
 
-  const post = await database(POSTS_COLLECTION)
-    .select("id", "location", "latitude", "longitude")
+  const item = await database(collection)
+    .select("id", "location", "country_code", "latitude", "longitude")
     .where({ id: Number(id) })
     .first();
 
-  return post ?? null;
+  return item ?? null;
 }
 
-async function geocodeLocation(location) {
+async function geocodeLocation(location, countryCode) {
   const query = String(location).trim();
   if (!query) return null;
+  const normalizedCountryCode = normalizeCountryCode(countryCode);
+  const cacheKey = normalizedCountryCode ? `${query}::${normalizedCountryCode}` : query;
 
-  if (geocodeCache.has(query)) {
-    return geocodeCache.get(query);
+  if (geocodeCache.has(cacheKey)) {
+    return geocodeCache.get(cacheKey);
   }
 
   const url = new URL(GEOCODER_URL);
   url.searchParams.set("q", query);
   url.searchParams.set("format", "jsonv2");
   url.searchParams.set("limit", "1");
+  if (normalizedCountryCode) {
+    url.searchParams.set("countrycodes", normalizedCountryCode);
+  }
 
   const response = await fetch(url, {
     headers: {
@@ -61,44 +71,47 @@ async function geocodeLocation(location) {
       }
     : null;
 
-  geocodeCache.set(query, coordinates);
+  geocodeCache.set(cacheKey, coordinates);
   return coordinates;
 }
 
-async function applyCoordinatesFromLocation(payload, database, keys) {
+async function applyCoordinatesFromLocation(payload, database, collection, keys) {
   if (!payload || Array.isArray(payload)) {
     return payload;
   }
 
-  const existingPost = keys ? await getExistingPost(database, keys) : null;
+  const existingItem = keys ? await getExistingItem(database, collection, keys) : null;
   const effectiveLocation = !isEmptyString(payload.location)
     ? payload.location
-    : existingPost?.location;
+    : existingItem?.location;
+  const effectiveCountryCode = !isEmptyString(payload.country_code)
+    ? payload.country_code
+    : existingItem?.country_code;
 
   if (isEmptyString(effectiveLocation)) {
     return payload;
   }
 
   const locationChanged =
-    existingPost == null || String(effectiveLocation).trim() !== String(existingPost.location ?? "").trim();
+    existingItem == null || String(effectiveLocation).trim() !== String(existingItem.location ?? "").trim();
   const latitudeUnchangedFromExisting =
-    existingPost != null && sameCoordinateValue(payload.latitude, existingPost.latitude);
+    existingItem != null && sameCoordinateValue(payload.latitude, existingItem.latitude);
   const longitudeUnchangedFromExisting =
-    existingPost != null && sameCoordinateValue(payload.longitude, existingPost.longitude);
+    existingItem != null && sameCoordinateValue(payload.longitude, existingItem.longitude);
   const needsLatitude =
     isEmptyCoordinate(payload.latitude) ||
     (locationChanged && latitudeUnchangedFromExisting) ||
-    (locationChanged && isEmptyCoordinate(existingPost?.latitude));
+    (locationChanged && isEmptyCoordinate(existingItem?.latitude));
   const needsLongitude =
     isEmptyCoordinate(payload.longitude) ||
     (locationChanged && longitudeUnchangedFromExisting) ||
-    (locationChanged && isEmptyCoordinate(existingPost?.longitude));
+    (locationChanged && isEmptyCoordinate(existingItem?.longitude));
 
   if (!needsLatitude && !needsLongitude) {
     return payload;
   }
 
-  const geocoded = await geocodeLocation(effectiveLocation);
+  const geocoded = await geocodeLocation(effectiveLocation, effectiveCountryCode);
   if (!geocoded) {
     return payload;
   }
@@ -116,18 +129,18 @@ async function applyCoordinatesFromLocation(payload, database, keys) {
 
 export default ({ filter }) => {
   filter("items.create", async (payload, meta, context) => {
-    if (meta.collection !== POSTS_COLLECTION) {
+    if (!LOCATABLE_COLLECTIONS.has(meta.collection)) {
       return payload;
     }
 
-    return applyCoordinatesFromLocation(payload, context.database);
+    return applyCoordinatesFromLocation(payload, context.database, meta.collection);
   });
 
   filter("items.update", async (payload, meta, context) => {
-    if (meta.collection !== POSTS_COLLECTION) {
+    if (!LOCATABLE_COLLECTIONS.has(meta.collection)) {
       return payload;
     }
 
-    return applyCoordinatesFromLocation(payload, context.database, meta.keys);
+    return applyCoordinatesFromLocation(payload, context.database, meta.collection, meta.keys);
   });
 };
