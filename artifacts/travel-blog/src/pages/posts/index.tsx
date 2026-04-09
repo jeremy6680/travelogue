@@ -89,6 +89,20 @@ function buildTagOptions(posts: Post[]) {
     });
 }
 
+function buildYearOptions(posts: Post[]) {
+  const counts = new Map<string, number>();
+
+  for (const post of posts) {
+    if (!post.publishedAt) continue;
+    const year = new Date(post.publishedAt).getFullYear().toString();
+    counts.set(year, (counts.get(year) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([value, count]) => ({ value, count }))
+    .sort((left, right) => Number(right.value) - Number(left.value));
+}
+
 export default function PostsPage() {
   const { countryName, formatCountLabel, formatDate, locale, t } = useI18n();
   const [location] = useLocation();
@@ -117,16 +131,7 @@ export default function PostsPage() {
     [countryName, posts, trips],
   );
 
-  const yearOptions = useMemo(() => {
-    const years = new Set<string>();
-    for (const post of posts) {
-      if (post.publishedAt) {
-        years.add(new Date(post.publishedAt).getFullYear().toString());
-      }
-    }
-
-    return Array.from(years).sort((left, right) => Number(right) - Number(left));
-  }, [posts]);
+  const yearOptions = useMemo(() => buildYearOptions(posts), [posts]);
 
   const tagOptions = useMemo(() => buildTagOptions(posts), [posts]);
 
@@ -269,7 +274,18 @@ export default function PostsPage() {
             <MultiSelectFilter
               label={t("allYears")}
               placeholder={t("allYears")}
-              options={yearOptions.map((year) => ({ value: year, label: year }))}
+              options={yearOptions.map((option) => ({
+                value: option.value,
+                label: (
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{option.value}</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">
+                      {option.count}
+                    </span>
+                  </span>
+                ),
+                triggerLabel: option.value,
+              }))}
               selectedValues={filterYears}
               onChange={(values) => {
                 setFilterYears(values);
@@ -373,9 +389,8 @@ export default function PostsPage() {
             {paginatedPosts.map((post, index) => {
               const trip = getPostTrip(post, trips);
               const countryCode = getPostCountryCode(post, trips);
-              const taxonomy = [post.category, ...post.tags].filter(
-                (tag): tag is string => Boolean(tag),
-              );
+              const category = post.category?.trim() || null;
+              const tags = post.tags.filter((tag): tag is string => Boolean(tag?.trim()));
 
               return (
                 <motion.article
@@ -414,22 +429,56 @@ export default function PostsPage() {
                   </div>
 
                   <div className="space-y-5 py-2">
-                    <div className="flex flex-wrap items-center gap-4 text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                      {post.publishedAt && (
-                        <span className="flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {formatDate(post.publishedAt, "short")}
-                        </span>
-                      )}
-                      {countryCode && (
-                        <button
-                          type="button"
-                          onClick={() => setSingleCountryFilter(countryCode)}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-lightest)] px-2.5 py-1 text-foreground transition-colors hover:bg-[var(--color-primary-light)]"
-                        >
-                          <span>{getFlagEmoji(countryCode)}</span>
-                          <span>{countryName(countryCode)}</span>
-                        </button>
+                    <div className="flex flex-wrap items-start justify-between gap-3 text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-4">
+                        {post.publishedAt && (
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {formatDate(post.publishedAt, "short")}
+                          </span>
+                        )}
+                        {countryCode && (
+                          <button
+                            type="button"
+                            onClick={() => setSingleCountryFilter(countryCode)}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-lightest)] px-2.5 py-1 text-foreground transition-colors hover:bg-[var(--color-primary-light)]"
+                          >
+                            <span>{getFlagEmoji(countryCode)}</span>
+                            <span>{countryName(countryCode)}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {(category || tags.length > 0) && (
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {category && (
+                            <button
+                              type="button"
+                              onClick={() => toggleTagFilter(category)}
+                              className={`rounded-full border px-2.5 py-1 transition-colors ${
+                                filterTags.includes(category)
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-amber-200 bg-amber-50 text-amber-900 hover:border-amber-300 hover:bg-amber-100"
+                              }`}
+                            >
+                              {category}
+                            </button>
+                          )}
+                          {tags.map((tag) => (
+                            <button
+                              key={`${post.id}-${tag}`}
+                              type="button"
+                              onClick={() => toggleTagFilter(tag)}
+                              className={`rounded-full border px-2.5 py-1 transition-colors ${
+                                filterTags.includes(tag)
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-sky-200 bg-sky-50 text-sky-900 hover:border-sky-300 hover:bg-sky-100"
+                              }`}
+                            >
+                              {tag}
+                            </button>
+                          ))}
+                        </div>
                       )}
                     </div>
 
@@ -455,25 +504,6 @@ export default function PostsPage() {
                         {post.excerpt}
                       </p>
                     </div>
-
-                    {taxonomy.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {taxonomy.map((tag) => (
-                          <button
-                            key={`${post.id}-${tag}`}
-                            type="button"
-                            onClick={() => toggleTagFilter(tag)}
-                            className={`rounded-full border px-3 py-1 text-xs uppercase tracking-wider transition-colors ${
-                              filterTags.includes(tag)
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                            }`}
-                          >
-                            {tag}
-                          </button>
-                        ))}
-                      </div>
-                    )}
 
                     {isExternalPost(post) && (
                       <div className="inline-flex max-w-fit items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900">

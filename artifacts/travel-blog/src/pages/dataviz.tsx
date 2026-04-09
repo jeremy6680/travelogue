@@ -164,17 +164,25 @@ export default function DataVizPage() {
     return Array.from(counts.entries())
       .map(([code, count]) => ({
         value: code,
-        label: `${countryName(code)} (${count})`,
+        text: countryName(code),
+        count,
       }))
-      .sort((left, right) => left.label.localeCompare(right.label, locale));
+      .sort((left, right) => {
+        if (right.count !== left.count) return right.count - left.count;
+        return left.text.localeCompare(right.text, locale);
+      });
   }, [countryName, locale, trips]);
 
   const yearOptions = useMemo(() => {
-    const years = new Set<string>();
+    const counts = new Map<string, number>();
     for (const trip of trips) {
-      years.add(new Date(trip.visitedAt).getFullYear().toString());
+      const year = new Date(trip.visitedAt).getFullYear().toString();
+      counts.set(year, (counts.get(year) ?? 0) + 1);
     }
-    return Array.from(years).sort((left, right) => Number(right) - Number(left));
+
+    return Array.from(counts.entries())
+      .map(([value, count]) => ({ value, count }))
+      .sort((left, right) => Number(right.value) - Number(left.value));
   }, [trips]);
 
   const companionOptions = useMemo(
@@ -876,23 +884,18 @@ export default function DataVizPage() {
           <MultiSelectFilter
             label={locale === "fr" ? "Voyages" : "Trips"}
             placeholder={locale === "fr" ? "Voyages" : "Trips"}
-            options={countryOptions.map((option) => {
-              const countMatch = option.label.match(/\((\d+)\)\s*$/);
-              const count = countMatch?.[1] ?? "";
-              const text = option.label.replace(/\s*\(\d+\)\s*$/, "");
-              return {
-                value: option.value,
-                label: (
-                  <span className="flex items-center justify-between gap-3">
-                    <span>{text}</span>
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
-                      {count}
-                    </span>
+            options={countryOptions.map((option) => ({
+              value: option.value,
+              label: (
+                <span className="flex items-center justify-between gap-3">
+                  <span>{option.text}</span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                    {option.count}
                   </span>
-                ),
-                triggerLabel: text,
-              };
-            })}
+                </span>
+              ),
+              triggerLabel: option.text,
+            }))}
             selectedValues={filterCountry}
             onChange={setFilterCountry}
             className="w-36"
@@ -901,7 +904,18 @@ export default function DataVizPage() {
           <MultiSelectFilter
             label={locale === "fr" ? "Années" : "Years"}
             placeholder={locale === "fr" ? "Années" : "Years"}
-            options={yearOptions.map((year) => ({ value: year, label: year }))}
+            options={yearOptions.map((option) => ({
+              value: option.value,
+              label: (
+                <span className="flex items-center justify-between gap-3">
+                  <span>{option.value}</span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                    {option.count}
+                  </span>
+                </span>
+              ),
+              triggerLabel: option.value,
+            }))}
             selectedValues={filterYear}
             onChange={setFilterYear}
             className="w-32"

@@ -220,6 +220,8 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-6">
             {recentPosts.map((post, i) => {
               const countryCode = getPostCountryCode(post, trips);
+              const category = post.category?.trim() || null;
+              const tags = post.tags.filter((tag): tag is string => Boolean(tag?.trim()));
 
               return (
                 <motion.article
@@ -256,18 +258,37 @@ export default function Home() {
                     )}
                   </div>
                   <div className="flex flex-1 flex-col space-y-4 p-5">
-                    <div className="flex flex-wrap items-center gap-3 text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                      {post.publishedAt && (
-                        <span className="flex items-center gap-1.5">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(post.publishedAt, "short")}
-                        </span>
-                      )}
-                      {countryCode && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-lightest)] px-2.5 py-1 text-foreground">
-                          <span>{getFlagEmoji(countryCode)}</span>
-                          <span>{countryName(countryCode)}</span>
-                        </span>
+                    <div className="flex flex-wrap items-start justify-between gap-3 text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-3">
+                        {post.publishedAt && (
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(post.publishedAt, "short")}
+                          </span>
+                        )}
+                        {countryCode && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-lightest)] px-2.5 py-1 text-foreground">
+                            <span>{getFlagEmoji(countryCode)}</span>
+                            <span>{countryName(countryCode)}</span>
+                          </span>
+                        )}
+                      </div>
+                      {(category || tags.length > 0) && (
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {category && (
+                            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-900">
+                              {category}
+                            </span>
+                          )}
+                          {tags.map((tag) => (
+                            <span
+                              key={`${post.id}-${tag}`}
+                              className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-sky-900"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
                     <h3 className="font-serif text-[1.35rem] font-bold leading-snug text-foreground md:text-2xl">

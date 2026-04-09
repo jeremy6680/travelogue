@@ -95,6 +95,10 @@ type FacetOption = {
   label: string;
   count: number;
 };
+type YearOption = {
+  value: string;
+  count: number;
+};
 
 type TimelineItem =
   | { type: "trip"; sortDate: string; trip: Trip; distanceKm: number | null }
@@ -548,7 +552,7 @@ interface FiltersPanelProps {
   transportOptions: string[];
   companionOptions: FacetOption[];
   reasonOptions: FacetOption[];
-  yearOptions: string[];
+  yearOptions: YearOption[];
   cityOptions: FacetOption[];
   onTripChange: (value: string[]) => void;
   onRegionChange: (value: string[]) => void;
@@ -737,7 +741,18 @@ function FiltersPanel({
             <MultiSelectFilter
               label={locale === "fr" ? "Année" : "Year"}
               placeholder={t("allYears")}
-              options={yearOptions.map((year) => ({ value: year, label: year }))}
+              options={yearOptions.map((option) => ({
+                value: option.value,
+                label: (
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{option.value}</span>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                      {option.count}
+                    </span>
+                  </span>
+                ),
+                triggerLabel: option.value,
+              }))}
               selectedValues={filterYear}
               onChange={onYearChange}
               className="w-full"
@@ -888,12 +903,16 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   }, [i18n.locale, trips]);
 
   const yearOptions = useMemo(() => {
-    const years = new Set<string>();
+    const counts = new Map<string, number>();
     for (const t of trips) {
-      if (t.visitedAt)
-        years.add(new Date(t.visitedAt).getFullYear().toString());
+      if (!t.visitedAt) continue;
+      const year = new Date(t.visitedAt).getFullYear().toString();
+      counts.set(year, (counts.get(year) ?? 0) + 1);
     }
-    return Array.from(years).sort((a, b) => Number(b) - Number(a));
+
+    return Array.from(counts.entries())
+      .map(([value, count]) => ({ value, count }))
+      .sort((left, right) => Number(right.value) - Number(left.value));
   }, [trips]);
 
   const tripCountryOptions = useMemo(
