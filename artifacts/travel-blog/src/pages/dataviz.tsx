@@ -345,9 +345,9 @@ export default function DataVizPage() {
       string,
       { countryCode: string; nights: number; trips: number }
     >();
-    const transportByCountry = new Map<
-      string,
-      { countryCode: string; total: number; modes: Map<string, number> }
+    const topCountriesByPeriod = new Map<
+      number,
+      { periodStart: number; label: string; counts: Map<string, number> }
     >();
     const yearlyDistance = new Map<
       number,
@@ -477,21 +477,16 @@ export default function DataVizPage() {
       }
 
       const travelModes = [...new Set(trip.transportationTo.filter(Boolean))];
-      if (travelModes.length > 0) {
-        const countryTransportEntry = transportByCountry.get(countryCode) ?? {
-          countryCode,
-          total: 0,
-          modes: new Map<string, number>(),
-        };
-        countryTransportEntry.total += 1;
-        for (const mode of travelModes) {
-          countryTransportEntry.modes.set(
-            mode,
-            (countryTransportEntry.modes.get(mode) ?? 0) + 1,
-          );
-        }
-        transportByCountry.set(countryCode, countryTransportEntry);
-      }
+      const periodCountryEntry = topCountriesByPeriod.get(periodStart) ?? {
+        periodStart,
+        label: getDecadeLabel(periodStart, locale),
+        counts: new Map<string, number>(),
+      };
+      periodCountryEntry.counts.set(
+        countryCode,
+        (periodCountryEntry.counts.get(countryCode) ?? 0) + 1,
+      );
+      topCountriesByPeriod.set(periodStart, periodCountryEntry);
 
       let tripCarbonKg = 0;
       if (distanceKm != null && travelModes.length > 0) {
@@ -630,33 +625,22 @@ export default function DataVizPage() {
         rank: index + 1,
         country: countryName(row.countryCode),
       }));
-    const transportCountryModes = Array.from(
-      new Set(
-        Array.from(transportByCountry.values()).flatMap((entry) =>
-          Array.from(entry.modes.keys()),
-        ),
-      ),
-    ).sort((left, right) =>
-      formatTransportLabel(left, locale).localeCompare(
-        formatTransportLabel(right, locale),
-        locale,
-      ),
-    );
-    const transportByCountryRows = Array.from(transportByCountry.values())
-      .sort((left, right) => right.total - left.total)
-      .map((entry) => {
-        const row: Record<string, number | string> = {
-          countryCode: entry.countryCode,
-          country: countryName(entry.countryCode),
-          total: entry.total,
-        };
-
-        for (const mode of transportCountryModes) {
-          row[mode] = entry.modes.get(mode) ?? 0;
-        }
-
-        return row;
-      });
+    const topCountriesByPeriodRows = Array.from(topCountriesByPeriod.values())
+      .sort((left, right) => left.periodStart - right.periodStart)
+      .map((entry) => ({
+        period: entry.label,
+        countries: Array.from(entry.counts.entries())
+          .map(([countryCode, trips]) => ({
+            countryCode,
+            country: countryName(countryCode),
+            trips,
+          }))
+          .sort((left, right) => {
+            if (right.trips !== left.trips) return right.trips - left.trips;
+            return left.country.localeCompare(right.country, locale);
+          })
+          .slice(0, 5),
+      }));
     const continentRows = Array.from(continentStats.values())
       .sort((left, right) => right.trips - left.trips)
       .map((row) => ({
@@ -741,8 +725,7 @@ export default function DataVizPage() {
       accommodationKeys,
       accommodationRows,
       nightsByCountryRows,
-      transportCountryModes,
-      transportByCountryRows,
+      topCountriesByPeriodRows,
       continentRows,
       continentNightRows,
       reasonRows,
@@ -793,16 +776,6 @@ export default function DataVizPage() {
       key,
       {
         label: formatAccomodationLabel(key, locale),
-        color: CHART_COLORS[index % CHART_COLORS.length],
-      },
-    ]),
-  );
-
-  const transportByCountryConfig = Object.fromEntries(
-    analytics.transportCountryModes.map((mode, index) => [
-      mode,
-      {
-        label: formatTransportLabel(mode, locale),
         color: CHART_COLORS[index % CHART_COLORS.length],
       },
     ]),
@@ -1657,7 +1630,7 @@ export default function DataVizPage() {
               {analytics.nightsByZoneRows.length > 0 ? (
                 <ChartContainer
                   config={nightsByZoneConfig}
-                  className="h-[460px] w-full aspect-auto"
+                  className="h-[620px] w-full aspect-auto"
                 >
                   <BarChart
                     data={analytics.nightsByZoneRows}
@@ -2075,66 +2048,53 @@ export default function DataVizPage() {
             <CardHeader>
               <CardTitle>
                 {locale === "fr"
-                  ? "Transport pour aller dans chaque pays"
-                  : "Transport used to reach each country"}
+                  ? "Pays les plus visités par décennie"
+                  : "Most visited countries by decade"}
               </CardTitle>
               <CardDescription>
                 {locale === "fr"
-                  ? "Nombre de fois où chaque mode a été utilisé pour rejoindre chaque pays."
-                  : "How many times each mode was used to reach each country."}
+                  ? "Top 5 des pays les plus visités pour chaque décennie de la sélection en cours."
+                  : "Top 5 most visited countries for each decade in the current selection."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {analytics.transportByCountryRows.length > 0 ? (
-                <div className="pr-4">
-                  <ChartContainer
-                    config={transportByCountryConfig}
-                    style={{
-                      height: `${Math.max(420, analytics.transportByCountryRows.length * 44)}px`,
-                    }}
-                    className="w-full aspect-auto"
-                  >
-                    <BarChart
-                      data={analytics.transportByCountryRows}
-                      layout="vertical"
-                      margin={{ left: 12, right: 16 }}
+              {analytics.topCountriesByPeriodRows.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {analytics.topCountriesByPeriodRows.map((period) => (
+                    <div
+                      key={period.period}
+                      className="rounded-xl border border-border/60 bg-muted/20 p-4"
                     >
-                      <CartesianGrid horizontal={false} />
-                      <YAxis
-                        type="category"
-                        dataKey="country"
-                        tickLine={false}
-                        axisLine={false}
-                        width={120}
-                      />
-                      <XAxis type="number" tickLine={false} axisLine={false} />
-                      <ChartTooltip
-                        content={
-                          <ChartTooltipContent
-                            formatter={(value, name) => (
-                              <>
-                                <span className="text-muted-foreground">
-                                  {formatTransportLabel(String(name), locale)} :
-                                </span>
-                                <span className="font-mono font-medium tabular-nums text-foreground">
-                                  {Number(value).toLocaleString(numberLocale)}
-                                </span>
-                              </>
-                            )}
-                          />
-                        }
-                      />
-                      <ChartLegend content={<ChartLegendContent />} />
-                      {analytics.transportCountryModes.map((mode, index) => (
-                        <Bar
-                          key={mode}
-                          dataKey={mode}
-                          stackId="transport-country"
-                          fill={CHART_COLORS[index % CHART_COLORS.length]}
-                        />
-                      ))}
-                    </BarChart>
-                  </ChartContainer>
+                      <div className="mb-3 text-sm font-semibold text-foreground">
+                        {period.period}
+                      </div>
+                      <div className="space-y-2">
+                        {period.countries.map((country, index) => (
+                          <div
+                            key={`${period.period}-${country.countryCode}`}
+                            className="flex items-center justify-between gap-4 rounded-md bg-background/70 px-3 py-2"
+                          >
+                            <div className="min-w-0">
+                              <div className="text-xs text-muted-foreground">
+                                #{index + 1}
+                              </div>
+                              <div className="truncate font-medium text-foreground">
+                                {country.country}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono text-sm tabular-nums text-foreground">
+                                {country.trips.toLocaleString(numberLocale)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {locale === "fr" ? "voyages" : "trips"}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
