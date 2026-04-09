@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/sheet";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { computeJourneyDistance, computeJourneyTripDistance, getTripAnalyticsPoints } from "@/lib/travel-analytics";
 import {
   formatAccomodationLabels,
   formatTravelReasonLabel,
@@ -40,46 +41,21 @@ import {
   sortTransportValues,
 } from "@/lib/trip-options";
 import { getTripCities, tripMatchesKeyword } from "@/lib/travel-insights";
-
-const NICE_COORDINATES = { latitude: 43.7102, longitude: 7.262 };
-
-function getFlagEmoji(countryCode: string) {
-  if (!countryCode || countryCode.length !== 2) return "";
-  const codePoints = countryCode
-    .toUpperCase()
-    .split("")
-    .map((char) => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
-}
+import { getCountryFlagEmoji } from "@/lib/travel-countries";
 
 function formatLengthOfStay(
-  visitedAt: string,
-  visitedUntil: string | null,
   t: ReturnType<typeof useI18n>["t"],
   formatDaysLabel: ReturnType<typeof useI18n>["formatDaysLabel"],
+  durationDays: number,
 ) {
-  if (!visitedUntil) return null;
-
-  const start = new Date(visitedAt);
-  const end = new Date(visitedUntil);
-
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return null;
-  }
-
-  const days = differenceInCalendarDays(end, start);
-
-  if (days < 0) return null;
-  if (days === 0) return t("sameDay");
-
-  return formatDaysLabel(days);
+  if (durationDays <= 0) return t("sameDay");
+  return formatDaysLabel(durationDays);
 }
 
 interface TravelTimelineProps {
   showFilters?: boolean;
 }
 
-type Coordinates = { latitude: number; longitude: number };
 type TripCountryOption = {
   value: string;
   label: string;
@@ -104,18 +80,6 @@ type TimelineItem =
   | { type: "trip"; sortDate: string; trip: Trip; distanceKm: number | null }
   | { type: "journey"; sortDate: string; journey: Journey; trips: Trip[]; distanceKm: number | null };
 
-function isCoordinatePair(
-  latitude: number | null | undefined,
-  longitude: number | null | undefined,
-): boolean {
-  return typeof latitude === "number" && typeof longitude === "number";
-}
-
-function getTripCoordinates(trip: Trip): Coordinates | null {
-  if (!isCoordinatePair(trip.latitude, trip.longitude)) return null;
-  return { latitude: trip.latitude as number, longitude: trip.longitude as number };
-}
-
 function formatList(values: string[]) {
   return values.join(", ");
 }
@@ -134,7 +98,7 @@ function getCountryFilterOptions(
   return Array.from(counts.entries())
     .map(([code, count]) => ({
       value: code,
-      label: `${getFlagEmoji(code)} ${countryName(code)} (${count})`,
+      label: `${getCountryFlagEmoji(code)} ${countryName(code)} (${count})`,
       count,
     }))
     .sort((left, right) => {
@@ -218,104 +182,6 @@ function getFacetOptions(values: string[][], locale: string) {
     });
 }
 
-function getJourneyEndpoint(
-  mode: Journey["originMode"] | Journey["destinationMode"],
-  latitude: number | null,
-  longitude: number | null,
-): Coordinates | null {
-  if (mode === "default_nice") return NICE_COORDINATES;
-  if (!isCoordinatePair(latitude, longitude)) return null;
-  return { latitude: latitude as number, longitude: longitude as number };
-}
-
-function haversineKm(from: Coordinates, to: Coordinates) {
-  const toRadians = (value: number) => (value * Math.PI) / 180;
-  const earthRadiusKm = 6371;
-  const dLat = toRadians(to.latitude - from.latitude);
-  const dLon = toRadians(to.longitude - from.longitude);
-  const lat1 = toRadians(from.latitude);
-  const lat2 = toRadians(to.latitude);
-
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.sin(dLon / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-
-  return 2 * earthRadiusKm * Math.asin(Math.sqrt(a));
-}
-
-function computeStandaloneTripDistance(trip: Trip) {
-  const coordinates = getTripCoordinates(trip);
-  if (!coordinates) return null;
-  return haversineKm(NICE_COORDINATES, coordinates) * 2;
-}
-
-function computeJourneyDistance(journey: Journey, orderedTrips: Trip[]) {
-  if (orderedTrips.length === 0) return null;
-
-  const points: Coordinates[] = [];
-  const origin = getJourneyEndpoint(
-    journey.originMode,
-    journey.originLatitude,
-    journey.originLongitude,
-  );
-  const destination = getJourneyEndpoint(
-    journey.destinationMode,
-    journey.destinationLatitude,
-    journey.destinationLongitude,
-  );
-
-  if (origin) points.push(origin);
-
-  for (const trip of orderedTrips) {
-    const coordinates = getTripCoordinates(trip);
-    if (!coordinates) return null;
-    points.push(coordinates);
-  }
-
-  if (destination) points.push(destination);
-
-  if (points.length < 2) return null;
-
-  let totalDistance = 0;
-  for (let index = 1; index < points.length; index += 1) {
-    totalDistance += haversineKm(points[index - 1], points[index]);
-  }
-
-  return totalDistance;
-}
-
-function computeJourneyTripDistance(
-  journey: Journey,
-  orderedTrips: Trip[],
-  tripIndex: number,
-) {
-  const currentCoordinates = getTripCoordinates(orderedTrips[tripIndex]);
-  if (!currentCoordinates) return null;
-
-  const arrivalCoordinates =
-    tripIndex === 0
-      ? getJourneyEndpoint(
-          journey.originMode,
-          journey.originLatitude,
-          journey.originLongitude,
-        )
-      : getTripCoordinates(orderedTrips[tripIndex - 1]);
-  if (!arrivalCoordinates) return null;
-
-  let totalDistance = haversineKm(arrivalCoordinates, currentCoordinates);
-
-  if (tripIndex === orderedTrips.length - 1) {
-    const destinationCoordinates = getJourneyEndpoint(
-      journey.destinationMode,
-      journey.destinationLatitude,
-      journey.destinationLongitude,
-    );
-    if (!destinationCoordinates) return null;
-    totalDistance += haversineKm(currentCoordinates, destinationCoordinates);
-  }
-
-  return totalDistance;
-}
 
 function renderTripCard(
   trip: Trip,
@@ -324,6 +190,7 @@ function renderTripCard(
   i18n: ReturnType<typeof useI18n>,
   metadata?: string,
   summaryLabel?: string,
+  durationDays?: number,
 ) {
   const {
     countryName,
@@ -343,10 +210,16 @@ function renderTripCard(
     locale,
   );
   const lengthOfStay = formatLengthOfStay(
-    trip.visitedAt,
-    trip.visitedUntil,
     t,
     formatDaysLabel,
+    durationDays ??
+      Math.max(
+        0,
+        differenceInCalendarDays(
+          new Date(trip.visitedUntil ?? trip.visitedAt),
+          new Date(trip.visitedAt),
+        ),
+      ),
   );
   const distanceLabel = formatDistanceKm(distanceKm);
 
@@ -356,7 +229,7 @@ function renderTripCard(
         <div>
           <h3 className="font-serif text-3xl font-bold flex items-center gap-3 text-foreground">
             <span className="text-4xl" aria-hidden="true">
-              {getFlagEmoji(trip.countryCode)}
+              {getCountryFlagEmoji(trip.countryCode)}
             </span>
             {countryName(trip.countryCode)}
           </h3>
@@ -958,6 +831,14 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
       });
   }, [locale, trips]);
 
+  const analyticsByTripId = useMemo(
+    () =>
+      new Map(
+        getTripAnalyticsPoints(trips, journeys).map((point) => [point.trip.id, point]),
+      ),
+    [journeys, trips],
+  );
+
   const filteredSorted = useMemo<TimelineItem[]>(() => {
     let list = [...trips];
     if (filterTrip.length > 0) {
@@ -1034,7 +915,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
           type: "trip",
           sortDate: trip.visitedAt,
           trip,
-          distanceKm: computeStandaloneTripDistance(trip),
+          distanceKm: analyticsByTripId.get(trip.id)?.distanceKm ?? null,
         });
         continue;
       }
@@ -1083,6 +964,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
     searchQuery,
     sortOrder,
     posts,
+    analyticsByTripId,
   ]);
 
   const clearFilters = () => {
@@ -1301,6 +1183,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                   i18n,
                   undefined,
                   t("estimatedTripDistance"),
+                  analyticsByTripId.get(item.trip.id)?.durationDays,
                 )
               ) : (
                 <div className="space-y-4">
@@ -1344,6 +1227,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                           i18n,
                           `${t("stepOf")} ${tripIndex + 1} / ${item.trips.length}`,
                           t("estimatedLegDistance"),
+                          analyticsByTripId.get(trip.id)?.durationDays,
                         )}
                       </div>
                     ))}

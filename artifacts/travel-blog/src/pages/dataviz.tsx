@@ -60,10 +60,6 @@ import {
   getContinentKey,
 } from "@/lib/trip-options";
 import { getTripAnalyticsPoints } from "@/lib/travel-analytics";
-import {
-  getTripNightCount,
-  getTripNightEntriesByMonth,
-} from "@/lib/travel-insights";
 
 const CHART_COLORS = [
   "#2563eb",
@@ -371,7 +367,7 @@ export default function DataVizPage() {
       const year = new Date(trip.visitedAt).getFullYear();
       const postsCount = postsByTripId.get(trip.id) ?? 0;
       const continentKey = getContinentKey(trip.countryCode) ?? "other";
-      const nights = getTripNightCount(trip);
+      const nights = point.nightCount;
       const countryCode = trip.countryCode.toUpperCase();
       const periodStart = getDecadeStart(year);
 
@@ -389,7 +385,7 @@ export default function DataVizPage() {
       }
       yearlyDistance.set(year, yearEntry);
 
-      for (const entry of getTripNightEntriesByMonth(trip)) {
+      for (const entry of point.nightEntriesByMonth) {
         const heatmapKey = `${entry.year}-${entry.month}`;
         const heatmapEntry = heatmap.get(heatmapKey) ?? {
           year: entry.year,

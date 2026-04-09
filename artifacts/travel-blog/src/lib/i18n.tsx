@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { format } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
+import { getCountryDisplayName } from "@/lib/travel-countries";
 
 export type Locale = "fr" | "en";
 
@@ -399,8 +400,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         if (distanceKm == null) return null;
         return `${Math.round(distanceKm).toLocaleString(numberLocale)} km ${catalog.approxKm}`;
       },
-      countryName: (code) =>
-        regionNames.of(code.toUpperCase()) ?? code.toUpperCase(),
+      countryName: (code) => getCountryDisplayName(code, effectiveLocale, regionNames),
     };
   }, [locale]);
 

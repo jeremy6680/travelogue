@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/lib/i18n";
+import { getCountryFlagEmoji } from "@/lib/travel-countries";
 
 const FALLBACK_PHOTOS = [
   {
@@ -81,17 +82,6 @@ const fadeUp = (delay = 0) => ({
   viewport: { once: true },
   transition: { duration: 0.5, delay },
 });
-
-function getFlagEmoji(code: string) {
-  if (!code || code.length !== 2) return "";
-
-  return String.fromCodePoint(
-    ...code
-      .toUpperCase()
-      .split("")
-      .map((char) => 127397 + char.charCodeAt(0)),
-  );
-}
 
 export default function Home() {
   const { countryName, formatDate, locale, t } = useI18n();
@@ -275,7 +265,7 @@ export default function Home() {
                         )}
                         {countryCode && (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-lightest)] px-2.5 py-1 text-foreground">
-                            <span>{getFlagEmoji(countryCode)}</span>
+                            <span>{getCountryFlagEmoji(countryCode)}</span>
                             <span>{countryName(countryCode)}</span>
                           </span>
                         )}

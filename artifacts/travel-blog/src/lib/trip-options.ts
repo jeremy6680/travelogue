@@ -79,7 +79,7 @@ export const CONTINENT_OPTIONS: Record<
       "AD", "AL", "AT", "BA", "BE", "BG", "BY", "CH", "CY", "CZ", "DE", "DK",
       "EE", "ES", "FI", "GB", "GE", "GR", "HR", "HU", "IE", "IS", "IT", "LI",
       "LT", "LU", "LV", "MC", "MD", "ME", "MK", "MT", "NL", "NO", "PL", "PT",
-      "RO", "RS", "SE", "SI", "SK", "SM", "UA", "VA",
+      "RO", "RS", "SE", "SI", "SK", "SM", "UA", "VA", "XE", "XS", "XW",
     ],
   },
   america: {

@@ -6,6 +6,7 @@ import { getPostHref, isExternalPost } from "@/lib/post-links";
 import { Link } from "wouter";
 import { MapPin, ZoomIn, ZoomOut, RotateCcw, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { getAtlasCountryCode } from "@/lib/travel-countries";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 const atlasCountryNameAliases: Record<string, string[]> = {
@@ -33,7 +34,7 @@ export function WorldMap() {
   const outerRef = useRef<HTMLDivElement>(null);
 
   const visitedCountryCodes = useMemo(() => {
-    return new Set(trips.map(t => t.countryCode.toUpperCase()));
+    return new Set(trips.map((trip) => getAtlasCountryCode(trip.countryCode)));
   }, [trips]);
 
   const visitedCountryNames = useMemo(() => {
@@ -41,7 +42,7 @@ export function WorldMap() {
 
     return new Set(
       trips.flatMap((trip) => {
-        const code = trip.countryCode.toUpperCase();
+        const code = getAtlasCountryCode(trip.countryCode);
         const names = [regionNames.of(code), ...(atlasCountryNameAliases[code] ?? [])];
 
         return names

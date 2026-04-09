@@ -22,6 +22,7 @@ import { usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { useI18n } from "@/lib/i18n";
 import { getPostHref, isExternalPost } from "@/lib/post-links";
 import { blogPostTitleHoverClass } from "@/lib/post-title-hover";
+import { getCountryFlagEmoji } from "@/lib/travel-countries";
 import {
   getPostCountryCode,
   getPostTrip,
@@ -32,17 +33,6 @@ import { postMatchesKeyword } from "@/lib/travel-insights";
 import type { Post, Trip } from "@/lib/travel-types";
 
 const PAGE_SIZE = 6;
-
-function getFlagEmoji(code: string) {
-  if (!code || code.length !== 2) return "";
-
-  return String.fromCodePoint(
-    ...code
-      .toUpperCase()
-      .split("")
-      .map((char) => 127397 + char.charCodeAt(0)),
-  );
-}
 
 function buildCountryOptions(
   posts: Post[],
@@ -60,7 +50,7 @@ function buildCountryOptions(
   return Array.from(counts.entries())
     .map(([code, count]) => ({
       value: code,
-      label: `${getFlagEmoji(code)} ${countryName(code)}`,
+      label: `${getCountryFlagEmoji(code)} ${countryName(code)}`,
       count,
     }))
     .sort((left, right) => {
@@ -443,7 +433,7 @@ export default function PostsPage() {
                             onClick={() => setSingleCountryFilter(countryCode)}
                             className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-lightest)] px-2.5 py-1 text-foreground transition-colors hover:bg-[var(--color-primary-light)]"
                           >
-                            <span>{getFlagEmoji(countryCode)}</span>
+                            <span>{getCountryFlagEmoji(countryCode)}</span>
                             <span>{countryName(countryCode)}</span>
                           </button>
                         )}

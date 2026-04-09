@@ -9,6 +9,8 @@ export type TripAnalyticsPoint = {
   trip: Trip;
   distanceKm: number | null;
   durationDays: number;
+  nightCount: number;
+  nightEntriesByMonth: { year: number; month: number; nights: number }[];
 };
 
 function isCoordinatePair(
@@ -51,20 +53,143 @@ function haversineKm(from: Coordinates, to: Coordinates) {
   return 2 * earthRadiusKm * Math.asin(Math.sqrt(a));
 }
 
-export function getTripDurationDays(trip: Trip) {
+function getTripStartDate(trip: Trip) {
+  const date = new Date(trip.visitedAt);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getTripEndDateExclusive(trip: Trip) {
+  const start = getTripStartDate(trip);
+  if (!start) return null;
+
+  if (!trip.visitedUntil) {
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    return end;
+  }
+
+  const end = new Date(trip.visitedUntil);
+  if (Number.isNaN(end.getTime())) return null;
+  return end;
+}
+
+function getRawTripNightCount(trip: Trip) {
   if (!trip.visitedUntil) return 1;
 
   const start = new Date(trip.visitedAt);
   const end = new Date(trip.visitedUntil);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 1;
 
-  return Math.max(1, differenceInCalendarDays(end, start) + 1);
+  return Math.max(0, differenceInCalendarDays(end, start));
+}
+
+function getTripParentMap(trips: Trip[]) {
+  const parentByTripId = new Map<number, number | null>();
+
+  for (const trip of trips) {
+    const tripStart = getTripStartDate(trip);
+    const tripEnd = getTripEndDateExclusive(trip);
+    if (!tripStart || !tripEnd) {
+      parentByTripId.set(trip.id, null);
+      continue;
+    }
+
+    const parent = trips
+      .filter((candidate) => candidate.id !== trip.id)
+      .filter((candidate) => {
+        const candidateStart = getTripStartDate(candidate);
+        const candidateEnd = getTripEndDateExclusive(candidate);
+        if (!candidateStart || !candidateEnd) return false;
+
+        return (
+          candidateStart.getTime() <= tripStart.getTime() &&
+          candidateEnd.getTime() >= tripEnd.getTime()
+        );
+      })
+      .sort((left, right) => {
+        const leftSpan =
+          (getTripEndDateExclusive(left)?.getTime() ?? Number.MAX_SAFE_INTEGER) -
+          (getTripStartDate(left)?.getTime() ?? 0);
+        const rightSpan =
+          (getTripEndDateExclusive(right)?.getTime() ?? Number.MAX_SAFE_INTEGER) -
+          (getTripStartDate(right)?.getTime() ?? 0);
+        if (leftSpan !== rightSpan) return leftSpan - rightSpan;
+        return left.id - right.id;
+      })[0];
+
+    parentByTripId.set(trip.id, parent?.id ?? null);
+  }
+
+  return parentByTripId;
+}
+
+function buildCoveredNightSet(tripById: Map<number, Trip>, childIds: number[]) {
+  const coveredNights = new Set<number>();
+
+  for (const childId of childIds) {
+    const child = tripById.get(childId);
+    const start = child ? getTripStartDate(child) : null;
+    const endExclusive = child ? getTripEndDateExclusive(child) : null;
+    if (!start || !endExclusive) continue;
+
+    for (
+      let current = new Date(start);
+      current.getTime() < endExclusive.getTime();
+      current.setDate(current.getDate() + 1)
+    ) {
+      coveredNights.add(current.getTime());
+    }
+  }
+
+  return coveredNights;
+}
+
+function getAdjustedTripNightEntriesByMonth(
+  trip: Trip,
+  tripById: Map<number, Trip>,
+  childIdsByTripId: Map<number, number[]>,
+) {
+  const start = getTripStartDate(trip);
+  const endExclusive = getTripEndDateExclusive(trip);
+
+  if (!start || !endExclusive) return [];
+
+  const coveredNights = buildCoveredNightSet(tripById, childIdsByTripId.get(trip.id) ?? []);
+  const counts = new Map<string, { year: number; month: number; nights: number }>();
+
+  for (
+    let current = new Date(start);
+    current.getTime() < endExclusive.getTime();
+    current.setDate(current.getDate() + 1)
+  ) {
+    if (coveredNights.has(current.getTime())) continue;
+
+    const year = current.getFullYear();
+    const month = current.getMonth();
+    const key = `${year}-${month}`;
+    const entry = counts.get(key) ?? { year, month, nights: 0 };
+    entry.nights += 1;
+    counts.set(key, entry);
+  }
+
+  return Array.from(counts.values());
+}
+
+export function getTripDurationDays(trip: Trip, nightCount?: number) {
+  return Math.max(1, nightCount ?? getRawTripNightCount(trip));
 }
 
 export function computeStandaloneTripDistance(trip: Trip) {
   const coordinates = getTripCoordinates(trip);
   if (!coordinates) return null;
   return haversineKm(NICE_COORDINATES, coordinates) * 2;
+}
+
+function computeNestedTripDistance(trip: Trip, parentTrip: Trip) {
+  const origin = getTripCoordinates(parentTrip);
+  const destination = getTripCoordinates(trip);
+  if (!origin || !destination) return null;
+  return haversineKm(origin, destination) * 2;
 }
 
 export function computeJourneyDistance(journey: Journey, orderedTrips: Trip[]) {
@@ -141,8 +266,29 @@ export function getTripAnalyticsPoints(
   const distanceByTripId = new Map<number, number | null>();
   const groupedTrips = new Map<number, Trip[]>();
   const journeyById = new Map(journeys.map((journey) => [journey.id, journey]));
+  const tripById = new Map(trips.map((trip) => [trip.id, trip]));
+  const parentByTripId = getTripParentMap(trips);
+  const childIdsByTripId = new Map<number, number[]>();
 
   for (const trip of trips) {
+    const parentTripId = parentByTripId.get(trip.id);
+    if (parentTripId == null) continue;
+    const childIds = childIdsByTripId.get(parentTripId) ?? [];
+    childIds.push(trip.id);
+    childIdsByTripId.set(parentTripId, childIds);
+  }
+
+  for (const trip of trips) {
+    const parentTripId = parentByTripId.get(trip.id);
+    if (parentTripId != null) {
+      const parentTrip = tripById.get(parentTripId);
+      distanceByTripId.set(
+        trip.id,
+        parentTrip ? computeNestedTripDistance(trip, parentTrip) : null,
+      );
+      continue;
+    }
+
     if (trip.journeyId == null) {
       distanceByTripId.set(trip.id, computeStandaloneTripDistance(trip));
       continue;
@@ -177,9 +323,23 @@ export function getTripAnalyticsPoints(
     });
   }
 
-  return trips.map((trip) => ({
-    trip,
-    distanceKm: distanceByTripId.get(trip.id) ?? null,
-    durationDays: getTripDurationDays(trip),
-  }));
+  return trips.map((trip) => {
+    const nightEntriesByMonth = getAdjustedTripNightEntriesByMonth(
+      trip,
+      tripById,
+      childIdsByTripId,
+    );
+    const nightCount = nightEntriesByMonth.reduce(
+      (sum, entry) => sum + entry.nights,
+      0,
+    );
+
+    return {
+      trip,
+      distanceKm: distanceByTripId.get(trip.id) ?? null,
+      nightCount,
+      nightEntriesByMonth,
+      durationDays: getTripDurationDays(trip, nightCount),
+    };
+  });
 }
