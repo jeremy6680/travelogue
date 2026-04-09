@@ -35,7 +35,15 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
-import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -102,6 +110,14 @@ function getFacetOptions(values: string[][], locale: string) {
       if (right.count !== left.count) return right.count - left.count;
       return left.value.localeCompare(right.value, locale);
     });
+}
+
+function getDecadeStart(year: number) {
+  return Math.floor(year / 10) * 10;
+}
+
+function getDecadeLabel(startYear: number, locale: string) {
+  return locale === "fr" ? `${startYear}s` : `${startYear}s`;
 }
 
 export default function DataVizPage() {
@@ -245,7 +261,7 @@ export default function DataVizPage() {
 
         if (
           filterReason.length > 0 &&
-          !filterReason.every((reason) => trip.reasonForTravel.includes(reason))
+          !filterReason.some((reason) => trip.reasonForTravel.includes(reason))
         ) {
           return false;
         }
@@ -292,13 +308,14 @@ export default function DataVizPage() {
       { year: number; totalKg: number; modes: Map<string, number> }
     >();
     const companionCounts = new Map<string, number>();
+    const companionDistance = new Map<string, { name: string; distanceKm: number; trips: number }>();
     const continentStats = new Map<
       string,
       { continent: string; trips: number; distanceKm: number }
     >();
-    const accommodationByYear = new Map<
+    const accommodationByPeriod = new Map<
       number,
-      { year: number; total: number; counts: Map<string, number> }
+      { periodStart: number; label: string; total: number; counts: Map<string, number> }
     >();
     const reasonStats = new Map<
       string,
@@ -317,6 +334,14 @@ export default function DataVizPage() {
     const continentNightStats = new Map<
       string,
       { continent: string; nights: number }
+    >();
+    const nightsByCountry = new Map<
+      string,
+      { countryCode: string; nights: number; trips: number }
+    >();
+    const transportByCountry = new Map<
+      string,
+      { countryCode: string; total: number; modes: Map<string, number> }
     >();
     const yearlyDistance = new Map<
       number,
@@ -341,6 +366,8 @@ export default function DataVizPage() {
       const postsCount = postsByTripId.get(trip.id) ?? 0;
       const continentKey = getContinentKey(trip.countryCode) ?? "other";
       const nights = getTripNightCount(trip);
+      const countryCode = trip.countryCode.toUpperCase();
+      const periodStart = getDecadeStart(year);
 
       const yearEntry = yearlyDistance.get(year) ?? {
         year,
@@ -404,26 +431,62 @@ export default function DataVizPage() {
 
       for (const companion of new Set(trip.travelCompanions)) {
         companionCounts.set(companion, (companionCounts.get(companion) ?? 0) + 1);
+        const companionEntry = companionDistance.get(companion) ?? {
+          name: companion,
+          distanceKm: 0,
+          trips: 0,
+        };
+        companionEntry.trips += 1;
+        if (distanceKm != null) {
+          companionEntry.distanceKm += distanceKm;
+        }
+        companionDistance.set(companion, companionEntry);
       }
+
+      const countryNightEntry = nightsByCountry.get(countryCode) ?? {
+        countryCode,
+        nights: 0,
+        trips: 0,
+      };
+      countryNightEntry.nights += nights;
+      countryNightEntry.trips += 1;
+      nightsByCountry.set(countryCode, countryNightEntry);
 
       const uniqueAccomodations = [...new Set(trip.accomodation.filter(Boolean))];
       if (uniqueAccomodations.length > 0) {
-        const yearEntry = accommodationByYear.get(year) ?? {
-          year,
+        const periodEntry = accommodationByPeriod.get(periodStart) ?? {
+          periodStart,
+          label: getDecadeLabel(periodStart, locale),
           total: 0,
           counts: new Map<string, number>(),
         };
-        yearEntry.total += 1;
+        periodEntry.total += 1;
         for (const accomodation of uniqueAccomodations) {
-          yearEntry.counts.set(
+          periodEntry.counts.set(
             accomodation,
-            (yearEntry.counts.get(accomodation) ?? 0) + 1,
+            (periodEntry.counts.get(accomodation) ?? 0) + 1,
           );
         }
-        accommodationByYear.set(year, yearEntry);
+        accommodationByPeriod.set(periodStart, periodEntry);
       }
 
       const travelModes = [...new Set(trip.transportationTo.filter(Boolean))];
+      if (travelModes.length > 0) {
+        const countryTransportEntry = transportByCountry.get(countryCode) ?? {
+          countryCode,
+          total: 0,
+          modes: new Map<string, number>(),
+        };
+        countryTransportEntry.total += 1;
+        for (const mode of travelModes) {
+          countryTransportEntry.modes.set(
+            mode,
+            (countryTransportEntry.modes.get(mode) ?? 0) + 1,
+          );
+        }
+        transportByCountry.set(countryCode, countryTransportEntry);
+      }
+
       let tripCarbonKg = 0;
       if (distanceKm != null && travelModes.length > 0) {
         const share = distanceKm / travelModes.length;
@@ -487,7 +550,7 @@ export default function DataVizPage() {
       (left, right) => left.year - right.year,
     );
     const nightsByZoneRows = Array.from(nightsByZone.values()).sort(
-      (left, right) => left.year - right.year,
+      (left, right) => right.year - left.year,
     );
     const transportDistanceRows = Array.from(transportDistance.values())
       .sort((left, right) => right.distanceKm - left.distanceKm)
@@ -526,9 +589,12 @@ export default function DataVizPage() {
       .map(([name, tripsCount]) => ({ name, tripsCount }))
       .sort((left, right) => right.tripsCount - left.tripsCount)
       .slice(0, 8);
+    const companionDistanceRows = Array.from(companionDistance.values()).sort(
+      (left, right) => right.distanceKm - left.distanceKm,
+    );
     const accommodationKeys = Array.from(
       new Set(
-        Array.from(accommodationByYear.values()).flatMap((entry) =>
+        Array.from(accommodationByPeriod.values()).flatMap((entry) =>
           Array.from(entry.counts.keys()),
         ),
       ),
@@ -538,16 +604,51 @@ export default function DataVizPage() {
         locale,
       ),
     );
-    const accommodationRows = Array.from(accommodationByYear.values())
-      .sort((left, right) => left.year - right.year)
+    const accommodationRows = Array.from(accommodationByPeriod.values())
+      .sort((left, right) => left.periodStart - right.periodStart)
       .map((entry) => {
         const row: Record<string, number | string> = {
-          year: entry.year,
+          period: entry.label,
+          tripCount: entry.total,
         };
         for (const key of accommodationKeys) {
           const count = entry.counts.get(key) ?? 0;
           row[key] = entry.total > 0 ? Number(((count / entry.total) * 100).toFixed(1)) : 0;
         }
+        return row;
+      });
+    const nightsByCountryRows = Array.from(nightsByCountry.values())
+      .sort((left, right) => right.nights - left.nights)
+      .map((row, index) => ({
+        ...row,
+        rank: index + 1,
+        country: countryName(row.countryCode),
+      }));
+    const transportCountryModes = Array.from(
+      new Set(
+        Array.from(transportByCountry.values()).flatMap((entry) =>
+          Array.from(entry.modes.keys()),
+        ),
+      ),
+    ).sort((left, right) =>
+      formatTransportLabel(left, locale).localeCompare(
+        formatTransportLabel(right, locale),
+        locale,
+      ),
+    );
+    const transportByCountryRows = Array.from(transportByCountry.values())
+      .sort((left, right) => right.total - left.total)
+      .map((entry) => {
+        const row: Record<string, number | string> = {
+          countryCode: entry.countryCode,
+          country: countryName(entry.countryCode),
+          total: entry.total,
+        };
+
+        for (const mode of transportCountryModes) {
+          row[mode] = entry.modes.get(mode) ?? 0;
+        }
+
         return row;
       });
     const continentRows = Array.from(continentStats.values())
@@ -630,8 +731,12 @@ export default function DataVizPage() {
       carbonModes,
       carbonRows,
       companionRows,
+      companionDistanceRows,
       accommodationKeys,
       accommodationRows,
+      nightsByCountryRows,
+      transportCountryModes,
+      transportByCountryRows,
       continentRows,
       continentNightRows,
       reasonRows,
@@ -687,6 +792,16 @@ export default function DataVizPage() {
     ]),
   );
 
+  const transportByCountryConfig = Object.fromEntries(
+    analytics.transportCountryModes.map((mode, index) => [
+      mode,
+      {
+        label: formatTransportLabel(mode, locale),
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      },
+    ]),
+  );
+
   const reasonConfig = {
     averageDistanceKm: {
       label: t("datavizDistanceAverage"),
@@ -729,6 +844,12 @@ export default function DataVizPage() {
 
   const formatRoundedKm = (value: number) =>
     formatDistanceWithDots(value);
+
+  const formatPercent = (value: number) =>
+    `${Number(value).toLocaleString(numberLocale, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1,
+    })}%`;
 
   const formatCarbonLabel = (valueKg: number) => {
     if (valueKg >= 1000) {
@@ -773,6 +894,22 @@ export default function DataVizPage() {
     return 0;
   };
 
+  const getAccommodationSegmentRadius = (
+    row: Record<string, number | string>,
+    key: string,
+  ) => {
+    const visibleKeys = analytics.accommodationKeys.filter(
+      (currentKey) => Number(row[currentKey] ?? 0) > 0,
+    );
+    const lastKey = visibleKeys[visibleKeys.length - 1];
+
+    if (!lastKey || Number(row[key] ?? 0) <= 0) {
+      return 0;
+    }
+
+    return lastKey === key ? ([0, 6, 6, 0] as const) : 0;
+  };
+
   const renderNightSegment =
     (key: "franceNights" | "europeNights" | "worldNights") =>
     (props: {
@@ -786,6 +923,24 @@ export default function DataVizPage() {
       <Rectangle
         {...props}
         radius={getStackedNightRadius(props.payload, key) as
+          | number
+          | [number, number, number, number]}
+      />
+    );
+
+  const renderAccommodationSegment =
+    (key: string) =>
+    (props: {
+      payload: Record<string, number | string>;
+      x?: number;
+      y?: number;
+      width?: number;
+      height?: number;
+      fill?: string;
+    }) => (
+      <Rectangle
+        {...props}
+        radius={getAccommodationSegmentRadius(props.payload, key) as
           | number
           | [number, number, number, number]}
       />
@@ -960,6 +1115,10 @@ export default function DataVizPage() {
             onChange={setFilterReason}
             className="w-36"
           />
+
+          <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+            {locale === "fr" ? "Raisons : filtre en OU" : "Reasons: OR filter"}
+          </span>
 
           <MultiSelectFilter
             label={locale === "fr" ? "Transports" : "Transport"}
@@ -1279,6 +1438,68 @@ export default function DataVizPage() {
 
           <Card className="border-border/60">
             <CardHeader>
+              <CardTitle>
+                {locale === "fr"
+                  ? "Kilomètres parcourus avec chaque compagnon"
+                  : "Kilometers traveled with each companion"}
+              </CardTitle>
+              <CardDescription>
+                {locale === "fr"
+                  ? "Distance cumulée des voyages partagés avec chaque compagnon."
+                  : "Cumulative distance of trips shared with each travel companion."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.companionDistanceRows.length > 0 ? (
+                <ChartContainer
+                  config={{ distanceKm: { label: t("datavizDistanceSeries"), color: "#7c3aed" } }}
+                  className="h-[360px] w-full aspect-auto"
+                >
+                  <BarChart
+                    data={analytics.companionDistanceRows}
+                    layout="vertical"
+                    margin={{ left: 12, right: 16 }}
+                  >
+                    <CartesianGrid horizontal={false} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tickLine={false}
+                      axisLine={false}
+                      width={90}
+                    />
+                    <XAxis type="number" tickLine={false} axisLine={false} />
+                    <ChartTooltip
+                      cursor={false}
+                      content={
+                        <ChartTooltipContent
+                          hideLabel
+                          formatter={(value) => (
+                            <>
+                              <span className="text-muted-foreground">
+                                {t("datavizDistanceSeries")} :
+                              </span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {formatRoundedKm(Number(value))}
+                              </span>
+                            </>
+                          )}
+                        />
+                      }
+                    />
+                    <Bar dataKey="distanceKm" fill="#7c3aed" radius={8} />
+                  </BarChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-2">
+          <Card className="border-border/60">
+            <CardHeader>
               <CardTitle>{t("datavizContinentsNoFrance")}</CardTitle>
               <CardDescription>{t("datavizContinentsDesc")}</CardDescription>
             </CardHeader>
@@ -1313,9 +1534,70 @@ export default function DataVizPage() {
               )}
             </CardContent>
           </Card>
+
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>
+                {locale === "fr"
+                  ? "Nuits par continent hors France"
+                  : "Nights by continent outside France"}
+              </CardTitle>
+              <CardDescription>
+                {locale === "fr"
+                  ? "Répartition des nuits passées en déplacement, agrégées par continent et hors France."
+                  : "Distribution of travel nights aggregated by continent, excluding France."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.continentNightRows.length > 0 ? (
+                <ChartContainer
+                  config={continentNightConfig}
+                  className="h-[360px] w-full aspect-auto"
+                >
+                  <PieChart>
+                    <Pie
+                      data={analytics.continentNightRows}
+                      dataKey="nights"
+                      nameKey="continent"
+                      innerRadius={72}
+                      outerRadius={108}
+                      paddingAngle={3}
+                    >
+                      {analytics.continentNightRows.map((row, index) => (
+                        <Cell
+                          key={row.continent}
+                          fill={CHART_COLORS[index % CHART_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          nameKey="continent"
+                          formatter={(value) => (
+                            <>
+                              <span className="text-muted-foreground">
+                                {locale === "fr" ? "Nuits :" : "Nights:"}
+                              </span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {Math.round(Number(value)).toLocaleString(numberLocale)}
+                              </span>
+                            </>
+                          )}
+                        />
+                      }
+                    />
+                    <ChartLegend content={<ChartLegendContent nameKey="continent" />} />
+                  </PieChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
+              )}
+            </CardContent>
+          </Card>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-2">
+        <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <Card className="border-border/60">
             <CardHeader>
               <CardTitle>
@@ -1405,59 +1687,62 @@ export default function DataVizPage() {
 
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>
-                {locale === "fr"
-                  ? "Nuits par continent hors France"
-                  : "Nights by continent outside France"}
+              <CardTitle className="flex items-center gap-2">
+                <Grid3X3 className="h-4 w-4 text-primary" />
+                {t("datavizHeatmap")}
               </CardTitle>
               <CardDescription>
                 {locale === "fr"
-                  ? "Répartition des nuits passées en déplacement, agrégées par continent et hors France."
-                  : "Distribution of travel nights aggregated by continent, excluding France."}
+                  ? "Nombre de nuits en déplacement par mois et par année, avec répartition sur les mois traversés."
+                  : "Number of travel nights by month and year, split across the months actually crossed."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {analytics.continentNightRows.length > 0 ? (
-                <ChartContainer
-                  config={continentNightConfig}
-                  className="h-[360px] w-full aspect-auto"
-                >
-                  <PieChart>
-                    <Pie
-                      data={analytics.continentNightRows}
-                      dataKey="nights"
-                      nameKey="continent"
-                      innerRadius={72}
-                      outerRadius={108}
-                      paddingAngle={3}
-                    >
-                      {analytics.continentNightRows.map((row, index) => (
-                        <Cell
-                          key={row.continent}
-                          fill={CHART_COLORS[index % CHART_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <ChartTooltip
-                      content={
-                        <ChartTooltipContent
-                          nameKey="continent"
-                          formatter={(value) => (
-                            <>
-                              <span className="text-muted-foreground">
-                                {locale === "fr" ? "Nuits :" : "Nights:"}
-                              </span>
-                              <span className="font-mono font-medium tabular-nums text-foreground">
-                                {Math.round(Number(value)).toLocaleString(numberLocale)}
-                              </span>
-                            </>
-                          )}
-                        />
-                      }
-                    />
-                    <ChartLegend content={<ChartLegendContent nameKey="continent" />} />
-                  </PieChart>
-                </ChartContainer>
+              {analytics.heatmapRows.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-[auto_repeat(12,minmax(0,1fr))_minmax(2.75rem,max-content)] gap-2 text-xs">
+                    <div />
+                    {MONTHS.map((month) => (
+                      <div key={month} className="text-center text-muted-foreground">
+                        {formatDate(new Date(Date.UTC(2024, month, 1)), "monthYear").slice(0, 3)}
+                      </div>
+                    ))}
+                    <div className="text-center text-muted-foreground">
+                      {locale === "fr" ? "Total" : "Total"}
+                    </div>
+                    {analytics.heatmapRows.map((row) => (
+                      <div key={row.year} className="contents">
+                        <div className="pr-2 text-sm font-medium text-foreground">
+                          {row.year}
+                        </div>
+                        {row.months.map((month) => (
+                          <div
+                            key={`${row.year}-${month.month}`}
+                            className={`flex aspect-square items-center justify-center rounded-md text-xs font-semibold transition-colors ${getHeatmapIntensity(
+                              month.count,
+                              analytics.maxHeatmapCount,
+                            )}`}
+                            title={`${row.year} · ${month.label} · ${month.count.toLocaleString(
+                              numberLocale,
+                            )} ${locale === "fr" ? "nuits" : "nights"}`}
+                          >
+                            {month.count > 0 ? month.count : ""}
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-center rounded-md bg-primary/10 px-2 text-xs font-semibold text-foreground">
+                          {row.months
+                            .reduce((sum, month) => sum + month.count, 0)
+                            .toLocaleString(numberLocale)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {locale === "fr"
+                      ? "Plus la case est dense, plus le mois concentre de nuits en déplacement."
+                      : "Darker cells indicate months with more travel nights."}
+                  </p>
+                </div>
               ) : (
                 <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
               )}
@@ -1477,19 +1762,28 @@ export default function DataVizPage() {
                   config={accommodationConfig}
                   className="h-[360px] w-full aspect-auto"
                 >
-                  <AreaChart
+                  <BarChart
                     data={analytics.accommodationRows}
-                    stackOffset="expand"
-                    margin={{ left: 12, right: 12 }}
+                    layout="vertical"
+                    margin={{ left: 12, right: 16 }}
                   >
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="year" tickLine={false} axisLine={false} />
+                    <CartesianGrid horizontal={false} />
                     <YAxis
+                      type="category"
+                      dataKey="period"
                       tickLine={false}
                       axisLine={false}
+                      width={68}
+                    />
+                    <XAxis
+                      type="number"
+                      tickLine={false}
+                      axisLine={false}
+                      domain={[0, 100]}
                       tickFormatter={(value) => `${Math.round(Number(value))}%`}
                     />
                     <ChartTooltip
+                      cursor={false}
                       content={
                         <ChartTooltipContent
                           formatter={(value, name) => (
@@ -1498,11 +1792,7 @@ export default function DataVizPage() {
                                 {formatAccomodationLabel(String(name), locale)} :
                               </span>
                               <span className="font-mono font-medium tabular-nums text-foreground">
-                                {Number(value).toLocaleString(numberLocale, {
-                                  minimumFractionDigits: 0,
-                                  maximumFractionDigits: 1,
-                                })}
-                                %
+                                {formatPercent(Number(value))}
                               </span>
                             </>
                           )}
@@ -1511,17 +1801,15 @@ export default function DataVizPage() {
                     />
                     <ChartLegend content={<ChartLegendContent />} />
                     {analytics.accommodationKeys.map((key, index) => (
-                      <Area
+                      <Bar
                         key={key}
-                        type="monotone"
                         dataKey={key}
                         stackId="accommodation"
-                        stroke={CHART_COLORS[index % CHART_COLORS.length]}
                         fill={CHART_COLORS[index % CHART_COLORS.length]}
-                        fillOpacity={0.45}
+                        shape={renderAccommodationSegment(key)}
                       />
                     ))}
-                  </AreaChart>
+                  </BarChart>
                 </ChartContainer>
               ) : (
                 <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
@@ -1615,7 +1903,7 @@ export default function DataVizPage() {
           </Card>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.35fr_1.15fr]">
+        <section className="grid gap-6">
           <Card className="border-border/60">
             <CardHeader>
               <CardTitle>{t("datavizScatter")}</CardTitle>
@@ -1687,65 +1975,125 @@ export default function DataVizPage() {
               )}
             </CardContent>
           </Card>
+        </section>
 
+        <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Grid3X3 className="h-4 w-4 text-primary" />
-                {t("datavizHeatmap")}
+              <CardTitle>
+                {locale === "fr" ? "Nuits par pays" : "Nights by country"}
               </CardTitle>
               <CardDescription>
                 {locale === "fr"
-                  ? "Nombre de nuits en déplacement par mois et par année, avec répartition sur les mois traversés."
-                  : "Number of travel nights by month and year, split across the months actually crossed."}
+                  ? "Classement complet des nuits passées dans chaque pays, sur la sélection en cours."
+                  : "Full ranking of nights spent in each country for the current selection."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {analytics.heatmapRows.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-[auto_repeat(12,minmax(0,1fr))_minmax(2.75rem,max-content)] gap-2 text-xs">
-                    <div />
-                    {MONTHS.map((month) => (
-                      <div key={month} className="text-center text-muted-foreground">
-                        {formatDate(new Date(Date.UTC(2024, month, 1)), "monthYear").slice(0, 3)}
-                      </div>
-                    ))}
-                    <div className="text-center text-muted-foreground">
-                      {locale === "fr" ? "Total" : "Total"}
-                    </div>
-                    {analytics.heatmapRows.map((row) => (
-                      <div key={row.year} className="contents">
-                        <div className="pr-2 text-sm font-medium text-foreground">
-                          {row.year}
-                        </div>
-                        {row.months.map((month) => (
-                          <div
-                            key={`${row.year}-${month.month}`}
-                            className={`flex aspect-square items-center justify-center rounded-md text-xs font-semibold transition-colors ${getHeatmapIntensity(
-                              month.count,
-                              analytics.maxHeatmapCount,
-                            )}`}
-                            title={`${row.year} · ${month.label} · ${month.count.toLocaleString(
-                              numberLocale,
-                            )} ${locale === "fr" ? "nuits" : "nights"}`}
-                          >
-                            {month.count > 0 ? month.count : ""}
-                          </div>
-                        ))}
-                        <div className="flex items-center justify-center rounded-md bg-primary/10 px-2 text-xs font-semibold text-foreground">
-                          {row.months
-                            .reduce((sum, month) => sum + month.count, 0)
-                            .toLocaleString(numberLocale)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {locale === "fr"
-                      ? "Plus la case est dense, plus le mois concentre de nuits en déplacement."
-                      : "Darker cells indicate months with more travel nights."}
-                  </p>
-                </div>
+              {analytics.nightsByCountryRows.length > 0 ? (
+                <ScrollArea className="h-[420px] pr-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">#</TableHead>
+                        <TableHead>{locale === "fr" ? "Pays" : "Country"}</TableHead>
+                        <TableHead className="text-right">
+                          {locale === "fr" ? "Nuits" : "Nights"}
+                        </TableHead>
+                        <TableHead className="text-right">
+                          {locale === "fr" ? "Voyages" : "Trips"}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {analytics.nightsByCountryRows.map((row) => (
+                        <TableRow key={row.countryCode}>
+                          <TableCell className="text-muted-foreground">{row.rank}</TableCell>
+                          <TableCell className="font-medium text-foreground">
+                            {row.country}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums">
+                            {row.nights.toLocaleString(numberLocale)}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums">
+                            {row.trips.toLocaleString(numberLocale)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>
+                {locale === "fr"
+                  ? "Transport pour aller dans chaque pays"
+                  : "Transport used to reach each country"}
+              </CardTitle>
+              <CardDescription>
+                {locale === "fr"
+                  ? "Nombre de fois où chaque mode a été utilisé pour rejoindre chaque pays."
+                  : "How many times each mode was used to reach each country."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.transportByCountryRows.length > 0 ? (
+                <ScrollArea className="h-[420px] pr-4">
+                  <ChartContainer
+                    config={transportByCountryConfig}
+                    style={{
+                      height: `${Math.max(340, analytics.transportByCountryRows.length * 42)}px`,
+                    }}
+                    className="w-full aspect-auto"
+                  >
+                    <BarChart
+                      data={analytics.transportByCountryRows}
+                      layout="vertical"
+                      margin={{ left: 12, right: 16 }}
+                    >
+                      <CartesianGrid horizontal={false} />
+                      <YAxis
+                        type="category"
+                        dataKey="country"
+                        tickLine={false}
+                        axisLine={false}
+                        width={120}
+                      />
+                      <XAxis type="number" tickLine={false} axisLine={false} />
+                      <ChartTooltip
+                        content={
+                          <ChartTooltipContent
+                            formatter={(value, name) => (
+                              <>
+                                <span className="text-muted-foreground">
+                                  {formatTransportLabel(String(name), locale)} :
+                                </span>
+                                <span className="font-mono font-medium tabular-nums text-foreground">
+                                  {Number(value).toLocaleString(numberLocale)}
+                                </span>
+                              </>
+                            )}
+                          />
+                        }
+                      />
+                      <ChartLegend content={<ChartLegendContent />} />
+                      {analytics.transportCountryModes.map((mode, index) => (
+                        <Bar
+                          key={mode}
+                          dataKey={mode}
+                          stackId="transport-country"
+                          fill={CHART_COLORS[index % CHART_COLORS.length]}
+                        />
+                      ))}
+                    </BarChart>
+                  </ChartContainer>
+                </ScrollArea>
               ) : (
                 <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
               )}

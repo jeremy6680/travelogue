@@ -133,7 +133,7 @@ const messages = {
       "Part des voyages par continent, avec le volume de déplacements associé.",
     datavizAccommodationShare: "Hébergement dans le temps",
     datavizAccommodationShareDesc:
-      "Part de chaque type d'hébergement par année, pour visualiser les bascules d'usage dans le temps.",
+      "Part de chaque type d'hébergement par décennie, pour comparer plus clairement les grandes évolutions d'usage.",
     datavizReasons: "Raisons du voyage",
     datavizReasonsDesc:
       "Comparaison des raisons de départ selon la distance moyenne parcourue et la durée moyenne des séjours.",
@@ -271,7 +271,7 @@ const messages = {
       "Share of trips by continent, along with their associated travel volume.",
     datavizAccommodationShare: "Accommodation over time",
     datavizAccommodationShareDesc:
-      "Share of each accommodation type by year to make usage shifts visible over time.",
+      "Share of each accommodation type by decade to make long-term shifts easier to compare.",
     datavizReasons: "Reasons for travel",
     datavizReasonsDesc:
       "A comparison of travel reasons against average distance traveled and average trip duration.",
