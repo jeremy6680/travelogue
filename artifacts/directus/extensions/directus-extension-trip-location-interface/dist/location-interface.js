@@ -111,19 +111,13 @@ export default {
 
     const buildTripGeocodeQuery = (visitedCities) => {
       const firstCity = getFirstVisitedCity(visitedCities);
-      const tripName = getSiblingValue("name");
       const countryCode = getSiblingValue("country_code");
-      const context = tripName || countryCode;
-
-      if (firstCity && context) {
-        return `${firstCity}, ${context}`;
-      }
-
-      return firstCity || context;
+      return firstCity || countryCode;
     };
 
     const geocodeInBackground = debounce(async (rawVisitedCities) => {
       const geocodeQuery = buildTripGeocodeQuery(rawVisitedCities);
+      const countryCode = getSiblingValue("country_code");
 
       if (!geocodeQuery) {
         status.value = "";
@@ -140,7 +134,7 @@ export default {
 
       try {
         const response = await api.get("/location-geocode", {
-          params: { q: geocodeQuery },
+          params: { q: geocodeQuery, countryCode },
         });
 
         const coordinates = response?.data?.data ?? null;

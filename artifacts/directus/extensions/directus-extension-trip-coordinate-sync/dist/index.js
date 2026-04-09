@@ -19,6 +19,11 @@ function normalizeValue(value) {
   return isEmptyString(value) ? "" : String(value).trim();
 }
 
+function normalizeCountryCode(countryCode) {
+  const normalized = String(countryCode ?? "").trim().toLowerCase();
+  return /^[a-z]{2}$/.test(normalized) ? normalized : "";
+}
+
 function getFirstVisitedCity(value) {
   if (isEmptyString(value)) return "";
 
@@ -28,19 +33,13 @@ function getFirstVisitedCity(value) {
     .find(Boolean) ?? "";
 }
 
-function buildGeocodeQuery({ visitedCities, name, countryCode }) {
+function buildGeocodeQuery({ visitedCities, countryCode }) {
   const firstCity = getFirstVisitedCity(visitedCities);
-  const countryOrTripName = normalizeValue(name) || normalizeValue(countryCode);
+  const normalizedCountryCode = normalizeValue(countryCode);
 
-  if (firstCity && countryOrTripName) {
-    return `${firstCity}, ${countryOrTripName}`;
-  }
-
-  if (firstCity) {
-    return firstCity;
-  }
-
-  return countryOrTripName;
+  if (firstCity) return firstCity;
+  if (normalizedCountryCode) return normalizedCountryCode;
+  return "";
 }
 
 async function getExistingTrip(database, keys) {
@@ -55,18 +54,23 @@ async function getExistingTrip(database, keys) {
   return trip ?? null;
 }
 
-async function geocodeLocation(location) {
+async function geocodeLocation(location, countryCode) {
   const query = String(location).trim();
   if (!query) return null;
+  const normalizedCountryCode = normalizeCountryCode(countryCode);
+  const cacheKey = normalizedCountryCode ? `${query}::${normalizedCountryCode}` : query;
 
-  if (geocodeCache.has(query)) {
-    return geocodeCache.get(query);
+  if (geocodeCache.has(cacheKey)) {
+    return geocodeCache.get(cacheKey);
   }
 
   const url = new URL(GEOCODER_URL);
   url.searchParams.set("q", query);
   url.searchParams.set("format", "jsonv2");
   url.searchParams.set("limit", "1");
+  if (normalizedCountryCode) {
+    url.searchParams.set("countrycodes", normalizedCountryCode);
+  }
 
   const response = await fetch(url, {
     headers: {
@@ -89,7 +93,7 @@ async function geocodeLocation(location) {
       }
     : null;
 
-  geocodeCache.set(query, coordinates);
+  geocodeCache.set(cacheKey, coordinates);
   return coordinates;
 }
 
@@ -99,7 +103,6 @@ async function applyCoordinatesFromTrip(payload, database, keys) {
   }
 
   const existingTrip = keys ? await getExistingTrip(database, keys) : null;
-  const effectiveName = !isEmptyString(payload.name) ? payload.name : existingTrip?.name;
   const effectiveCountryCode = !isEmptyString(payload.country_code)
     ? payload.country_code
     : existingTrip?.country_code;
@@ -109,7 +112,6 @@ async function applyCoordinatesFromTrip(payload, database, keys) {
 
   const effectiveQuery = buildGeocodeQuery({
     visitedCities: effectiveVisitedCities,
-    name: effectiveName,
     countryCode: effectiveCountryCode,
   });
 
@@ -120,7 +122,6 @@ async function applyCoordinatesFromTrip(payload, database, keys) {
   const previousQuery = existingTrip
     ? buildGeocodeQuery({
         visitedCities: existingTrip.visited_cities,
-        name: existingTrip.name,
         countryCode: existingTrip.country_code,
       })
     : "";
@@ -144,7 +145,7 @@ async function applyCoordinatesFromTrip(payload, database, keys) {
     return payload;
   }
 
-  const geocoded = await geocodeLocation(effectiveQuery);
+  const geocoded = await geocodeLocation(effectiveQuery, effectiveCountryCode);
   if (!geocoded) {
     return payload;
   }
