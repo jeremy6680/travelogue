@@ -37,12 +37,11 @@ import { cn } from "@/lib/utils";
 import { computeJourneyDistance, computeJourneyTripDistance, getTripAnalyticsPoints } from "@/lib/travel-analytics";
 import {
   formatAccomodationLabels,
+  formatTripContextLabel,
   formatTripContextLabels,
   formatTravelReasonLabel,
-  formatTransportLabel,
   formatTransportLabels,
   getContinentKey,
-  sortTransportValues,
 } from "@/lib/trip-options";
 import { getTripCities, tripMatchesKeyword } from "@/lib/travel-insights";
 function formatLengthOfStay(
@@ -447,7 +446,7 @@ interface FiltersPanelProps {
   sortOrder: "newest" | "oldest";
   filterTrip: string[];
   filterRegion: string[];
-  filterTransport: string[];
+  filterTripContext: string[];
   filterCompanion: string[];
   filterReason: string[];
   filterYear: string[];
@@ -455,14 +454,14 @@ interface FiltersPanelProps {
   searchQuery: string;
   tripCountryOptions: TripCountryOption[];
   regionOptions: RegionOption[];
-  transportOptions: string[];
+  tripContextOptions: FacetOption[];
   companionOptions: FacetOption[];
   reasonOptions: FacetOption[];
   yearOptions: YearOption[];
   cityOptions: FacetOption[];
   onTripChange: (value: string[]) => void;
   onRegionChange: (value: string[]) => void;
-  onTransportChange: (value: string[]) => void;
+  onTripContextChange: (value: string[]) => void;
   onCompanionChange: (value: string[]) => void;
   onReasonChange: (value: string[]) => void;
   onYearChange: (value: string[]) => void;
@@ -470,7 +469,6 @@ interface FiltersPanelProps {
   onSearchChange: (value: string) => void;
   onSortToggle: () => void;
   onClear: () => void;
-  formatTransport: (value: string) => string;
   t: ReturnType<typeof useI18n>["t"];
 }
 
@@ -481,7 +479,7 @@ function FiltersPanel({
   sortOrder,
   filterTrip,
   filterRegion,
-  filterTransport,
+  filterTripContext,
   filterCompanion,
   filterReason,
   filterYear,
@@ -489,14 +487,14 @@ function FiltersPanel({
   searchQuery,
   tripCountryOptions,
   regionOptions,
-  transportOptions,
+  tripContextOptions,
   companionOptions,
   reasonOptions,
   yearOptions,
   cityOptions,
   onTripChange,
   onRegionChange,
-  onTransportChange,
+  onTripContextChange,
   onCompanionChange,
   onReasonChange,
   onYearChange,
@@ -504,13 +502,12 @@ function FiltersPanel({
   onSearchChange,
   onSortToggle,
   onClear,
-  formatTransport,
   t,
 }: FiltersPanelProps) {
   const hasActiveFilters =
     filterTrip.length > 0 ||
     filterRegion.length > 0 ||
-    filterTransport.length > 0 ||
+    filterTripContext.length > 0 ||
     filterCompanion.length > 0 ||
     filterReason.length > 0 ||
     filterYear.length > 0 ||
@@ -674,6 +671,34 @@ function FiltersPanel({
           </div>
         )}
 
+        {tripContextOptions.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+              {locale === "fr" ? "Contexte" : "Context"}
+            </p>
+            <MultiSelectFilter
+              label={locale === "fr" ? "Contexte" : "Context"}
+              placeholder={locale === "fr" ? "Contexte" : "Context"}
+              options={tripContextOptions.map((option) => ({
+                value: option.value,
+                label: (
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{formatTripContextLabel(option.value, locale)}</span>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                      {option.count}
+                    </span>
+                  </span>
+                ),
+                triggerLabel: formatTripContextLabel(option.value, locale),
+              }))}
+              selectedValues={filterTripContext}
+              onChange={onTripContextChange}
+              className="w-full"
+              data-testid="select-filter-context"
+            />
+          </div>
+        )}
+
         {companionOptions.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
@@ -730,27 +755,6 @@ function FiltersPanel({
           </div>
         )}
 
-        {transportOptions.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
-              Transport
-            </p>
-            <MultiSelectFilter
-              label="Transport"
-              placeholder={t("allTransport")}
-              options={transportOptions.map((transport) => ({
-                value: transport,
-                label: <span>{formatTransport(transport)}</span>,
-                triggerLabel: formatTransport(transport),
-              }))}
-              selectedValues={filterTransport}
-              onChange={onTransportChange}
-              className="w-full"
-              data-testid="select-filter-transport"
-            />
-          </div>
-        )}
-
         <div className="space-y-2">
           <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
             {locale === "fr" ? "Recherche" : "Search"}
@@ -790,7 +794,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const { data: posts = [] } = usePostsQuery();
   const [filterTrip, setFilterTrip] = useState<string[]>([]);
   const [filterRegion, setFilterRegion] = useState<string[]>([]);
-  const [filterTransport, setFilterTransport] = useState<string[]>([]);
+  const [filterTripContext, setFilterTripContext] = useState<string[]>([]);
   const [filterCompanion, setFilterCompanion] = useState<string[]>([]);
   const [filterReason, setFilterReason] = useState<string[]>([]);
   const [filterYear, setFilterYear] = useState<string[]>([]);
@@ -804,16 +808,6 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const desktopSidebarSlotRef = useRef<HTMLElement | null>(null);
   const desktopSidebarPanelRef = useRef<HTMLDivElement | null>(null);
   const timelineListRef = useRef<HTMLDivElement | null>(null);
-
-  const transportOptions = useMemo(() => {
-    const modes = new Set<string>();
-    for (const trip of trips) {
-      for (const mode of [...trip.transportationTo, ...trip.transportationOnSite]) {
-        modes.add(mode);
-      }
-    }
-    return sortTransportValues(Array.from(modes), i18n.locale);
-  }, [i18n.locale, trips]);
 
   const yearOptions = useMemo(() => {
     const counts = new Map<string, number>();
@@ -840,6 +834,11 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
 
   const companionOptions = useMemo(
     () => getFacetOptions(trips.map((trip) => trip.travelCompanions), locale),
+    [locale, trips],
+  );
+
+  const tripContextOptions = useMemo(
+    () => getFacetOptions(trips.map((trip) => trip.tripContext), locale),
     [locale, trips],
   );
 
@@ -903,11 +902,10 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
         });
       });
     }
-    if (filterTransport.length > 0) {
-      list = list.filter((t) => {
-        const modes = [...t.transportationTo, ...t.transportationOnSite];
-        return filterTransport.every((transport) => modes.includes(transport));
-      });
+    if (filterTripContext.length > 0) {
+      list = list.filter((trip) =>
+        filterTripContext.some((context) => trip.tripContext.includes(context)),
+      );
     }
     if (filterCompanion.length > 0) {
       list = list.filter((trip) =>
@@ -996,7 +994,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
     journeys,
     filterTrip,
     filterRegion,
-    filterTransport,
+    filterTripContext,
     filterCompanion,
     filterReason,
     filterYear,
@@ -1010,7 +1008,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const clearFilters = () => {
     setFilterTrip([]);
     setFilterRegion([]);
-    setFilterTransport([]);
+    setFilterTripContext([]);
     setFilterCompanion([]);
     setFilterReason([]);
     setFilterYear([]);
@@ -1101,7 +1099,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                   sortOrder={sortOrder}
                   filterTrip={filterTrip}
                   filterRegion={filterRegion}
-                  filterTransport={filterTransport}
+                  filterTripContext={filterTripContext}
                   filterCompanion={filterCompanion}
                   filterReason={filterReason}
                   filterYear={filterYear}
@@ -1109,14 +1107,14 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                   searchQuery={searchQuery}
                   tripCountryOptions={tripCountryOptions}
                   regionOptions={regionOptions}
-                  transportOptions={transportOptions}
+                  tripContextOptions={tripContextOptions}
                   companionOptions={companionOptions}
                   reasonOptions={reasonOptions}
                   yearOptions={yearOptions}
                   cityOptions={cityOptions}
                   onTripChange={setFilterTrip}
                   onRegionChange={setFilterRegion}
-                  onTransportChange={setFilterTransport}
+                  onTripContextChange={setFilterTripContext}
                   onCompanionChange={setFilterCompanion}
                   onReasonChange={setFilterReason}
                   onYearChange={setFilterYear}
@@ -1126,7 +1124,6 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                     setSortOrder((current) => (current === "newest" ? "oldest" : "newest"))
                   }
                   onClear={clearFilters}
-                  formatTransport={(value) => formatTransportLabel(value, i18n.locale)}
                   t={t}
                   className="border-none bg-transparent p-0 shadow-none"
                 />
@@ -1166,7 +1163,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                 sortOrder={sortOrder}
                 filterTrip={filterTrip}
                 filterRegion={filterRegion}
-                filterTransport={filterTransport}
+                filterTripContext={filterTripContext}
                 filterCompanion={filterCompanion}
                 filterReason={filterReason}
                 filterYear={filterYear}
@@ -1174,14 +1171,14 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                 searchQuery={searchQuery}
                 tripCountryOptions={tripCountryOptions}
                 regionOptions={regionOptions}
-                transportOptions={transportOptions}
+                tripContextOptions={tripContextOptions}
                 companionOptions={companionOptions}
                 reasonOptions={reasonOptions}
                 yearOptions={yearOptions}
                 cityOptions={cityOptions}
                 onTripChange={setFilterTrip}
                 onRegionChange={setFilterRegion}
-                onTransportChange={setFilterTransport}
+                onTripContextChange={setFilterTripContext}
                 onCompanionChange={setFilterCompanion}
                 onReasonChange={setFilterReason}
                 onYearChange={setFilterYear}
@@ -1191,7 +1188,6 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                   setSortOrder((current) => (current === "newest" ? "oldest" : "newest"))
                 }
                 onClear={clearFilters}
-                formatTransport={(value) => formatTransportLabel(value, i18n.locale)}
                 t={t}
               />
             </div>
