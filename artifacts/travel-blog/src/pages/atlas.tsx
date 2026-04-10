@@ -32,6 +32,7 @@ export default function AtlasPage() {
             {[
               { value: stats.totalTrips, label: t("statTrips") },
               { value: stats.continents, label: t("statContinents") },
+              { value: stats.totalCountries, label: t("statCountries") },
               { value: stats.totalCities, label: t("statCities") },
               { value: stats.totalPosts, label: t("statDispatches") },
             ].map(({ value, label }) => (

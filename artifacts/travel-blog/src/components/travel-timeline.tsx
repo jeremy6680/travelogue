@@ -19,6 +19,7 @@ import {
   PlaneTakeoff,
   Car,
   Filter,
+  CircleUserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
@@ -36,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { computeJourneyDistance, computeJourneyTripDistance, getTripAnalyticsPoints } from "@/lib/travel-analytics";
 import {
   formatAccomodationLabels,
+  formatTripContextLabels,
   formatTravelReasonLabel,
   formatTransportLabel,
   formatTransportLabels,
@@ -84,6 +86,8 @@ type TimelineItem =
 function formatList(values: string[]) {
   return values.join(", ");
 }
+
+const tripDetailIconClassName = "w-4 h-4 text-primary mt-0.5 shrink-0";
 
 function getCountryFilterOptions(
   trips: Trip[],
@@ -233,6 +237,7 @@ function renderTripCard(
       ),
   );
   const distanceLabel = formatDistanceKm(distanceKm);
+  const tripContextLabel = formatTripContextLabels(trip.tripContext, locale);
 
   return (
     <div className="bg-card border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -255,14 +260,29 @@ function renderTripCard(
             </p>
           )}
         </div>
-        {distanceLabel && (
-          <div className="rounded-xl border border-border/60 bg-background/60 px-4 py-3 text-sm">
-            <strong className="block font-serif text-foreground">
-              {summaryLabel}
-            </strong>
-            <span className="text-muted-foreground">
-              {distanceLabel}
-            </span>
+        {(tripContextLabel || distanceLabel) && (
+          <div className="flex flex-wrap items-start justify-end gap-3">
+            {tripContextLabel && (
+              <div className="rounded-xl border border-border/60 bg-background/60 px-4 py-3 text-sm">
+                <strong className="flex items-center gap-2 font-serif text-foreground">
+                  <CircleUserRound className={tripDetailIconClassName} />
+                  {locale === "fr" ? "Contexte" : "Context"}
+                </strong>
+                <span className="text-muted-foreground">
+                  {tripContextLabel}
+                </span>
+              </div>
+            )}
+            {distanceLabel && (
+              <div className="rounded-xl border border-border/60 bg-background/60 px-4 py-3 text-sm">
+                <strong className="block font-serif text-foreground">
+                  {summaryLabel}
+                </strong>
+                <span className="text-muted-foreground">
+                  {distanceLabel}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -270,7 +290,7 @@ function renderTripCard(
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm bg-background/50 p-4 rounded-xl border border-border/50">
         {trip.visitedCities && (
           <div className="flex items-start gap-2.5">
-            <MapPin className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+            <MapPin className={tripDetailIconClassName} />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
                 {t("citiesVisited")}
@@ -283,7 +303,7 @@ function renderTripCard(
         )}
         {trip.reasonForVisit && (
           <div className="flex items-start gap-2.5">
-            <Navigation className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+            <Navigation className={tripDetailIconClassName} />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
                 {t("mission")}
@@ -296,7 +316,7 @@ function renderTripCard(
         )}
         {trip.travelCompanions.length > 0 && (
           <div className="flex items-start gap-2.5">
-            <Users className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+            <Users className={tripDetailIconClassName} />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
                 {t("companions")}
@@ -309,7 +329,7 @@ function renderTripCard(
         )}
         {trip.friendsFamilyMet && (
           <div className="flex items-start gap-2.5">
-            <Heart className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+            <Heart className={tripDetailIconClassName} />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
                 {t("metAlongTheWay")}
@@ -322,7 +342,7 @@ function renderTripCard(
         )}
         {transportationToLabel && (
           <div className="flex items-start gap-2.5">
-            <PlaneTakeoff className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+            <PlaneTakeoff className={tripDetailIconClassName} />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
                 {t("gettingThere")}
@@ -335,7 +355,7 @@ function renderTripCard(
         )}
         {transportationOnSiteLabel && (
           <div className="flex items-start gap-2.5">
-            <Car className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+            <Car className={tripDetailIconClassName} />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
                 {t("gettingAround")}
@@ -348,7 +368,7 @@ function renderTripCard(
         )}
         {accomodationLabel && (
           <div className="flex items-start gap-2.5">
-            <BedDouble className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+            <BedDouble className={tripDetailIconClassName} />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
                 {t("accommodation")}
@@ -361,7 +381,7 @@ function renderTripCard(
         )}
         {lengthOfStay && (
           <div className="flex items-start gap-2.5">
-            <CalendarRange className="w-4 h-4 text-secondary mt-0.5 shrink-0" />
+            <CalendarRange className={tripDetailIconClassName} />
             <div>
               <strong className="block text-foreground mb-0.5 font-serif">
                 {t("lengthOfStay")}

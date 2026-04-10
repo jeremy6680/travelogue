@@ -294,6 +294,7 @@ export interface MapPin {
 export interface TravelStats {
   totalTrips: number;
   totalPosts: number;
+  totalCountries: number;
   totalCities: number;
   continents: number;
 }

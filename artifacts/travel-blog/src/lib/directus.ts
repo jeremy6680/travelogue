@@ -464,8 +464,10 @@ function mapPhotoPin(photo: Photo): MapPin {
 
 function buildStats(trips: Trip[], posts: Post[]): TravelStats {
   const visitedContinents = new Set<string>();
+  const visitedCountries = new Set<string>();
 
   for (const trip of trips) {
+    visitedCountries.add(trip.countryCode.toUpperCase());
     const continent = getContinentKey(trip.countryCode);
     if (continent) {
       visitedContinents.add(continent);
@@ -479,6 +481,7 @@ function buildStats(trips: Trip[], posts: Post[]): TravelStats {
   return {
     totalTrips: trips.length,
     totalPosts: posts.length,
+    totalCountries: visitedCountries.size,
     totalCities,
     continents: visitedContinents.size,
   };

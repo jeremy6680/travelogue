@@ -1,6 +1,7 @@
 export type CountryLocale = "fr" | "en";
 
 const CUSTOM_COUNTRY_NAMES: Record<string, Record<CountryLocale, string>> = {
+  VA: { fr: "Vatican", en: "Vatican" },
   XE: { fr: "Angleterre", en: "England" },
   XS: { fr: "Ecosse", en: "Scotland" },
   XW: { fr: "Pays de Galles", en: "Wales" },
