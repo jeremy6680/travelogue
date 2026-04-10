@@ -69,6 +69,24 @@ export const TRAVEL_REASON_OPTIONS: Option[] = [
   },
 ] as const;
 
+export const TRIP_CONTEXT_OPTIONS: Option[] = [
+  { value: "solo", label: { fr: "👤 Solo", en: "👤 Solo" } },
+  { value: "couple", label: { fr: "❤️ En couple", en: "❤️ Couple" } },
+  { value: "family", label: { fr: "👨‍👩‍👧‍👦 En famille", en: "👨‍👩‍👧‍👦 Family" } },
+  { value: "friends", label: { fr: "👯 Entre amis", en: "👯 Friends" } },
+  {
+    value: "work-colleagues",
+    label: {
+      fr: "💼 Professionnel / collègues",
+      en: "💼 Work / colleagues",
+    },
+  },
+  {
+    value: "organized-group",
+    label: { fr: "👥 Groupe organisé", en: "👥 Organized group" },
+  },
+] as const;
+
 export const CONTINENT_OPTIONS: Record<
   "europe" | "america" | "africa" | "asia" | "oceania",
   { label: Record<Locale, string>; countryCodes: string[] }
@@ -131,6 +149,10 @@ const TRAVEL_REASON_LABELS = new Map(
   TRAVEL_REASON_OPTIONS.map((option) => [option.value, option.label]),
 );
 
+const TRIP_CONTEXT_LABELS = new Map(
+  TRIP_CONTEXT_OPTIONS.map((option) => [option.value, option.label]),
+);
+
 function formatOptionLabel(
   value: string,
   labels: Map<string, Record<Locale, string>>,
@@ -187,6 +209,14 @@ export function formatTravelReasonLabel(value: string, locale: Locale) {
 
 export function formatTravelReasonLabels(values: string[], locale: Locale) {
   return values.map((value) => formatTravelReasonLabel(value, locale)).join(", ");
+}
+
+export function formatTripContextLabel(value: string, locale: Locale) {
+  return formatOptionLabel(value, TRIP_CONTEXT_LABELS, locale);
+}
+
+export function formatTripContextLabels(values: string[], locale: Locale) {
+  return values.map((value) => formatTripContextLabel(value, locale)).join(", ");
 }
 
 export function getContinentKey(countryCode: string) {

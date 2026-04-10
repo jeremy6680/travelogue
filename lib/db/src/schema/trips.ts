@@ -14,6 +14,7 @@ export const tripsTable = pgTable("trips", {
   visitedCities: varchar("visited_cities", { length: 500 }).notNull(),
   reasonForVisit: varchar("reason_for_visit", { length: 255 }).notNull(),
   reasonForTravel: jsonb("reason_for_travel").$type<string[]>().default([]).notNull(),
+  tripContext: jsonb("trip_context").$type<string[]>().default([]).notNull(),
   travelCompanions: jsonb("travel_companions").$type<string[]>().default([]).notNull(),
   friendsFamilyMet: varchar("friends_family_met", { length: 255 }).notNull(),
   visitedAt: date("visited_at", { mode: "string" }).notNull(),

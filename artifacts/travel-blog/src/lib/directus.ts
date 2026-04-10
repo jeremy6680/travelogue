@@ -93,6 +93,7 @@ type DirectusTrip = {
   accomodation: string[] | string | null;
   reason_for_visit: string;
   reason_for_travel?: string[] | string | null;
+  trip_context?: string[] | string | null;
   travel_companions: string[] | string | null;
   friends_family_met: string;
   visited_at: string;
@@ -202,6 +203,7 @@ const TRIP_FIELDS = [
   "accomodation",
   "reason_for_visit",
   "reason_for_travel",
+  "trip_context",
   "travel_companions",
   "friends_family_met",
   "visited_at",
@@ -372,6 +374,7 @@ function mapTrip(trip: DirectusTrip): Trip {
     accomodation: normalizeMultiValueField(trip.accomodation),
     reasonForVisit: trip.reason_for_visit,
     reasonForTravel: normalizeMultiValueField(trip.reason_for_travel),
+    tripContext: normalizeMultiValueField(trip.trip_context),
     travelCompanions: normalizeMultiValueField(trip.travel_companions),
     friendsFamilyMet: trip.friends_family_met,
     visitedAt: trip.visited_at,
@@ -512,6 +515,7 @@ function mapCreateTripInput(data: CreateTripBody | UpdateTripBody) {
     accomodation: data.accomodation,
     reason_for_visit: data.reasonForVisit,
     reason_for_travel: normalizeMultiValueField(data.reasonForTravel),
+    trip_context: normalizeMultiValueField(data.tripContext),
     travel_companions: normalizeMultiValueField(data.travelCompanions),
     friends_family_met: data.friendsFamilyMet,
     visited_at: data.visitedAt,

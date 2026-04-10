@@ -37,8 +37,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   COMPANION_OPTIONS,
+  TRIP_CONTEXT_OPTIONS,
   TRAVEL_REASON_OPTIONS,
   TRANSPORT_OPTIONS,
+  formatTripContextLabels,
   formatTransportLabels,
   formatTravelReasonLabels,
 } from "@/lib/trip-options";
@@ -783,6 +785,10 @@ export default function AdminPage() {
       .getAll("reasonForTravel")
       .map((value) => String(value).trim())
       .filter(Boolean);
+    const tripContext = formData
+      .getAll("tripContext")
+      .map((value) => String(value).trim())
+      .filter(Boolean);
     const transportationTo = formData
       .getAll("transportationTo")
       .map((value) => String(value).trim())
@@ -798,6 +804,7 @@ export default function AdminPage() {
       visitedCities: formData.get("visitedCities") as string,
       reasonForVisit: formData.get("reasonForVisit") as string,
       reasonForTravel,
+      tripContext,
       travelCompanions,
       friendsFamilyMet: formData.get("friendsFamilyMet") as string,
       visitedAt: formData.get("visitedAt") as string,
@@ -1594,6 +1601,19 @@ export default function AdminPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
+                    Contexte du voyage
+                  </label>
+                  <CheckboxGroup
+                    name="tripContext"
+                    options={TRIP_CONTEXT_OPTIONS.map((option) => ({
+                      value: option.value,
+                      label: option.label.fr,
+                    }))}
+                    defaultValues={editingTrip?.tripContext ?? []}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
                     Compagnons de voyage
                   </label>
                   <MultiSelectWithCustomOption
@@ -1775,6 +1795,11 @@ export default function AdminPage() {
                       <p className="text-xs text-muted-foreground">
                         Raison du voyage :{" "}
                         {formatTravelReasonLabels(trip.reasonForTravel, "fr")}
+                      </p>
+                    )}
+                    {trip.tripContext.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Contexte : {formatTripContextLabels(trip.tripContext, "fr")}
                       </p>
                     )}
                     {trip.travelCompanions.length > 0 && (

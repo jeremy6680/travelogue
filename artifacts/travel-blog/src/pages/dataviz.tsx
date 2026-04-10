@@ -64,6 +64,7 @@ import { useI18n } from "@/lib/i18n";
 import {
   CONTINENT_OPTIONS,
   formatAccomodationLabel,
+  formatTripContextLabel,
   formatTravelReasonLabel,
   formatTransportLabel,
   getContinentKey,
@@ -158,6 +159,7 @@ export default function DataVizPage() {
   const [filterCountry, setFilterCountry] = useState<string[]>([]);
   const [filterYear, setFilterYear] = useState<string[]>([]);
   const [filterCompanion, setFilterCompanion] = useState<string[]>([]);
+  const [filterTripContext, setFilterTripContext] = useState<string[]>([]);
   const [filterReason, setFilterReason] = useState<string[]>([]);
   const [filterTransport, setFilterTransport] = useState<string[]>([]);
   const [countrySort, setCountrySort] = useState<{
@@ -239,6 +241,11 @@ export default function DataVizPage() {
     [locale, trips],
   );
 
+  const tripContextOptions = useMemo(
+    () => getFacetOptions(trips.map((trip) => trip.tripContext), locale),
+    [locale, trips],
+  );
+
   const reasonOptions = useMemo(
     () => getFacetOptions(trips.map((trip) => trip.reasonForTravel), locale),
     [locale, trips],
@@ -293,6 +300,13 @@ export default function DataVizPage() {
         }
 
         if (
+          filterTripContext.length > 0 &&
+          !filterTripContext.some((context) => trip.tripContext.includes(context))
+        ) {
+          return false;
+        }
+
+        if (
           filterReason.length > 0 &&
           !filterReason.some((reason) => trip.reasonForTravel.includes(reason))
         ) {
@@ -314,6 +328,7 @@ export default function DataVizPage() {
       filterCompanion,
       filterCountry,
       filterReason,
+      filterTripContext,
       filterTransport,
       filterYear,
       filterZone,
@@ -342,6 +357,11 @@ export default function DataVizPage() {
     >();
     const companionCounts = new Map<string, number>();
     const companionDistance = new Map<string, { name: string; distanceKm: number; trips: number }>();
+    const tripContextCounts = new Map<string, number>();
+    const reasonContextStats = new Map<
+      string,
+      { reason: string; total: number; counts: Map<string, number> }
+    >();
     const continentStats = new Map<
       string,
       { continent: string; trips: number; distanceKm: number }
@@ -568,6 +588,29 @@ export default function DataVizPage() {
       }
 
       const uniqueReasons = [...new Set(trip.reasonForTravel.filter(Boolean))];
+      const uniqueTripContexts = [...new Set(trip.tripContext.filter(Boolean))];
+      for (const context of uniqueTripContexts) {
+        tripContextCounts.set(context, (tripContextCounts.get(context) ?? 0) + 1);
+      }
+
+      if (uniqueReasons.length > 0 && uniqueTripContexts.length > 0) {
+        for (const reason of uniqueReasons) {
+          const reasonContextEntry = reasonContextStats.get(reason) ?? {
+            reason,
+            total: 0,
+            counts: new Map<string, number>(),
+          };
+          for (const context of uniqueTripContexts) {
+            reasonContextEntry.total += 1;
+            reasonContextEntry.counts.set(
+              context,
+              (reasonContextEntry.counts.get(context) ?? 0) + 1,
+            );
+          }
+          reasonContextStats.set(reason, reasonContextEntry);
+        }
+      }
+
       for (const reason of uniqueReasons) {
         const reasonEntry = reasonStats.get(reason) ?? {
           reason,
@@ -645,6 +688,60 @@ export default function DataVizPage() {
     const companionDistanceRows = Array.from(companionDistance.values())
       .sort((left, right) => right.distanceKm - left.distanceKm)
       .slice(0, 10);
+    const tripContextTotal = Array.from(tripContextCounts.values()).reduce(
+      (sum, count) => sum + count,
+      0,
+    );
+    const tripContextRows = Array.from(tripContextCounts.entries())
+      .map(([context, tripsCount]) => ({
+        context,
+        label: formatTripContextLabel(context, locale),
+        tripsCount,
+        share: tripContextTotal > 0 ? (tripsCount / tripContextTotal) * 100 : 0,
+      }))
+      .sort((left, right) => {
+        if (right.tripsCount !== left.tripsCount) {
+          return right.tripsCount - left.tripsCount;
+        }
+
+        return left.label.localeCompare(right.label, locale);
+      });
+    const tripContextKeys = Array.from(
+      new Set(
+        [
+          ...Array.from(tripContextCounts.keys()),
+          ...Array.from(reasonContextStats.values()).flatMap((entry) =>
+            Array.from(entry.counts.keys()),
+          ),
+        ],
+      ),
+    ).sort((left, right) =>
+      formatTripContextLabel(left, locale).localeCompare(
+        formatTripContextLabel(right, locale),
+        locale,
+      ),
+    );
+    const reasonContextRows = Array.from(reasonContextStats.values())
+      .map((entry) => {
+        const row: Record<string, number | string> = {
+          reason: entry.reason,
+          label: formatTravelReasonLabel(entry.reason, locale),
+          total: entry.total,
+        };
+
+        for (const context of tripContextKeys) {
+          const count = entry.counts.get(context) ?? 0;
+          row[context] =
+            entry.total > 0 ? Number(((count / entry.total) * 100).toFixed(1)) : 0;
+        }
+
+        return row;
+      })
+      .sort((left, right) => {
+        const totalDiff = Number(right.total) - Number(left.total);
+        if (totalDiff !== 0) return totalDiff;
+        return String(left.label).localeCompare(String(right.label), locale);
+      });
     const accommodationKeys = Array.from(
       new Set(
         Array.from(accommodationByPeriod.values()).flatMap((entry) =>
@@ -803,6 +900,9 @@ export default function DataVizPage() {
       carbonRows,
       companionRows,
       companionDistanceRows,
+      tripContextRows,
+      tripContextKeys,
+      reasonContextRows,
       accommodationKeys,
       accommodationRows,
       nightsByCountryRows,
@@ -859,6 +959,26 @@ export default function DataVizPage() {
       key,
       {
         label: formatAccomodationLabel(key, locale),
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      },
+    ]),
+  );
+
+  const tripContextConfig = Object.fromEntries(
+    analytics.tripContextKeys.map((key, index) => [
+      key,
+      {
+        label: formatTripContextLabel(key, locale),
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      },
+    ]),
+  );
+
+  const reasonContextConfig = Object.fromEntries(
+    analytics.tripContextKeys.map((key, index) => [
+      key,
+      {
+        label: formatTripContextLabel(key, locale),
         color: CHART_COLORS[index % CHART_COLORS.length],
       },
     ]),
@@ -1026,6 +1146,22 @@ export default function DataVizPage() {
     return lastKey === key ? ([0, 6, 6, 0] as const) : 0;
   };
 
+  const getTripContextSegmentRadius = (
+    row: Record<string, number | string>,
+    key: string,
+  ) => {
+    const visibleKeys = analytics.tripContextKeys.filter(
+      (currentKey) => Number(row[currentKey] ?? 0) > 0,
+    );
+    const lastKey = visibleKeys[visibleKeys.length - 1];
+
+    if (!lastKey || Number(row[key] ?? 0) <= 0) {
+      return 0;
+    }
+
+    return lastKey === key ? ([0, 6, 6, 0] as const) : 0;
+  };
+
   const renderNightSegment =
     (key: "franceNights" | "europeNights" | "worldNights") =>
     (props: {
@@ -1057,6 +1193,24 @@ export default function DataVizPage() {
       <Rectangle
         {...props}
         radius={getAccommodationSegmentRadius(props.payload, key) as
+          | number
+          | [number, number, number, number]}
+      />
+    );
+
+  const renderTripContextSegment =
+    (key: string) =>
+    (props: {
+      payload: Record<string, number | string>;
+      x?: number;
+      y?: number;
+      width?: number;
+      height?: number;
+      fill?: string;
+    }) => (
+      <Rectangle
+        {...props}
+        radius={getTripContextSegmentRadius(props.payload, key) as
           | number
           | [number, number, number, number]}
       />
@@ -1126,155 +1280,179 @@ export default function DataVizPage() {
           ))}
         </section>
 
-        <section className="flex flex-wrap items-center gap-3">
-          <MultiSelectFilter
-            label={locale === "fr" ? "Zones" : "Regions"}
-            placeholder={locale === "fr" ? "Zones" : "Regions"}
-            options={zoneOptions.map((option) => {
-              const countMatch = option.label.match(/\((\d+)\)\s*$/);
-              const count = countMatch?.[1] ?? "";
-              const text = option.label.replace(/\s*\(\d+\)\s*$/, "");
-              return {
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <MultiSelectFilter
+              label={locale === "fr" ? "Zones" : "Regions"}
+              placeholder={locale === "fr" ? "Zones" : "Regions"}
+              options={zoneOptions.map((option) => {
+                const countMatch = option.label.match(/\((\d+)\)\s*$/);
+                const count = countMatch?.[1] ?? "";
+                const text = option.label.replace(/\s*\(\d+\)\s*$/, "");
+                return {
+                  value: option.value,
+                  label: (
+                    <span className="flex items-center justify-between gap-3">
+                      <span>{text}</span>
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                        {count}
+                      </span>
+                    </span>
+                  ),
+                  triggerLabel: text,
+                };
+              })}
+              selectedValues={filterZone}
+              onChange={setFilterZone}
+              className="w-32 shrink-0"
+            />
+
+            <MultiSelectFilter
+              label={locale === "fr" ? "Voyages" : "Trips"}
+              placeholder={locale === "fr" ? "Voyages" : "Trips"}
+              options={countryOptions.map((option) => ({
                 value: option.value,
                 label: (
                   <span className="flex items-center justify-between gap-3">
-                    <span>{text}</span>
+                    <span>{option.text}</span>
                     <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
-                      {count}
+                      {option.count}
                     </span>
                   </span>
                 ),
-                triggerLabel: text,
-              };
-            })}
-            selectedValues={filterZone}
-            onChange={setFilterZone}
-            className="w-36"
-          />
+                triggerLabel: option.text,
+              }))}
+              selectedValues={filterCountry}
+              onChange={setFilterCountry}
+              className="w-32 shrink-0"
+            />
 
-          <MultiSelectFilter
-            label={locale === "fr" ? "Voyages" : "Trips"}
-            placeholder={locale === "fr" ? "Voyages" : "Trips"}
-            options={countryOptions.map((option) => ({
-              value: option.value,
-              label: (
-                <span className="flex items-center justify-between gap-3">
-                  <span>{option.text}</span>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
-                    {option.count}
+            <MultiSelectFilter
+              label={locale === "fr" ? "Années" : "Years"}
+              placeholder={locale === "fr" ? "Années" : "Years"}
+              options={yearOptions.map((option) => ({
+                value: option.value,
+                label: (
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{option.value}</span>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                      {option.count}
+                    </span>
                   </span>
-                </span>
-              ),
-              triggerLabel: option.text,
-            }))}
-            selectedValues={filterCountry}
-            onChange={setFilterCountry}
-            className="w-36"
-          />
+                ),
+                triggerLabel: option.value,
+              }))}
+              selectedValues={filterYear}
+              onChange={setFilterYear}
+              className="w-28 shrink-0"
+            />
 
-          <MultiSelectFilter
-            label={locale === "fr" ? "Années" : "Years"}
-            placeholder={locale === "fr" ? "Années" : "Years"}
-            options={yearOptions.map((option) => ({
-              value: option.value,
-              label: (
-                <span className="flex items-center justify-between gap-3">
-                  <span>{option.value}</span>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
-                    {option.count}
+            <MultiSelectFilter
+              label={locale === "fr" ? "Contexte" : "Context"}
+              placeholder={locale === "fr" ? "Contexte" : "Context"}
+              options={tripContextOptions.map((option) => ({
+                value: option.value,
+                label: (
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{formatTripContextLabel(option.value, locale)}</span>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                      {option.count}
+                    </span>
                   </span>
-                </span>
-              ),
-              triggerLabel: option.value,
-            }))}
-            selectedValues={filterYear}
-            onChange={setFilterYear}
-            className="w-32"
-          />
+                ),
+                triggerLabel: formatTripContextLabel(option.value, locale),
+              }))}
+              selectedValues={filterTripContext}
+              onChange={setFilterTripContext}
+              className="w-36 shrink-0"
+            />
 
-          <MultiSelectFilter
-            label={locale === "fr" ? "Compagnons de route" : "Companions"}
-            placeholder={locale === "fr" ? "Compagnons de route" : "Companions"}
-            options={companionOptions.map((option) => ({
-              value: option.value,
-              label: (
-                <span className="flex items-center justify-between gap-3">
-                  <span>{option.value}</span>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
-                    {option.count}
+            <MultiSelectFilter
+              label={locale === "fr" ? "Compagnons de route" : "Companions"}
+              placeholder={locale === "fr" ? "Compagnons" : "Companions"}
+              options={companionOptions.map((option) => ({
+                value: option.value,
+                label: (
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{option.value}</span>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                      {option.count}
+                    </span>
                   </span>
-                </span>
-              ),
-              triggerLabel: option.value,
-            }))}
-            selectedValues={filterCompanion}
-            onChange={setFilterCompanion}
-            className="w-44"
-          />
+                ),
+                triggerLabel: option.value,
+              }))}
+              selectedValues={filterCompanion}
+              onChange={setFilterCompanion}
+              className="w-40 shrink-0"
+            />
 
-          <MultiSelectFilter
-            label={locale === "fr" ? "Raisons" : "Reasons"}
-            placeholder={locale === "fr" ? "Raisons" : "Reasons"}
-            options={reasonOptions.map((option) => ({
-              value: option.value,
-              label: (
-                <span className="flex items-center justify-between gap-3">
-                  <span>{formatTravelReasonLabel(option.value, locale)}</span>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
-                    {option.count}
+            <MultiSelectFilter
+              label={locale === "fr" ? "Raisons" : "Reasons"}
+              placeholder={locale === "fr" ? "Raisons" : "Reasons"}
+              options={reasonOptions.map((option) => ({
+                value: option.value,
+                label: (
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{formatTravelReasonLabel(option.value, locale)}</span>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                      {option.count}
+                    </span>
                   </span>
-                </span>
-              ),
-              triggerLabel: formatTravelReasonLabel(option.value, locale),
-            }))}
-            selectedValues={filterReason}
-            onChange={setFilterReason}
-            className="w-36"
-          />
+                ),
+                triggerLabel: formatTravelReasonLabel(option.value, locale),
+              }))}
+              selectedValues={filterReason}
+              onChange={setFilterReason}
+              className="w-32 shrink-0"
+            />
 
-          <MultiSelectFilter
-            label={locale === "fr" ? "Transports" : "Transport"}
-            placeholder={locale === "fr" ? "Transports" : "Transport"}
-            options={transportOptions.map((option) => ({
-              value: option.value,
-              label: (
-                <span className="flex items-center justify-between gap-3">
-                  <span>{formatTransportLabel(option.value, locale)}</span>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
-                    {option.count}
+            <MultiSelectFilter
+              label={locale === "fr" ? "Transports" : "Transport"}
+              placeholder={locale === "fr" ? "Transports" : "Transport"}
+              options={transportOptions.map((option) => ({
+                value: option.value,
+                label: (
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{formatTransportLabel(option.value, locale)}</span>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                      {option.count}
+                    </span>
                   </span>
-                </span>
-              ),
-              triggerLabel: formatTransportLabel(option.value, locale),
-            }))}
-            selectedValues={filterTransport}
-            onChange={setFilterTransport}
-            className="w-36"
-          />
+                ),
+                triggerLabel: formatTransportLabel(option.value, locale),
+              }))}
+              selectedValues={filterTransport}
+              onChange={setFilterTransport}
+              className="w-32 shrink-0"
+            />
+          </div>
 
-          {(filterZone.length > 0 ||
-            filterCountry.length > 0 ||
-            filterYear.length > 0 ||
-            filterCompanion.length > 0 ||
-            filterReason.length > 0 ||
-            filterTransport.length > 0) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setFilterZone([]);
-                setFilterCountry([]);
-                setFilterYear([]);
-                setFilterCompanion([]);
-                setFilterReason([]);
-                setFilterTransport([]);
-              }}
-            >
-              {t("clearFilters")}
-            </Button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {(filterZone.length > 0 ||
+              filterCountry.length > 0 ||
+              filterYear.length > 0 ||
+              filterCompanion.length > 0 ||
+              filterTripContext.length > 0 ||
+              filterReason.length > 0 ||
+              filterTransport.length > 0) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setFilterZone([]);
+                  setFilterCountry([]);
+                  setFilterYear([]);
+                  setFilterTripContext([]);
+                  setFilterCompanion([]);
+                  setFilterReason([]);
+                  setFilterTransport([]);
+                }}
+              >
+                {t("clearFilters")}
+              </Button>
+            )}
 
-          <div className="ml-auto flex items-center gap-2">
             <TooltipProvider delayDuration={100}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1301,8 +1479,8 @@ export default function DataVizPage() {
                   </p>
                   <p>
                     {locale === "fr"
-                      ? "Filtres en OU : Zones, Voyages, Années, Raisons."
-                      : "OR filters: Regions, Trips, Years, Reasons."}
+                      ? "Filtres en OU : Zones, Voyages, Années, Contextes, Raisons."
+                      : "OR filters: Regions, Trips, Years, Contexts, Reasons."}
                   </p>
                   <p>
                     {locale === "fr"
@@ -1540,6 +1718,147 @@ export default function DataVizPage() {
                       }
                     />
                     <Bar dataKey="averageCarbonKg" fill="#0f766e" radius={8} />
+                  </BarChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-2">
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>
+                {locale === "fr" ? "Contextes de voyage" : "Trip contexts"}
+              </CardTitle>
+              <CardDescription>
+                {locale === "fr"
+                  ? "Répartition des contextes renseignés sur les voyages de la sélection."
+                  : "Distribution of contexts set on trips in the current selection."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.tripContextRows.length > 0 ? (
+                <ChartContainer
+                  config={tripContextConfig}
+                  className="h-[340px] w-full aspect-auto"
+                >
+                  <PieChart>
+                    <Pie
+                      data={analytics.tripContextRows}
+                      dataKey="tripsCount"
+                      nameKey="context"
+                      innerRadius={72}
+                      outerRadius={108}
+                      paddingAngle={3}
+                    >
+                      {analytics.tripContextRows.map((row) => (
+                        <Cell
+                          key={row.context}
+                          fill={
+                            CHART_COLORS[
+                              analytics.tripContextKeys.indexOf(row.context) %
+                                CHART_COLORS.length
+                            ]
+                          }
+                        />
+                      ))}
+                    </Pie>
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          nameKey="context"
+                          formatter={(value, name, item) => (
+                            <>
+                              <span className="text-muted-foreground">
+                                {formatTripContextLabel(String(name), locale)} :
+                              </span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {formatPercent(Number(item.payload?.share ?? 0))} ·{" "}
+                                {Number(value).toLocaleString(numberLocale)}
+                              </span>
+                            </>
+                          )}
+                        />
+                      }
+                    />
+                    <ChartLegend content={<ChartLegendContent nameKey="context" />} />
+                  </PieChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>
+                {locale === "fr"
+                  ? "Contextes par raison de voyage"
+                  : "Contexts by travel reason"}
+              </CardTitle>
+              <CardDescription>
+                {locale === "fr"
+                  ? "Part de chaque contexte dans les voyages associés à chaque raison."
+                  : "Share of each context among trips associated with each travel reason."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.reasonContextRows.length > 0 ? (
+                <ChartContainer
+                  config={reasonContextConfig}
+                  className="h-[360px] w-full aspect-auto"
+                >
+                  <BarChart
+                    data={analytics.reasonContextRows}
+                    layout="vertical"
+                    margin={{ left: 12, right: 16 }}
+                  >
+                    <CartesianGrid horizontal={false} />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      tickLine={false}
+                      axisLine={false}
+                      width={128}
+                    />
+                    <XAxis
+                      type="number"
+                      tickLine={false}
+                      axisLine={false}
+                      domain={[0, 100]}
+                      tickFormatter={(value) => `${Math.round(Number(value))}%`}
+                    />
+                    <ChartTooltip
+                      cursor={false}
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value, name) => (
+                            <>
+                              <span className="text-muted-foreground">
+                                {formatTripContextLabel(String(name), locale)} :
+                              </span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {formatPercent(Number(value))}
+                              </span>
+                            </>
+                          )}
+                        />
+                      }
+                    />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    {analytics.tripContextKeys.map((key, index) => (
+                      <Bar
+                        key={key}
+                        dataKey={key}
+                        stackId="trip-context"
+                        fill={CHART_COLORS[index % CHART_COLORS.length]}
+                        shape={renderTripContextSegment(key)}
+                      />
+                    ))}
                   </BarChart>
                 </ChartContainer>
               ) : (

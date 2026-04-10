@@ -64,6 +64,13 @@
       "when": 1775056119169,
       "tag": "0008_photo_locations",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775057119169,
+      "tag": "0009_trip_context",
+      "breakpoints": true
     }
   ]
 }
