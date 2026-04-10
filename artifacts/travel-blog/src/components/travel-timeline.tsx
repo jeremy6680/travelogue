@@ -196,7 +196,6 @@ function getFacetOptions(values: string[][], locale: string) {
     });
 }
 
-
 function renderTripCard(
   trip: Trip,
   tripPosts: Post[],
@@ -259,29 +258,14 @@ function renderTripCard(
             </p>
           )}
         </div>
-        {(tripContextLabel || distanceLabel) && (
-          <div className="flex flex-wrap items-start justify-end gap-3">
-            {tripContextLabel && (
-              <div className="rounded-xl border border-border/60 bg-background/60 px-4 py-3 text-sm">
-                <strong className="flex items-center gap-2 font-serif text-foreground">
-                  <CircleUserRound className={tripDetailIconClassName} />
-                  {locale === "fr" ? "Contexte" : "Context"}
-                </strong>
-                <span className="text-muted-foreground">
-                  {tripContextLabel}
-                </span>
-              </div>
-            )}
-            {distanceLabel && (
-              <div className="rounded-xl border border-border/60 bg-background/60 px-4 py-3 text-sm">
-                <strong className="block font-serif text-foreground">
-                  {summaryLabel}
-                </strong>
-                <span className="text-muted-foreground">
-                  {distanceLabel}
-                </span>
-              </div>
-            )}
+        {distanceLabel && (
+          <div className="rounded-xl border border-border/60 bg-background/60 px-4 py-3 text-sm">
+            <strong className="block font-serif text-foreground">
+              {summaryLabel}
+            </strong>
+            <span className="text-muted-foreground">
+              {distanceLabel}
+            </span>
           </div>
         )}
       </div>
@@ -309,6 +293,19 @@ function renderTripCard(
               </strong>
               <span className="text-muted-foreground leading-relaxed">
                 {trip.reasonForVisit}
+              </span>
+            </div>
+          </div>
+        )}
+        {tripContextLabel && (
+          <div className="flex items-start gap-2.5">
+            <CircleUserRound className={tripDetailIconClassName} />
+            <div>
+              <strong className="block text-foreground mb-0.5 font-serif">
+                {locale === "fr" ? "Contexte" : "Context"}
+              </strong>
+              <span className="text-muted-foreground leading-relaxed">
+                {tripContextLabel}
               </span>
             </div>
           </div>
@@ -1280,6 +1277,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
           </div>
         )}
       </div>
+
     </div>
   );
 }

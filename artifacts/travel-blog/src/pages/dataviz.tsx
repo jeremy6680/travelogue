@@ -19,6 +19,7 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
+import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 import {
   ArrowUpDown,
   BarChart3,
@@ -61,6 +62,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { useI18n } from "@/lib/i18n";
+import type { Trip } from "@/lib/travel-types";
 import {
   CONTINENT_OPTIONS,
   formatAccomodationLabel,
@@ -70,6 +72,7 @@ import {
   getContinentKey,
 } from "@/lib/trip-options";
 import { getTripAnalyticsPoints } from "@/lib/travel-analytics";
+import { getAtlasCountryCode } from "@/lib/travel-countries";
 
 const CHART_COLORS = [
   "#2563eb",
@@ -94,6 +97,110 @@ const TRANSPORT_EMISSION_FACTORS_KG_PER_KM: Record<string, number> = {
   motorbike: 0.103,
   bicycle: 0,
 };
+const CITY_MAP_GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const CITY_MAP_COUNTRY_NAME_ALIASES: Record<string, string[]> = {
+  DO: ["Dominican Rep."],
+  CF: ["Central African Rep."],
+  CG: ["Congo"],
+  CD: ["Dem. Rep. Congo"],
+  CZ: ["Czech Rep."],
+  GQ: ["Eq. Guinea"],
+  BA: ["Bosnia and Herz."],
+  PS: ["Palestine"],
+  SB: ["Solomon Is."],
+  TL: ["Timor-Leste"],
+  US: ["United States of America"],
+};
+const NORTH_AMERICA_COUNTRY_CODES = new Set([
+  "AG", "BB", "BS", "BZ", "CA", "CR", "CU", "DM", "DO", "GD", "GT", "HN",
+  "HT", "JM", "KN", "LC", "MX", "NI", "PA", "SV", "TT", "US", "VC",
+]);
+const SOUTH_AMERICA_COUNTRY_CODES = new Set([
+  "AR", "BO", "BR", "CL", "CO", "EC", "GY", "PE", "PY", "SR", "UY", "VE",
+]);
+const WEST_CENTRAL_ASIA_COUNTRY_CODES = new Set([
+  "AE", "AM", "AZ", "BH", "CY", "GE", "IL", "IQ", "IR", "JO", "KW", "LB", "OM",
+  "PS", "QA", "SA", "SY", "TR", "YE", "KZ", "KG", "TJ", "TM", "UZ",
+]);
+const SOUTH_EAST_ASIA_COUNTRY_CODES = new Set([
+  "AF", "BD", "BN", "BT", "CN", "HK", "ID", "IN", "JP", "KH", "KP", "KR", "LA",
+  "LK", "MM", "MN", "MO", "MV", "MY", "NP", "PH", "PK", "SG", "TH", "TL", "TW",
+  "VN",
+]);
+
+type CityMapRegionKey =
+  | "france"
+  | "europe"
+  | "northAmerica"
+  | "southAmerica"
+  | "africa"
+  | "westCentralAsia"
+  | "southEastAsia"
+  | "oceania";
+
+type CityMapPoint = {
+  id: string;
+  coordinates: [number, number];
+  label: string;
+  tripName: string;
+  countryCode: string;
+};
+
+type CityMapRegion = {
+  key: CityMapRegionKey;
+  label: Record<ReturnType<typeof useI18n>["locale"], string>;
+  projectionConfig: {
+    center: [number, number];
+    scale: number;
+  };
+  countryCodes: Set<string>;
+  countryNames: Set<string>;
+  cities: Array<{ key: string; name: string; countryCode: string }>;
+  points: CityMapPoint[];
+};
+
+const CITY_MAP_REGION_CONFIGS: Array<Omit<CityMapRegion, "countryCodes" | "countryNames" | "cities" | "points">> = [
+  {
+    key: "france",
+    label: { fr: "France", en: "France" },
+    projectionConfig: { center: [2.2, 46.5], scale: 1350 },
+  },
+  {
+    key: "europe",
+    label: { fr: "Europe", en: "Europe" },
+    projectionConfig: { center: [14, 52], scale: 560 },
+  },
+  {
+    key: "northAmerica",
+    label: { fr: "Amérique du Nord", en: "North America" },
+    projectionConfig: { center: [-98, 45], scale: 360 },
+  },
+  {
+    key: "southAmerica",
+    label: { fr: "Amérique du Sud", en: "South America" },
+    projectionConfig: { center: [-60, -17], scale: 420 },
+  },
+  {
+    key: "africa",
+    label: { fr: "Afrique", en: "Africa" },
+    projectionConfig: { center: [20, 2], scale: 430 },
+  },
+  {
+    key: "westCentralAsia",
+    label: { fr: "Asie de l'Ouest et centrale", en: "West & Central Asia" },
+    projectionConfig: { center: [54, 33], scale: 430 },
+  },
+  {
+    key: "southEastAsia",
+    label: { fr: "Asie du Sud, de l'Est et du Sud-Est", en: "South, East & Southeast Asia" },
+    projectionConfig: { center: [104, 24], scale: 360 },
+  },
+  {
+    key: "oceania",
+    label: { fr: "Océanie", en: "Oceania" },
+    projectionConfig: { center: [135, -25], scale: 420 },
+  },
+];
 
 function getHeatmapIntensity(value: number, maxValue: number) {
   if (value <= 0 || maxValue <= 0) {
@@ -145,6 +252,101 @@ function getVisitedCitiesList(visitedCities: string, locale: string) {
   }
 
   return Array.from(uniqueCities.entries()).map(([key, city]) => ({ key, city }));
+}
+
+function getCityMapRegionKey(countryCode: string): CityMapRegionKey | null {
+  const normalizedCode = countryCode.toUpperCase();
+  if (normalizedCode === "FR") return "france";
+  if (NORTH_AMERICA_COUNTRY_CODES.has(normalizedCode)) return "northAmerica";
+  if (SOUTH_AMERICA_COUNTRY_CODES.has(normalizedCode)) return "southAmerica";
+  if (WEST_CENTRAL_ASIA_COUNTRY_CODES.has(normalizedCode)) return "westCentralAsia";
+  if (SOUTH_EAST_ASIA_COUNTRY_CODES.has(normalizedCode)) return "southEastAsia";
+
+  const continent = getContinentKey(normalizedCode);
+  if (continent === "europe") return "europe";
+  if (continent === "africa") return "africa";
+  if (continent === "asia") return "southEastAsia";
+  if (continent === "oceania") return "oceania";
+
+  return null;
+}
+
+function buildCityMapRegions(trips: Trip[], locale: ReturnType<typeof useI18n>["locale"]) {
+  const cityMaps: Record<
+    CityMapRegionKey,
+    {
+      countryCodes: Set<string>;
+      countryNames: Set<string>;
+      cities: Map<string, { name: string; countryCode: string }>;
+      points: CityMapPoint[];
+    }
+  > = {
+    france: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
+    europe: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
+    northAmerica: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
+    southAmerica: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
+    africa: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
+    westCentralAsia: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
+    southEastAsia: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
+    oceania: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
+  };
+  const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+  for (const trip of trips) {
+    const countryCode = trip.countryCode.toUpperCase();
+    const atlasCountryCode = getAtlasCountryCode(countryCode);
+    const regionKey = getCityMapRegionKey(countryCode);
+    if (!regionKey) continue;
+
+    const region = cityMaps[regionKey];
+    const cities = getVisitedCitiesList(trip.visitedCities, locale);
+    region.countryCodes.add(countryCode);
+    region.countryCodes.add(atlasCountryCode);
+    for (const name of [
+      regionNames.of(atlasCountryCode),
+      ...(CITY_MAP_COUNTRY_NAME_ALIASES[atlasCountryCode] ?? []),
+    ]) {
+      if (name) region.countryNames.add(name.toLowerCase());
+    }
+
+    for (const { key, city } of cities) {
+      const cityKey = `${countryCode}:${key}`;
+      if (!region.cities.has(cityKey)) {
+        region.cities.set(cityKey, { name: city, countryCode });
+      }
+    }
+
+    if (
+      typeof trip.longitude === "number" &&
+      typeof trip.latitude === "number" &&
+      cities.length > 0
+    ) {
+      region.points.push({
+        id: `${trip.id}-${region.points.length}`,
+        coordinates: [trip.longitude, trip.latitude],
+        label: cities.map(({ city }) => city).join(", "),
+        tripName: trip.name,
+        countryCode,
+      });
+    }
+  }
+
+  return CITY_MAP_REGION_CONFIGS.map((config) => {
+    const region = cityMaps[config.key];
+    return {
+      ...config,
+      countryCodes: region.countryCodes,
+      countryNames: region.countryNames,
+      points: region.points,
+      cities: Array.from(region.cities.entries())
+        .map(([key, value]) => ({ key, ...value }))
+        .sort((left, right) => {
+          const cityDiff = left.name.localeCompare(right.name, locale);
+          if (cityDiff !== 0) return cityDiff;
+          return left.countryCode.localeCompare(right.countryCode, locale);
+        }),
+    };
+  });
 }
 
 type CountrySortKey = "nights" | "trips";
@@ -887,6 +1089,7 @@ export default function DataVizPage() {
       0,
       ...heatmapRows.flatMap((row) => row.months.map((month) => month.count)),
     );
+    const cityMapRegions = buildCityMapRegions(filteredTrips, locale);
 
     return {
       totalEstimatedKm,
@@ -915,6 +1118,7 @@ export default function DataVizPage() {
       scatterRows,
       heatmapRows,
       maxHeatmapCount,
+      cityMapRegions,
     };
   }, [filteredTrips, journeys, locale, numberLocale, posts]);
 
@@ -2549,6 +2753,127 @@ export default function DataVizPage() {
               )}
             </CardContent>
           </Card>
+        </section>
+
+        <section className="space-y-6">
+          <div>
+            <p className="text-xs font-mono uppercase tracking-[0.24em] text-muted-foreground">
+              {locale === "fr" ? "Villes visitées" : "Visited cities"}
+            </p>
+            <h2 className="mt-2 font-serif text-3xl font-bold text-foreground">
+              {locale === "fr" ? "Cartes des villes" : "City maps"}
+            </h2>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-2">
+            {analytics.cityMapRegions.map((region) => (
+              <div
+                key={region.key}
+                className="overflow-hidden rounded-xl border border-border/60 bg-background"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-5 py-4">
+                  <h3 className="font-serif text-2xl font-bold text-foreground">
+                    {region.label[locale]}
+                  </h3>
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-mono text-foreground">
+                    {region.cities.length.toLocaleString(numberLocale)}{" "}
+                    {locale === "fr" ? "villes" : "cities"}
+                  </span>
+                </div>
+
+                <div className="h-[320px] w-full bg-[#f3f6f1]">
+                  <ComposableMap
+                    width={640}
+                    height={360}
+                    projection="geoMercator"
+                    projectionConfig={region.projectionConfig}
+                    className="h-full w-full"
+                  >
+                    <Geographies geography={CITY_MAP_GEO_URL}>
+                      {({ geographies }) =>
+                        geographies.map((geo) => {
+                          const countryCode = String(geo.properties.ISO_A2 ?? "");
+                          const geographyName = String(geo.properties.name ?? "").toLowerCase();
+                          const isVisited =
+                            region.countryCodes.has(countryCode) ||
+                            region.countryCodes.has(String(geo.properties.ISO_A3 ?? "")) ||
+                            region.countryCodes.has(String(geo.id ?? "")) ||
+                            region.countryNames.has(geographyName);
+
+                          return (
+                            <Geography
+                              key={geo.rsmKey}
+                              geography={geo}
+                              fill={isVisited ? "#d48643" : "#d9ded3"}
+                              stroke="#f8faf5"
+                              strokeWidth={0.5}
+                              style={{
+                                default: { outline: "none" },
+                                hover: {
+                                  fill: isVisited ? "#bf6f32" : "#c9d0c4",
+                                  outline: "none",
+                                },
+                                pressed: { outline: "none" },
+                              }}
+                            />
+                          );
+                        })
+                      }
+                    </Geographies>
+
+                    {region.points.map((point) => (
+                      <Marker key={point.id} coordinates={point.coordinates}>
+                        <g>
+                          <title>{`${point.label} - ${point.tripName}`}</title>
+                          <circle
+                            r={5}
+                            fill="#0f766e"
+                            stroke="#ffffff"
+                            strokeWidth={1.8}
+                          />
+                          <text
+                            x={8}
+                            y={4}
+                            className="text-[11px] font-semibold fill-foreground"
+                            style={{
+                              paintOrder: "stroke",
+                              stroke: "#ffffff",
+                              strokeWidth: 3,
+                              strokeLinecap: "round",
+                              strokeLinejoin: "round",
+                            }}
+                          >
+                            {point.label.length > 24
+                              ? `${point.label.slice(0, 22)}...`
+                              : point.label}
+                          </text>
+                        </g>
+                      </Marker>
+                    ))}
+                  </ComposableMap>
+                </div>
+
+                <div className="flex flex-wrap gap-2 border-t border-border/60 bg-muted/20 px-5 py-4">
+                  {region.cities.length > 0 ? (
+                    region.cities.map((city) => (
+                      <span
+                        key={city.key}
+                        className="rounded-full border border-border/70 bg-background px-3 py-1 text-sm text-foreground"
+                      >
+                        {city.name} · {countryName(city.countryCode)}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {locale === "fr"
+                        ? "Aucune ville dans la sélection en cours."
+                        : "No city in the current selection."}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         <footer className="border-t border-border/60 pt-6">
