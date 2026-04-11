@@ -70,20 +70,20 @@ export const TRAVEL_REASON_OPTIONS: Option[] = [
 ] as const;
 
 export const TRIP_CONTEXT_OPTIONS: Option[] = [
-  { value: "solo", label: { fr: "👤 Solo", en: "👤 Solo" } },
-  { value: "couple", label: { fr: "❤️ En couple", en: "❤️ Couple" } },
-  { value: "family", label: { fr: "👨‍👩‍👧‍👦 En famille", en: "👨‍👩‍👧‍👦 Family" } },
-  { value: "friends", label: { fr: "🍻 Entre amis", en: "🍻 Friends" } },
+  { value: "solo", label: { fr: "Solo", en: "Solo" } },
+  { value: "couple", label: { fr: "En couple", en: "Couple" } },
+  { value: "family", label: { fr: "En famille", en: "Family" } },
+  { value: "friends", label: { fr: "Entre amis", en: "Friends" } },
   {
     value: "work-colleagues",
     label: {
-      fr: "💼 Professionnel / collègues",
-      en: "💼 Work / colleagues",
+      fr: "Professionnel / collègues",
+      en: "Work / colleagues",
     },
   },
   {
     value: "organized-group",
-    label: { fr: "👥 Groupe organisé", en: "👥 Organized group" },
+    label: { fr: "Groupe organisé", en: "Organized group" },
   },
 ] as const;
 

@@ -280,7 +280,7 @@ const ChartLegendContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "flex items-center justify-center gap-4",
+          "flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center",
           verticalAlign === "top" ? "pb-3" : "pt-3",
           className
         )}
@@ -295,7 +295,7 @@ const ChartLegendContent = React.forwardRef<
               <div
                 key={item.value}
                 className={cn(
-                  "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
+                  "flex min-w-0 items-center gap-1.5 break-words [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
                 )}
               >
                 {itemConfig?.icon && !hideIcon ? (
@@ -308,7 +308,9 @@ const ChartLegendContent = React.forwardRef<
                     }}
                   />
                 )}
-                {itemConfig?.label}
+                <span className="max-w-full whitespace-normal text-sm leading-snug">
+                  {itemConfig?.label}
+                </span>
               </div>
             )
           })}

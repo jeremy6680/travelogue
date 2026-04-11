@@ -60,9 +60,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
+import { useJourneysQuery, usePhotosQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { useI18n } from "@/lib/i18n";
-import type { Post, Trip } from "@/lib/travel-types";
+import type { Photo, Post, Trip } from "@/lib/travel-types";
 import {
   CONTINENT_OPTIONS,
   formatAccomodationLabel,
@@ -143,6 +143,15 @@ type CityMapPoint = {
   coordinates: [number, number];
   label: string;
   score: number;
+};
+
+type CityGeoSource = {
+  id: string;
+  tripId: number | null;
+  countryCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  location: string | null;
 };
 
 type CityMapRegion = {
@@ -293,7 +302,7 @@ function getCityMapRegionKey(countryCode: string): CityMapRegionKey | null {
 
 function buildCityMapRegions(
   trips: Trip[],
-  posts: Post[],
+  geoSources: CityGeoSource[],
   locale: ReturnType<typeof useI18n>["locale"],
 ) {
   const cityMaps: Record<
@@ -325,13 +334,32 @@ function buildCityMapRegions(
     oceania: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: new Map() },
   };
   const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
-  const postsByTripId = new Map<number, Post[]>();
+  const sourcesByTripId = new Map<number, CityGeoSource[]>();
+  const sourcesByCountryCode = new Map<string, CityGeoSource[]>();
+  const tripCityKeysByCountryCode = new Map<string, Set<string>>();
 
-  for (const post of posts) {
-    if (post.tripId == null) continue;
-    const tripPosts = postsByTripId.get(post.tripId) ?? [];
-    tripPosts.push(post);
-    postsByTripId.set(post.tripId, tripPosts);
+  for (const source of geoSources) {
+    if (
+      typeof source.latitude !== "number" ||
+      typeof source.longitude !== "number" ||
+      typeof source.location !== "string" ||
+      !source.location.trim()
+    ) {
+      continue;
+    }
+
+    if (source.tripId != null) {
+      const tripSources = sourcesByTripId.get(source.tripId) ?? [];
+      tripSources.push(source);
+      sourcesByTripId.set(source.tripId, tripSources);
+    }
+
+    if (source.countryCode) {
+      const normalizedCountryCode = source.countryCode.toUpperCase();
+      const countrySources = sourcesByCountryCode.get(normalizedCountryCode) ?? [];
+      countrySources.push(source);
+      sourcesByCountryCode.set(normalizedCountryCode, countrySources);
+    }
   }
 
   const registerPoint = (
@@ -366,13 +394,7 @@ function buildCityMapRegions(
 
     const region = cityMaps[regionKey];
     const cities = getVisitedCitiesList(trip.visitedCities, locale);
-    const tripPosts = (postsByTripId.get(trip.id) ?? []).filter(
-      (post) =>
-        typeof post.latitude === "number" &&
-        typeof post.longitude === "number" &&
-        typeof post.location === "string" &&
-        post.location.trim(),
-    );
+    const cityKeys = tripCityKeysByCountryCode.get(countryCode) ?? new Set<string>();
     region.countryCodes.add(countryCode);
     region.countryCodes.add(atlasCountryCode);
     for (const name of [
@@ -382,33 +404,64 @@ function buildCityMapRegions(
       if (name) region.countryNames.add(name.toLowerCase());
     }
 
-    for (const post of tripPosts) {
-      const label = post.location!.trim();
-      const pointKey = `${countryCode}:post:${normalizePlaceName(label)}`;
-      registerPoint(
-        region,
-        pointKey,
-        label,
-        post.latitude!,
-        post.longitude!,
-        1,
-      );
-    }
-
     for (const { key, city } of cities) {
       const cityKey = `${countryCode}:${key}`;
+      cityKeys.add(key);
       if (!region.cities.has(cityKey)) {
         region.cities.set(cityKey, { name: city, countryCode });
       }
+    }
+
+    tripCityKeysByCountryCode.set(countryCode, cityKeys);
+
+    if (
+      cities.length === 1 &&
+      typeof trip.longitude === "number" &&
+      typeof trip.latitude === "number"
+    ) {
+      const [city] = cities;
+      registerPoint(region, `${countryCode}:${city.key}`, city.city, trip.latitude, trip.longitude, 0.5);
+    }
+  }
+
+  for (const trip of trips) {
+    const countryCode = trip.countryCode.toUpperCase();
+    const regionKey = getCityMapRegionKey(countryCode);
+    if (!regionKey) continue;
+
+    const region = cityMaps[regionKey];
+    const cityKeys = tripCityKeysByCountryCode.get(countryCode) ?? new Set<string>();
+    const linkedSources = sourcesByTripId.get(trip.id) ?? [];
+    const countrySources = sourcesByCountryCode.get(countryCode) ?? [];
+    const seenSourceIds = new Set<string>();
+
+    for (const source of [...linkedSources, ...countrySources]) {
+      if (seenSourceIds.has(source.id)) continue;
+      seenSourceIds.add(source.id);
+
+      const normalizedLocation = normalizePlaceName(source.location ?? "");
+      if (!normalizedLocation) continue;
 
       if (
-        cities.length === 1 &&
-        typeof trip.longitude === "number" &&
-        typeof trip.latitude === "number" &&
-        tripPosts.length === 0
+        source.tripId !== trip.id &&
+        !Array.from(cityKeys).some(
+          (cityKey) =>
+            normalizedLocation === cityKey ||
+            normalizedLocation.includes(cityKey) ||
+            cityKey.includes(normalizedLocation),
+        )
       ) {
-        registerPoint(region, cityKey, city, trip.latitude, trip.longitude, 0.5);
+        continue;
       }
+
+      registerPoint(
+        region,
+        `${countryCode}:geo:${normalizedLocation}`,
+        source.location!.trim(),
+        source.latitude!,
+        source.longitude!,
+        source.tripId === trip.id ? 1 : 0.8,
+      );
     }
   }
 
@@ -452,6 +505,7 @@ export default function DataVizPage() {
   const { data: trips = [] } = useTripsQuery();
   const { data: journeys = [] } = useJourneysQuery();
   const { data: posts = [] } = usePostsQuery();
+  const { data: photos = [] } = usePhotosQuery();
   const [filterZone, setFilterZone] = useState<string[]>([]);
   const [filterCountry, setFilterCountry] = useState<string[]>([]);
   const [filterYear, setFilterYear] = useState<string[]>([]);
@@ -1186,7 +1240,24 @@ export default function DataVizPage() {
     );
     const cityMapRegions = buildCityMapRegions(
       filteredTrips,
-      posts.filter((post) => post.tripId != null && filteredTripIds.has(post.tripId)),
+      [
+        ...posts.map((post) => ({
+          id: `post-${post.id}`,
+          tripId: post.tripId,
+          countryCode: post.countryCode,
+          latitude: post.latitude,
+          longitude: post.longitude,
+          location: post.location,
+        })),
+        ...photos.map((photo) => ({
+          id: `photo-${photo.id}`,
+          tripId: photo.tripId,
+          countryCode: photo.countryCode,
+          latitude: photo.latitude,
+          longitude: photo.longitude,
+          location: photo.location,
+        })),
+      ],
       locale,
     );
 
@@ -1219,7 +1290,7 @@ export default function DataVizPage() {
       maxHeatmapCount,
       cityMapRegions,
     };
-  }, [filteredTrips, journeys, locale, numberLocale, posts]);
+  }, [filteredTrips, journeys, locale, numberLocale, photos, posts]);
 
   const transportConfig = Object.fromEntries(
     analytics.transportDistanceRows.map((row, index) => [
@@ -1951,7 +2022,9 @@ export default function DataVizPage() {
                         />
                       }
                     />
-                    <ChartLegend content={<ChartLegendContent />} />
+                    <ChartLegend
+                      content={<ChartLegendContent className="mx-auto max-w-full px-2" />}
+                    />
                     {analytics.carbonModes.map((mode, index) => (
                       <Bar
                         key={mode}
