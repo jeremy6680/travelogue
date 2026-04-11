@@ -62,7 +62,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
 import { useI18n } from "@/lib/i18n";
-import type { Trip } from "@/lib/travel-types";
+import type { Post, Trip } from "@/lib/travel-types";
 import {
   CONTINENT_OPTIONS,
   formatAccomodationLabel,
@@ -142,8 +142,6 @@ type CityMapPoint = {
   id: string;
   coordinates: [number, number];
   label: string;
-  tripName: string;
-  countryCode: string;
 };
 
 type CityMapRegion = {
@@ -168,7 +166,7 @@ const CITY_MAP_REGION_CONFIGS: Array<Omit<CityMapRegion, "countryCodes" | "count
   {
     key: "europe",
     label: { fr: "Europe", en: "Europe" },
-    projectionConfig: { center: [14, 52], scale: 560 },
+    projectionConfig: { center: [14, 47], scale: 470 },
   },
   {
     key: "northAmerica",
@@ -178,12 +176,12 @@ const CITY_MAP_REGION_CONFIGS: Array<Omit<CityMapRegion, "countryCodes" | "count
   {
     key: "southAmerica",
     label: { fr: "Amérique du Sud", en: "South America" },
-    projectionConfig: { center: [-60, -17], scale: 420 },
+    projectionConfig: { center: [-60, -22], scale: 350 },
   },
   {
     key: "africa",
     label: { fr: "Afrique", en: "Africa" },
-    projectionConfig: { center: [20, 2], scale: 430 },
+    projectionConfig: { center: [20, 2], scale: 265 },
   },
   {
     key: "westCentralAsia",
@@ -198,7 +196,7 @@ const CITY_MAP_REGION_CONFIGS: Array<Omit<CityMapRegion, "countryCodes" | "count
   {
     key: "oceania",
     label: { fr: "Océanie", en: "Oceania" },
-    projectionConfig: { center: [135, -25], scale: 420 },
+    projectionConfig: { center: [154, -28], scale: 300 },
   },
 ];
 
@@ -254,6 +252,14 @@ function getVisitedCitiesList(visitedCities: string, locale: string) {
   return Array.from(uniqueCities.entries()).map(([key, city]) => ({ key, city }));
 }
 
+function normalizePlaceName(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 function getCityMapRegionKey(countryCode: string): CityMapRegionKey | null {
   const normalizedCode = countryCode.toUpperCase();
   if (normalizedCode === "FR") return "france";
@@ -271,26 +277,38 @@ function getCityMapRegionKey(countryCode: string): CityMapRegionKey | null {
   return null;
 }
 
-function buildCityMapRegions(trips: Trip[], locale: ReturnType<typeof useI18n>["locale"]) {
+function buildCityMapRegions(
+  trips: Trip[],
+  posts: Post[],
+  locale: ReturnType<typeof useI18n>["locale"],
+) {
   const cityMaps: Record<
     CityMapRegionKey,
     {
       countryCodes: Set<string>;
       countryNames: Set<string>;
       cities: Map<string, { name: string; countryCode: string }>;
-      points: CityMapPoint[];
+      points: Map<string, CityMapPoint>;
     }
   > = {
-    france: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
-    europe: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
-    northAmerica: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
-    southAmerica: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
-    africa: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
-    westCentralAsia: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
-    southEastAsia: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
-    oceania: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: [] },
+    france: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: new Map() },
+    europe: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: new Map() },
+    northAmerica: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: new Map() },
+    southAmerica: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: new Map() },
+    africa: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: new Map() },
+    westCentralAsia: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: new Map() },
+    southEastAsia: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: new Map() },
+    oceania: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: new Map() },
   };
   const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+  const postsByTripId = new Map<number, Post[]>();
+
+  for (const post of posts) {
+    if (post.tripId == null) continue;
+    const tripPosts = postsByTripId.get(post.tripId) ?? [];
+    tripPosts.push(post);
+    postsByTripId.set(post.tripId, tripPosts);
+  }
 
   for (const trip of trips) {
     const countryCode = trip.countryCode.toUpperCase();
@@ -300,6 +318,7 @@ function buildCityMapRegions(trips: Trip[], locale: ReturnType<typeof useI18n>["
 
     const region = cityMaps[regionKey];
     const cities = getVisitedCitiesList(trip.visitedCities, locale);
+    const tripPosts = postsByTripId.get(trip.id) ?? [];
     region.countryCodes.add(countryCode);
     region.countryCodes.add(atlasCountryCode);
     for (const name of [
@@ -311,23 +330,57 @@ function buildCityMapRegions(trips: Trip[], locale: ReturnType<typeof useI18n>["
 
     for (const { key, city } of cities) {
       const cityKey = `${countryCode}:${key}`;
+      const normalizedCity = normalizePlaceName(city);
       if (!region.cities.has(cityKey)) {
         region.cities.set(cityKey, { name: city, countryCode });
       }
-    }
 
-    if (
-      typeof trip.longitude === "number" &&
-      typeof trip.latitude === "number" &&
-      cities.length > 0
-    ) {
-      region.points.push({
-        id: `${trip.id}-${region.points.length}`,
-        coordinates: [trip.longitude, trip.latitude],
-        label: cities.map(({ city }) => city).join(", "),
-        tripName: trip.name,
-        countryCode,
-      });
+      const matchingPosts = tripPosts.filter(
+        (post) =>
+          typeof post.latitude === "number" &&
+          typeof post.longitude === "number" &&
+          typeof post.location === "string" &&
+          post.location.trim() &&
+          (() => {
+            const normalizedLocation = normalizePlaceName(post.location);
+            return (
+              normalizedLocation === normalizedCity ||
+              normalizedLocation.includes(normalizedCity) ||
+              normalizedCity.includes(normalizedLocation)
+            );
+          })(),
+      );
+
+      if (matchingPosts.length > 0) {
+        const latitude =
+          matchingPosts.reduce((sum, post) => sum + (post.latitude ?? 0), 0) /
+          matchingPosts.length;
+        const longitude =
+          matchingPosts.reduce((sum, post) => sum + (post.longitude ?? 0), 0) /
+          matchingPosts.length;
+
+        if (!region.points.has(cityKey)) {
+          region.points.set(cityKey, {
+            id: cityKey,
+            coordinates: [longitude, latitude],
+            label: city,
+          });
+        }
+        continue;
+      }
+
+      if (
+        cities.length === 1 &&
+        typeof trip.longitude === "number" &&
+        typeof trip.latitude === "number" &&
+        !region.points.has(cityKey)
+      ) {
+        region.points.set(cityKey, {
+          id: cityKey,
+          coordinates: [trip.longitude, trip.latitude],
+          label: city,
+        });
+      }
     }
   }
 
@@ -337,7 +390,9 @@ function buildCityMapRegions(trips: Trip[], locale: ReturnType<typeof useI18n>["
       ...config,
       countryCodes: region.countryCodes,
       countryNames: region.countryNames,
-      points: region.points,
+      points: Array.from(region.points.values()).sort((left, right) =>
+        left.label.localeCompare(right.label, locale),
+      ),
       cities: Array.from(region.cities.entries())
         .map(([key, value]) => ({ key, ...value }))
         .sort((left, right) => {
@@ -1089,7 +1144,11 @@ export default function DataVizPage() {
       0,
       ...heatmapRows.flatMap((row) => row.months.map((month) => month.count)),
     );
-    const cityMapRegions = buildCityMapRegions(filteredTrips, locale);
+    const cityMapRegions = buildCityMapRegions(
+      filteredTrips,
+      posts.filter((post) => post.tripId != null && filteredTripIds.has(post.tripId)),
+      locale,
+    );
 
     return {
       totalEstimatedKm,
@@ -2824,7 +2883,7 @@ export default function DataVizPage() {
                     {region.points.map((point) => (
                       <Marker key={point.id} coordinates={point.coordinates}>
                         <g>
-                          <title>{`${point.label} - ${point.tripName}`}</title>
+                          <title>{point.label}</title>
                           <circle
                             r={5}
                             fill="#0f766e"
@@ -2851,25 +2910,6 @@ export default function DataVizPage() {
                       </Marker>
                     ))}
                   </ComposableMap>
-                </div>
-
-                <div className="flex flex-wrap gap-2 border-t border-border/60 bg-muted/20 px-5 py-4">
-                  {region.cities.length > 0 ? (
-                    region.cities.map((city) => (
-                      <span
-                        key={city.key}
-                        className="rounded-full border border-border/70 bg-background px-3 py-1 text-sm text-foreground"
-                      >
-                        {city.name} · {countryName(city.countryCode)}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      {locale === "fr"
-                        ? "Aucune ville dans la sélection en cours."
-                        : "No city in the current selection."}
-                    </p>
-                  )}
                 </div>
               </div>
             ))}
