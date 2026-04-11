@@ -10,6 +10,21 @@ Travelogue is a pnpm monorepo for a travel blog frontend backed by Directus and 
 - Database: PostgreSQL + Drizzle (`lib/db`)
 - Scripts: migrations and seeders from the workspace root
 
+## What The App Includes
+
+- Home page with featured posts and global travel stats
+- Atlas page with the interactive world map
+- Trips page with the travel timeline and multi-filter exploration
+- Dataviz page with travel analytics, regional city maps, and trip context breakdowns
+- Posts pages for the journal index and individual post detail views
+- Directus-backed admin and media workflows
+
+Recent data model additions used by the frontend include:
+
+- `trip_context` on trips, used in filters, labels, and analytics
+- multi-value travel reasons, including `mariage`
+- Cloudinary-backed `media_assets` relations for posts, trips, and photos
+
 ## Documentation
 
 - Directus operations guide: [`docs/directus.md`](/Users/jeremymarchandeau/Code/personal/projects/travelogue/docs/directus.md)
@@ -156,6 +171,16 @@ pnpm --filter @workspace/travel-blog dev
 ```
 
 The frontend runs on `http://localhost:5173` and talks directly to Directus.
+
+Main frontend routes:
+
+- `/` home
+- `/atlas` world map and headline stats
+- `/trips` timeline with country, region, year, reason, context, and companion filters
+- `/dataviz` analytics dashboards and maps
+- `/posts` journal index
+- `/posts/:slug` post detail
+- `/admin` frontend admin entrypoint
 
 ## Typecheck and Build
 
