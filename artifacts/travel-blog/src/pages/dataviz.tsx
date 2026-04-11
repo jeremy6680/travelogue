@@ -142,6 +142,7 @@ type CityMapPoint = {
   id: string;
   coordinates: [number, number];
   label: string;
+  score: number;
 };
 
 type CityMapRegion = {
@@ -199,6 +200,19 @@ const CITY_MAP_REGION_CONFIGS: Array<Omit<CityMapRegion, "countryCodes" | "count
     projectionConfig: { center: [154, -28], scale: 300 },
   },
 ];
+
+function getCityMapPointLimit(regionKey: CityMapRegionKey) {
+  switch (regionKey) {
+    case "europe":
+      return 12;
+    case "france":
+    case "northAmerica":
+    case "southEastAsia":
+      return 10;
+    default:
+      return 8;
+  }
+}
 
 function getHeatmapIntensity(value: number, maxValue: number) {
   if (value <= 0 || maxValue <= 0) {
@@ -288,7 +302,17 @@ function buildCityMapRegions(
       countryCodes: Set<string>;
       countryNames: Set<string>;
       cities: Map<string, { name: string; countryCode: string }>;
-      points: Map<string, CityMapPoint>;
+      points: Map<
+        string,
+        {
+          id: string;
+          label: string;
+          latitudeTotal: number;
+          longitudeTotal: number;
+          sampleCount: number;
+          score: number;
+        }
+      >;
     }
   > = {
     france: { countryCodes: new Set(), countryNames: new Set(), cities: new Map(), points: new Map() },
@@ -310,6 +334,30 @@ function buildCityMapRegions(
     postsByTripId.set(post.tripId, tripPosts);
   }
 
+  const registerPoint = (
+    region: (typeof cityMaps)[CityMapRegionKey],
+    pointKey: string,
+    label: string,
+    latitude: number,
+    longitude: number,
+    scoreIncrement: number,
+  ) => {
+    const point = region.points.get(pointKey) ?? {
+      id: pointKey,
+      label,
+      latitudeTotal: 0,
+      longitudeTotal: 0,
+      sampleCount: 0,
+      score: 0,
+    };
+
+    point.latitudeTotal += latitude;
+    point.longitudeTotal += longitude;
+    point.sampleCount += 1;
+    point.score += scoreIncrement;
+    region.points.set(pointKey, point);
+  };
+
   for (const trip of trips) {
     const countryCode = trip.countryCode.toUpperCase();
     const atlasCountryCode = getAtlasCountryCode(countryCode);
@@ -318,7 +366,13 @@ function buildCityMapRegions(
 
     const region = cityMaps[regionKey];
     const cities = getVisitedCitiesList(trip.visitedCities, locale);
-    const tripPosts = postsByTripId.get(trip.id) ?? [];
+    const tripPosts = (postsByTripId.get(trip.id) ?? []).filter(
+      (post) =>
+        typeof post.latitude === "number" &&
+        typeof post.longitude === "number" &&
+        typeof post.location === "string" &&
+        post.location.trim(),
+    );
     region.countryCodes.add(countryCode);
     region.countryCodes.add(atlasCountryCode);
     for (const name of [
@@ -328,58 +382,32 @@ function buildCityMapRegions(
       if (name) region.countryNames.add(name.toLowerCase());
     }
 
+    for (const post of tripPosts) {
+      const label = post.location!.trim();
+      const pointKey = `${countryCode}:post:${normalizePlaceName(label)}`;
+      registerPoint(
+        region,
+        pointKey,
+        label,
+        post.latitude!,
+        post.longitude!,
+        1,
+      );
+    }
+
     for (const { key, city } of cities) {
       const cityKey = `${countryCode}:${key}`;
-      const normalizedCity = normalizePlaceName(city);
       if (!region.cities.has(cityKey)) {
         region.cities.set(cityKey, { name: city, countryCode });
-      }
-
-      const matchingPosts = tripPosts.filter(
-        (post) =>
-          typeof post.latitude === "number" &&
-          typeof post.longitude === "number" &&
-          typeof post.location === "string" &&
-          post.location.trim() &&
-          (() => {
-            const normalizedLocation = normalizePlaceName(post.location);
-            return (
-              normalizedLocation === normalizedCity ||
-              normalizedLocation.includes(normalizedCity) ||
-              normalizedCity.includes(normalizedLocation)
-            );
-          })(),
-      );
-
-      if (matchingPosts.length > 0) {
-        const latitude =
-          matchingPosts.reduce((sum, post) => sum + (post.latitude ?? 0), 0) /
-          matchingPosts.length;
-        const longitude =
-          matchingPosts.reduce((sum, post) => sum + (post.longitude ?? 0), 0) /
-          matchingPosts.length;
-
-        if (!region.points.has(cityKey)) {
-          region.points.set(cityKey, {
-            id: cityKey,
-            coordinates: [longitude, latitude],
-            label: city,
-          });
-        }
-        continue;
       }
 
       if (
         cities.length === 1 &&
         typeof trip.longitude === "number" &&
         typeof trip.latitude === "number" &&
-        !region.points.has(cityKey)
+        tripPosts.length === 0
       ) {
-        region.points.set(cityKey, {
-          id: cityKey,
-          coordinates: [trip.longitude, trip.latitude],
-          label: city,
-        });
+        registerPoint(region, cityKey, city, trip.latitude, trip.longitude, 0.5);
       }
     }
   }
@@ -390,9 +418,21 @@ function buildCityMapRegions(
       ...config,
       countryCodes: region.countryCodes,
       countryNames: region.countryNames,
-      points: Array.from(region.points.values()).sort((left, right) =>
-        left.label.localeCompare(right.label, locale),
-      ),
+      points: Array.from(region.points.values())
+        .map((point) => ({
+          id: point.id,
+          label: point.label,
+          coordinates: [
+            point.longitudeTotal / point.sampleCount,
+            point.latitudeTotal / point.sampleCount,
+          ] as [number, number],
+          score: point.score,
+        }))
+        .sort((left, right) => {
+          if (right.score !== left.score) return right.score - left.score;
+          return left.label.localeCompare(right.label, locale);
+        })
+        .slice(0, getCityMapPointLimit(config.key)),
       cities: Array.from(region.cities.entries())
         .map(([key, value]) => ({ key, ...value }))
         .sort((left, right) => {
@@ -2754,66 +2794,6 @@ export default function DataVizPage() {
           </Card>
         </section>
 
-        <section className="grid gap-6">
-          <Card className="border-border/60">
-            <CardHeader>
-              <CardTitle>
-                {locale === "fr"
-                  ? "Pays les plus visités par décennie hors France"
-                  : "Most visited countries by decade"}
-              </CardTitle>
-              <CardDescription>
-                {locale === "fr"
-                  ? "Top 5 des pays les plus visités pour chaque décennie de la sélection en cours, hors France."
-                  : "Top 5 most visited countries for each decade in the current selection, excluding France."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {analytics.topCountriesByPeriodRows.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {analytics.topCountriesByPeriodRows.map((period) => (
-                    <div
-                      key={period.period}
-                      className="rounded-xl border border-border/60 bg-muted/20 p-4"
-                    >
-                      <div className="mb-3 text-sm font-semibold text-foreground">
-                        {period.period}
-                      </div>
-                      <div className="space-y-2">
-                        {period.countries.map((country, index) => (
-                          <div
-                            key={`${period.period}-${country.countryCode}`}
-                            className="flex items-center justify-between gap-4 rounded-md bg-background/70 px-3 py-2"
-                          >
-                            <div className="min-w-0">
-                              <div className="text-xs text-muted-foreground">
-                                #{index + 1}
-                              </div>
-                              <div className="truncate font-medium text-foreground">
-                                {country.country}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-mono text-sm tabular-nums text-foreground">
-                                {country.trips.toLocaleString(numberLocale)}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {locale === "fr" ? "voyages" : "trips"}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
-              )}
-            </CardContent>
-          </Card>
-        </section>
-
         <section className="space-y-6">
           <div>
             <p className="text-xs font-mono uppercase tracking-[0.24em] text-muted-foreground">
@@ -2835,7 +2815,7 @@ export default function DataVizPage() {
                     {region.label[locale]}
                   </h3>
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-mono text-foreground">
-                    {region.cities.length.toLocaleString(numberLocale)}{" "}
+                    {region.points.length.toLocaleString(numberLocale)}{" "}
                     {locale === "fr" ? "villes" : "cities"}
                   </span>
                 </div>
@@ -2914,6 +2894,66 @@ export default function DataVizPage() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section className="grid gap-6">
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>
+                {locale === "fr"
+                  ? "Pays les plus visités par décennie hors France"
+                  : "Most visited countries by decade"}
+              </CardTitle>
+              <CardDescription>
+                {locale === "fr"
+                  ? "Top 5 des pays les plus visités pour chaque décennie de la sélection en cours, hors France."
+                  : "Top 5 most visited countries for each decade in the current selection, excluding France."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.topCountriesByPeriodRows.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {analytics.topCountriesByPeriodRows.map((period) => (
+                    <div
+                      key={period.period}
+                      className="rounded-xl border border-border/60 bg-muted/20 p-4"
+                    >
+                      <div className="mb-3 text-sm font-semibold text-foreground">
+                        {period.period}
+                      </div>
+                      <div className="space-y-2">
+                        {period.countries.map((country, index) => (
+                          <div
+                            key={`${period.period}-${country.countryCode}`}
+                            className="flex items-center justify-between gap-4 rounded-md bg-background/70 px-3 py-2"
+                          >
+                            <div className="min-w-0">
+                              <div className="text-xs text-muted-foreground">
+                                #{index + 1}
+                              </div>
+                              <div className="truncate font-medium text-foreground">
+                                {country.country}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono text-sm tabular-nums text-foreground">
+                                {country.trips.toLocaleString(numberLocale)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {locale === "fr" ? "voyages" : "trips"}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("datavizNoData")}</p>
+              )}
+            </CardContent>
+          </Card>
         </section>
 
         <footer className="border-t border-border/60 pt-6">
