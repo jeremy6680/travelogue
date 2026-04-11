@@ -57,6 +57,7 @@ export const COMPANION_OPTIONS = [
 export const TRAVEL_REASON_OPTIONS: Option[] = [
   { value: "vacances", label: { fr: "Vacances", en: "Vacation" } },
   { value: "week-end", label: { fr: "Week-end", en: "Weekend" } },
+  { value: "mariage", label: { fr: "Mariage", en: "Wedding" } },
   { value: "travail", label: { fr: "Travail", en: "Work" } },
   { value: "etudes", label: { fr: "Etudes", en: "Studies" } },
   { value: "stage", label: { fr: "Stage", en: "Internship" } },

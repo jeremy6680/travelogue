@@ -3498,6 +3498,8 @@ fields:
             value: vacances
           - text: Week-end
             value: week-end
+          - text: Mariage
+            value: mariage
           - text: Travail
             value: travail
           - text: Etudes
