@@ -3622,6 +3622,8 @@ fields:
             value: cricket
           - text: Formule 1
             value: formula-1
+          - text: Cyclisme
+            value: cycling
       readonly: false
       required: true
       searchable: true
@@ -5755,7 +5757,7 @@ relations:
       column: trip_id
       foreign_key_table: trips
       foreign_key_column: id
-      constraint_name: posts_trip_id_trips_id_fk
+      constraint_name: posts_trip_id_fkey
       on_update: CASCADE
       on_delete: SET NULL
   - collection: posts
@@ -5776,7 +5778,7 @@ relations:
       column: trip_id
       foreign_key_table: trips
       foreign_key_column: id
-      constraint_name: posts_trip_id_fkey
+      constraint_name: posts_trip_id_trips_id_fk
       on_update: CASCADE
       on_delete: SET NULL
   - collection: posts
