@@ -175,6 +175,11 @@ type DirectusConcert = {
   city: string | null;
   country_code: string | null;
   venue: string | null;
+  photos_link: string | null;
+  article_link: string | null;
+  attendees_people?:
+    | Array<{ people_id?: { display_name?: string | null } | null }>
+    | null;
 };
 
 type DirectusSportEvent = {
@@ -190,6 +195,11 @@ type DirectusSportEvent = {
   away_team: string | null;
   home_score: number | null;
   away_score: number | null;
+  photos_link: string | null;
+  article_link: string | null;
+  attendees_people?:
+    | Array<{ people_id?: { display_name?: string | null } | null }>
+    | null;
 };
 
 type DirectusWeddingRelation = {
@@ -206,6 +216,11 @@ type DirectusWedding = {
   trip_id: number | DirectusWeddingRelation;
   groom_id: number | DirectusWeddingRelation;
   bride_id: number | DirectusWeddingRelation;
+  photos_link: string | null;
+  article_link: string | null;
+  attendees_people?:
+    | Array<{ people_id?: { display_name?: string | null } | null }>
+    | null;
 };
 
 const MEDIA_ASSET_FIELDS = [
@@ -358,6 +373,9 @@ const CONCERT_FIELDS = [
   "city",
   "country_code",
   "venue",
+  "photos_link",
+  "article_link",
+  { attendees_people: [{ people_id: ["display_name"] }] },
 ] as const;
 
 const SPORT_EVENT_FIELDS = [
@@ -373,6 +391,9 @@ const SPORT_EVENT_FIELDS = [
   "away_team",
   "home_score",
   "away_score",
+  "photos_link",
+  "article_link",
+  { attendees_people: [{ people_id: ["display_name"] }] },
 ] as const;
 
 const WEDDING_FIELDS = [
@@ -383,6 +404,9 @@ const WEDDING_FIELDS = [
   { trip_id: ["id", "name"] },
   { groom_id: ["id", "display_name"] },
   { bride_id: ["id", "display_name"] },
+  "photos_link",
+  "article_link",
+  { attendees_people: [{ people_id: ["display_name"] }] },
 ] as const;
 
 const directus = createDirectus<DirectusSchema>(
@@ -537,6 +561,50 @@ function mapPhoto(photo: DirectusPhoto): Photo {
   };
 }
 
+function extractPeopleDisplayNames(
+  relations:
+    | Array<
+        | string
+        | { display_name?: string | null }
+        | { people_id?: number | string | { display_name?: string | null } | null }
+        | null
+      >
+    | null
+    | undefined,
+): string[] {
+  return (
+    relations
+      ?.map((entry) => {
+        if (!entry) return "";
+
+        if (typeof entry === "string") {
+          return entry.trim();
+        }
+
+        if ("display_name" in entry && typeof entry.display_name === "string") {
+          return entry.display_name.trim();
+        }
+
+        if (!("people_id" in entry)) return "";
+
+        if (typeof entry.people_id === "string") {
+          return entry.people_id.trim();
+        }
+
+        if (
+          entry.people_id &&
+          typeof entry.people_id === "object" &&
+          typeof entry.people_id.display_name === "string"
+        ) {
+          return entry.people_id.display_name.trim();
+        }
+
+        return "";
+      })
+      .filter(Boolean) ?? []
+  );
+}
+
 function mapConcert(concert: DirectusConcert): Concert {
   return {
     id: concert.id,
@@ -549,6 +617,9 @@ function mapConcert(concert: DirectusConcert): Concert {
     city: concert.city,
     countryCode: concert.country_code,
     venue: concert.venue,
+    photosLink: concert.photos_link,
+    articleLink: concert.article_link,
+    attendeesPeople: extractPeopleDisplayNames(concert.attendees_people),
   };
 }
 
@@ -566,6 +637,9 @@ function mapSportEvent(event: DirectusSportEvent): SportEvent {
     awayTeam: event.away_team,
     homeScore: event.home_score,
     awayScore: event.away_score,
+    photosLink: event.photos_link,
+    articleLink: event.article_link,
+    attendeesPeople: extractPeopleDisplayNames(event.attendees_people),
   };
 }
 
@@ -592,6 +666,9 @@ function mapWedding(wedding: DirectusWedding): Wedding {
     tripName: getRelationName(wedding.trip_id, "name"),
     groomName: getRelationName(wedding.groom_id, "display_name"),
     brideName: getRelationName(wedding.bride_id, "display_name"),
+    photosLink: wedding.photos_link,
+    articleLink: wedding.article_link,
+    attendeesPeople: extractPeopleDisplayNames(wedding.attendees_people),
   };
 }
 
@@ -918,13 +995,13 @@ export async function fetchMediaAssets(): Promise<MediaAsset[]> {
 
 export async function fetchConcerts(): Promise<Concert[]> {
   try {
-    const concerts = await directus.request(
+    const concerts = (await directus.request(
       readItems("concerts", {
         sort: ["-event_date", "artist"],
-        fields: [...CONCERT_FIELDS],
+        fields: [...CONCERT_FIELDS] as any,
         limit: -1,
       }),
-    );
+    )) as unknown as DirectusConcert[];
 
     return concerts.map(mapConcert);
   } catch (error) {
@@ -938,13 +1015,13 @@ export async function fetchConcerts(): Promise<Concert[]> {
 
 export async function fetchSportEvents(): Promise<SportEvent[]> {
   try {
-    const sportEvents = await directus.request(
+    const sportEvents = (await directus.request(
       readItems("sport_events", {
         sort: ["-event_date", "sport", "competition"],
-        fields: [...SPORT_EVENT_FIELDS],
+        fields: [...SPORT_EVENT_FIELDS] as any,
         limit: -1,
       }),
-    );
+    )) as unknown as DirectusSportEvent[];
 
     return sportEvents.map(mapSportEvent);
   } catch (error) {

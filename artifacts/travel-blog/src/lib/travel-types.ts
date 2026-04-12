@@ -290,6 +290,9 @@ export interface Concert {
   city: string | null;
   countryCode: string | null;
   venue: string | null;
+  photosLink: string | null;
+  articleLink: string | null;
+  attendeesPeople: string[];
 }
 
 export interface SportEvent {
@@ -305,6 +308,9 @@ export interface SportEvent {
   awayTeam: string | null;
   homeScore: number | null;
   awayScore: number | null;
+  photosLink: string | null;
+  articleLink: string | null;
+  attendeesPeople: string[];
 }
 
 export interface Wedding {
@@ -316,6 +322,9 @@ export interface Wedding {
   tripName: string | null;
   groomName: string | null;
   brideName: string | null;
+  photosLink: string | null;
+  articleLink: string | null;
+  attendeesPeople: string[];
 }
 
 export interface MapPin {

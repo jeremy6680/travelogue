@@ -26,6 +26,32 @@ collections:
       versioning: false
     schema:
       name: concerts
+  - collection: concerts_attendees
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: concerts_attendees
+      color: null
+      display_template: null
+      group: null
+      hidden: true
+      icon: import_export
+      item_duplication_fields: null
+      note: >-
+        Junction table linking concerts to attendees (people present at the
+        event).
+      preview_url: null
+      singleton: false
+      sort: 13
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: concerts_attendees
   - collection: countries
     meta:
       accountability: all
@@ -194,6 +220,32 @@ collections:
       versioning: false
     schema:
       name: sport_events
+  - collection: sport_events_attendees
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: sport_events_attendees
+      color: null
+      display_template: null
+      group: null
+      hidden: true
+      icon: import_export
+      item_duplication_fields: null
+      note: >-
+        Junction table linking sport events to attendees (people present at the
+        event).
+      preview_url: null
+      singleton: false
+      sort: 14
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: sport_events_attendees
   - collection: trips
     meta:
       accountability: all
@@ -294,6 +346,32 @@ collections:
       versioning: false
     schema:
       name: weddings
+  - collection: weddings_attendees
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: weddings_attendees
+      color: null
+      display_template: null
+      group: null
+      hidden: true
+      icon: import_export
+      item_duplication_fields: null
+      note: >-
+        Junction table linking weddings to attendees (people present at the
+        event).
+      preview_url: null
+      singleton: false
+      sort: 15
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: weddings_attendees
 fields:
   - collection: concerts
     field: id
@@ -739,6 +817,232 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: concerts
+    field: photos_link
+    type: string
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: photos_link
+      group: null
+      hidden: false
+      interface: input
+      note: External URL pointing to photos from this concert.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 8
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: photos_link
+      table: concerts
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: concerts
+    field: article_link
+    type: string
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: article_link
+      group: null
+      hidden: false
+      interface: input
+      note: External or internal URL pointing to the related article.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: article_link
+      table: concerts
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: concerts
+    field: attendees_people
+    type: alias
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: attendees_people
+      group: null
+      hidden: false
+      interface: list-m2m
+      note: Personnes présentes à l'évènement.
+      options:
+        enableCreate: true
+        template: '{{people_id.display_name}}'
+      readonly: false
+      required: false
+      searchable: false
+      sort: 10
+      special:
+        - m2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+  - collection: concerts_attendees
+    field: id
+    type: integer
+    meta:
+      collection: concerts_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: concerts_attendees
+      data_type: integer
+      default_value: nextval('concerts_attendees_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: concerts_attendees
+    field: concerts_id
+    type: integer
+    meta:
+      collection: concerts_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: concerts_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to concerts.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: concerts_id
+      table: concerts_attendees
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: concerts
+      foreign_key_column: id
+  - collection: concerts_attendees
+    field: people_id
+    type: integer
+    meta:
+      collection: concerts_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: people_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to people.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: people_id
+      table: concerts_attendees
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: people
+      foreign_key_column: id
   - collection: countries
     field: code
     type: string
@@ -3603,6 +3907,7 @@ fields:
       interface: select-dropdown
       note: Sport category.
       options:
+        allowOther: true
         choices:
           - text: Rugby
             value: rugby
@@ -3624,6 +3929,8 @@ fields:
             value: formula-1
           - text: Cyclisme
             value: cycling
+          - text: Tennis
+            value: tennis
       readonly: false
       required: true
       searchable: true
@@ -4054,6 +4361,232 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: sport_events
+    field: photos_link
+    type: string
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: photos_link
+      group: null
+      hidden: false
+      interface: input
+      note: External URL pointing to photos from this sporting event.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 12
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: photos_link
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: article_link
+    type: string
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: article_link
+      group: null
+      hidden: false
+      interface: input
+      note: External or internal URL pointing to the related article.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 13
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: article_link
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: attendees_people
+    type: alias
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: attendees_people
+      group: null
+      hidden: false
+      interface: list-m2m
+      note: Personnes présentes à l'évènement.
+      options:
+        enableCreate: true
+        template: '{{people_id.display_name}}'
+      readonly: false
+      required: false
+      searchable: false
+      sort: 14
+      special:
+        - m2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+  - collection: sport_events_attendees
+    field: id
+    type: integer
+    meta:
+      collection: sport_events_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: sport_events_attendees
+      data_type: integer
+      default_value: nextval('sport_events_attendees_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events_attendees
+    field: sport_events_id
+    type: integer
+    meta:
+      collection: sport_events_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: sport_events_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to sport_events.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: sport_events_id
+      table: sport_events_attendees
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: sport_events
+      foreign_key_column: id
+  - collection: sport_events_attendees
+    field: people_id
+    type: integer
+    meta:
+      collection: sport_events_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: people_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to people.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: people_id
+      table: sport_events_attendees
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: people
+      foreign_key_column: id
   - collection: trips
     field: id
     type: integer
@@ -5620,6 +6153,232 @@ fields:
       has_auto_increment: false
       foreign_key_table: people
       foreign_key_column: id
+  - collection: weddings
+    field: photos_link
+    type: string
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: photos_link
+      group: null
+      hidden: false
+      interface: input
+      note: External URL pointing to photos from this wedding.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: photos_link
+      table: weddings
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: weddings
+    field: article_link
+    type: string
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: article_link
+      group: null
+      hidden: false
+      interface: input
+      note: External or internal URL pointing to the related article.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 8
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: article_link
+      table: weddings
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: weddings
+    field: attendees_people
+    type: alias
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: attendees_people
+      group: null
+      hidden: false
+      interface: list-m2m
+      note: Personnes présentes à l'évènement.
+      options:
+        enableCreate: true
+        template: '{{people_id.display_name}}'
+      readonly: false
+      required: false
+      searchable: false
+      sort: 9
+      special:
+        - m2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+  - collection: weddings_attendees
+    field: id
+    type: integer
+    meta:
+      collection: weddings_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: weddings_attendees
+      data_type: integer
+      default_value: nextval('weddings_attendees_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: weddings_attendees
+    field: weddings_id
+    type: integer
+    meta:
+      collection: weddings_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: weddings_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to weddings.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: weddings_id
+      table: weddings_attendees
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: weddings
+      foreign_key_column: id
+  - collection: weddings_attendees
+    field: people_id
+    type: integer
+    meta:
+      collection: weddings_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: people_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to people.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: people_id
+      table: weddings_attendees
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: people
+      foreign_key_column: id
 systemFields:
   - collection: directus_activity
     field: timestamp
@@ -5676,6 +6435,48 @@ relations:
       constraint_name: concerts_country_code_foreign
       on_update: CASCADE
       on_delete: SET NULL
+  - collection: concerts_attendees
+    field: concerts_id
+    related_collection: concerts
+    meta:
+      junction_field: people_id
+      many_collection: concerts_attendees
+      many_field: concerts_id
+      one_allowed_collections: null
+      one_collection: concerts
+      one_collection_field: attendees_people
+      one_deselect_action: nullify
+      one_field: attendees_people
+      sort_field: null
+    schema:
+      table: concerts_attendees
+      column: concerts_id
+      foreign_key_table: concerts
+      foreign_key_column: id
+      constraint_name: concerts_attendees_concerts_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
+  - collection: concerts_attendees
+    field: people_id
+    related_collection: people
+    meta:
+      junction_field: concerts_id
+      many_collection: concerts_attendees
+      many_field: people_id
+      one_allowed_collections: null
+      one_collection: people
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: concerts_attendees
+      column: people_id
+      foreign_key_table: people
+      foreign_key_column: id
+      constraint_name: concerts_attendees_people_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
   - collection: photos
     field: trip_id
     related_collection: trips
@@ -5865,6 +6666,48 @@ relations:
       constraint_name: sport_events_country_code_foreign
       on_update: CASCADE
       on_delete: SET NULL
+  - collection: sport_events_attendees
+    field: sport_events_id
+    related_collection: sport_events
+    meta:
+      junction_field: people_id
+      many_collection: sport_events_attendees
+      many_field: sport_events_id
+      one_allowed_collections: null
+      one_collection: sport_events
+      one_collection_field: attendees_people
+      one_deselect_action: nullify
+      one_field: attendees_people
+      sort_field: null
+    schema:
+      table: sport_events_attendees
+      column: sport_events_id
+      foreign_key_table: sport_events
+      foreign_key_column: id
+      constraint_name: sport_events_attendees_sport_events_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
+  - collection: sport_events_attendees
+    field: people_id
+    related_collection: people
+    meta:
+      junction_field: sport_events_id
+      many_collection: sport_events_attendees
+      many_field: people_id
+      one_allowed_collections: null
+      one_collection: people
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: sport_events_attendees
+      column: people_id
+      foreign_key_table: people
+      foreign_key_column: id
+      constraint_name: sport_events_attendees_people_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
   - collection: trips
     field: country_code
     related_collection: countries
@@ -6096,3 +6939,45 @@ relations:
       constraint_name: weddings_bride_id_foreign
       on_update: CASCADE
       on_delete: SET NULL
+  - collection: weddings_attendees
+    field: weddings_id
+    related_collection: weddings
+    meta:
+      junction_field: people_id
+      many_collection: weddings_attendees
+      many_field: weddings_id
+      one_allowed_collections: null
+      one_collection: weddings
+      one_collection_field: attendees_people
+      one_deselect_action: nullify
+      one_field: attendees_people
+      sort_field: null
+    schema:
+      table: weddings_attendees
+      column: weddings_id
+      foreign_key_table: weddings
+      foreign_key_column: id
+      constraint_name: weddings_attendees_weddings_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
+  - collection: weddings_attendees
+    field: people_id
+    related_collection: people
+    meta:
+      junction_field: weddings_id
+      many_collection: weddings_attendees
+      many_field: people_id
+      one_allowed_collections: null
+      one_collection: people
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: weddings_attendees
+      column: people_id
+      foreign_key_table: people
+      foreign_key_column: id
+      constraint_name: weddings_attendees_people_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE

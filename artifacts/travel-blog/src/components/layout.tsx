@@ -18,7 +18,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { locale, setLocale, t, isLocaleSwitcherEnabled } = useI18n();
 
   const navItems = [
-    { href: "/", label: t("navHome"), icon: Compass, exact: true },
     { href: "/atlas", label: t("navAtlas"), icon: Map },
     { href: "/posts", label: t("navJournal"), icon: BookOpen },
     { href: "/trips", label: t("navTrips"), icon: Globe },
@@ -45,10 +44,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           <nav className="flex items-center gap-1">
             {navItems.map((item) => {
-              const isActive = item.exact
-                ? location === item.href
-                : location === item.href ||
-                  location.startsWith(item.href + "/");
+              const isActive =
+                location === item.href || location.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}
