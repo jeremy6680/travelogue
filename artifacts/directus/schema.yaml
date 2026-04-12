@@ -2,6 +2,30 @@ version: 1
 directus: 11.17.1
 vendor: postgres
 collections:
+  - collection: concerts
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: concerts
+      color: null
+      display_template: '{{artist}} — {{event_name}} ({{event_date}})'
+      group: null
+      hidden: false
+      icon: music_note
+      item_duplication_fields: null
+      note: Concerts attended, optionally linked to a trip.
+      preview_url: null
+      singleton: false
+      sort: 9
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: concerts
   - collection: countries
     meta:
       accountability: all
@@ -74,6 +98,30 @@ collections:
       versioning: false
     schema:
       name: media_assets
+  - collection: people
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: people
+      color: null
+      display_template: '{{display_name}}'
+      group: null
+      hidden: false
+      icon: people
+      item_duplication_fields: null
+      note: Travel companions and people met during trips.
+      preview_url: null
+      singleton: false
+      sort: 7
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: people
   - collection: photos
     meta:
       accountability: all
@@ -122,6 +170,30 @@ collections:
       versioning: false
     schema:
       name: posts
+  - collection: sport_events
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: sport_events
+      color: null
+      display_template: '{{home_team}} vs {{away_team}} ({{event_date}})'
+      group: null
+      hidden: false
+      icon: sports
+      item_duplication_fields: null
+      note: Sporting events attended, optionally linked to a trip.
+      preview_url: null
+      singleton: false
+      sort: 8
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: sport_events
   - collection: trips
     meta:
       accountability: all
@@ -146,7 +218,503 @@ collections:
       versioning: false
     schema:
       name: trips
+  - collection: trips_friends_family_met
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: trips_friends_family_met
+      color: null
+      display_template: null
+      group: null
+      hidden: true
+      icon: import_export
+      item_duplication_fields: null
+      note: >-
+        Junction table linking trips to people met on location (friends,
+        family).
+      preview_url: null
+      singleton: false
+      sort: 11
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: trips_friends_family_met
+  - collection: trips_travel_companions
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: trips_travel_companions
+      color: null
+      display_template: null
+      group: null
+      hidden: true
+      icon: import_export
+      item_duplication_fields: null
+      note: >-
+        Junction table linking trips to travel companions (people who travelled
+        with you).
+      preview_url: null
+      singleton: false
+      sort: 10
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: trips_travel_companions
 fields:
+  - collection: concerts
+    field: id
+    type: integer
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: concerts
+      data_type: integer
+      default_value: nextval('concerts_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: concerts
+    field: artist
+    type: string
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: artist
+      group: null
+      hidden: false
+      interface: input
+      note: Artist or band name (e.g. "Green Day").
+      options: null
+      readonly: false
+      required: true
+      searchable: true
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: artist
+      table: concerts
+      data_type: character varying
+      default_value: null
+      max_length: 200
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: concerts
+    field: genre
+    type: string
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: genre
+      group: null
+      hidden: false
+      interface: select-dropdown
+      note: Musical genre of the concert.
+      options:
+        choices:
+          - text: Rock
+            value: rock
+          - text: Jazz
+            value: jazz
+          - text: Classique
+            value: classical
+          - text: Électro
+            value: electronic
+          - text: World
+            value: world
+          - text: Hip-hop
+            value: hip-hop
+          - text: Reggae
+            value: reggae
+          - text: Funk & Soul
+            value: funk-soul
+      readonly: false
+      required: false
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: genre
+      table: concerts
+      data_type: character varying
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: concerts
+    field: subgenre
+    type: string
+    meta:
+      collection: concerts
+      conditions:
+        - hidden: true
+          name: Hide if not rock
+          options: {}
+          readonly: false
+          required: false
+          rule:
+            genre:
+              _neq: rock
+      display: null
+      display_options: null
+      field: subgenre
+      group: null
+      hidden: false
+      interface: select-dropdown
+      note: Rock sub-genre (only applicable when genre is Rock).
+      options:
+        choices:
+          - text: Alternative
+            value: alternative
+          - text: Folk
+            value: folk
+          - text: Hardcore
+            value: hardcore
+          - text: Metal
+            value: metal
+          - text: Noise
+            value: noise
+          - text: Pop
+            value: pop
+          - text: Punk
+            value: punk
+      readonly: false
+      required: false
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: subgenre
+      table: concerts
+      data_type: character varying
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: concerts
+    field: event_name
+    type: string
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: event_name
+      group: null
+      hidden: false
+      interface: input
+      note: >-
+        Event name (e.g. "Big Day Out Festival", "Reading Festival", "Concert
+        Green Day").
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: event_name
+      table: concerts
+      data_type: character varying
+      default_value: null
+      max_length: 250
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: concerts
+    field: trip_id
+    type: integer
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: trip_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Trip this concert was attended during (optional).
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: trip_id
+      table: concerts
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: trips
+      foreign_key_column: id
+  - collection: concerts
+    field: event_date
+    type: date
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: event_date
+      group: null
+      hidden: false
+      interface: datetime
+      note: Date of the concert (day/month/year).
+      options:
+        includeSeconds: false
+        use24: true
+      readonly: false
+      required: true
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: event_date
+      table: concerts
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: concerts
+    field: city
+    type: string
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: city
+      group: null
+      hidden: false
+      interface: input
+      note: City where the concert took place.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: city
+      table: concerts
+      data_type: character varying
+      default_value: null
+      max_length: 120
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: concerts
+    field: country_code
+    type: string
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: country_code
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Country where the concert took place.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: country_code
+      table: concerts
+      data_type: character varying
+      default_value: null
+      max_length: 2
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: countries
+      foreign_key_column: code
+  - collection: concerts
+    field: venue
+    type: string
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: venue
+      group: null
+      hidden: false
+      interface: input
+      note: Stadium, arena, club or venue name.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: venue
+      table: concerts
+      data_type: character varying
+      default_value: null
+      max_length: 200
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: countries
     field: code
     type: string
@@ -1389,6 +1957,356 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: people
+    field: id
+    type: integer
+    meta:
+      collection: people
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: people
+      data_type: integer
+      default_value: nextval('people_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: people
+    field: first_name
+    type: string
+    meta:
+      collection: people
+      conditions: null
+      display: null
+      display_options: null
+      field: first_name
+      group: null
+      hidden: false
+      interface: input
+      note: First name of the person.
+      options: null
+      readonly: false
+      required: true
+      searchable: true
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: first_name
+      table: people
+      data_type: character varying
+      default_value: null
+      max_length: 100
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: people
+    field: last_name
+    type: string
+    meta:
+      collection: people
+      conditions: null
+      display: null
+      display_options: null
+      field: last_name
+      group: null
+      hidden: false
+      interface: input
+      note: Last name of the person (optional).
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: last_name
+      table: people
+      data_type: character varying
+      default_value: null
+      max_length: 100
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: people
+    field: display_name
+    type: string
+    meta:
+      collection: people
+      conditions: null
+      display: null
+      display_options: null
+      field: display_name
+      group: null
+      hidden: false
+      interface: input
+      note: Public display name shown on the website (e.g. "Hine", "Jeff", "Maman").
+      options: null
+      readonly: false
+      required: true
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: display_name
+      table: people
+      data_type: character varying
+      default_value: null
+      max_length: 100
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: people
+    field: relationship
+    type: string
+    meta:
+      collection: people
+      conditions: null
+      display: null
+      display_options: null
+      field: relationship
+      group: null
+      hidden: false
+      interface: select-dropdown
+      note: Relationship to the author.
+      options:
+        choices:
+          - text: Épouse / Époux
+            value: spouse
+          - text: Fils / Fille
+            value: child
+          - text: Beau-fils (enfant du conjoint)
+            value: stepson
+          - text: Belle-fille (enfant du conjoint)
+            value: stepdaughter
+          - text: Père
+            value: father
+          - text: Mère
+            value: mother
+          - text: Frère
+            value: brother
+          - text: Sœur
+            value: sister
+          - text: Grand-père
+            value: grandfather
+          - text: Grand-mère
+            value: grandmother
+          - text: Oncle
+            value: uncle
+          - text: Tante
+            value: aunt
+          - text: Cousin
+            value: cousin-male
+          - text: Cousine
+            value: cousin-female
+          - text: Cousin issu de germain
+            value: second-cousin-male
+          - text: Cousine issue de germain
+            value: second-cousin-female
+          - text: Beau-père (belle-famille)
+            value: father-in-law
+          - text: Belle-mère (belle-famille)
+            value: mother-in-law
+          - text: Beau-frère (belle-famille)
+            value: brother-in-law
+          - text: Belle-sœur (belle-famille)
+            value: sister-in-law
+          - text: Oncle (belle-famille)
+            value: uncle-in-law
+          - text: Tante (belle-famille)
+            value: aunt-in-law
+          - text: Cousin (belle-famille)
+            value: cousin-in-law-male
+          - text: Cousine (belle-famille)
+            value: cousin-in-law-female
+          - text: Ami d'enfance
+            value: childhood-friend
+          - text: Ami de la fac
+            value: university-friend
+          - text: Ami de Couchsurfing
+            value: couchsurfing-friend
+          - text: Ami rencontré en voyage
+            value: travel-friend
+          - text: Ami club de sport
+            value: sports-club-friend
+          - text: Autre ami
+            value: other-friend
+          - text: Animal de compagnie
+            value: pet
+      readonly: false
+      required: false
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: relationship
+      table: people
+      data_type: character varying
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: people
+    field: sex
+    type: string
+    meta:
+      collection: people
+      conditions: null
+      display: null
+      display_options: null
+      field: sex
+      group: null
+      hidden: false
+      interface: select-dropdown
+      note: Sex of the person.
+      options:
+        choices:
+          - text: Homme
+            value: male
+          - text: Femme
+            value: female
+      readonly: false
+      required: false
+      searchable: false
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: sex
+      table: people
+      data_type: character varying
+      default_value: null
+      max_length: 10
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: people
+    field: met_year
+    type: integer
+    meta:
+      collection: people
+      conditions: null
+      display: null
+      display_options: null
+      field: met_year
+      group: null
+      hidden: false
+      interface: input
+      note: Year you first met this person (e.g. 2008). Leave empty if unknown.
+      options:
+        max: 2100
+        min: 1900
+      readonly: false
+      required: false
+      searchable: false
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: met_year
+      table: people
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: photos
     field: id
     type: integer
@@ -1632,128 +2550,6 @@ fields:
       foreign_key_table: countries
       foreign_key_column: code
   - collection: photos
-    field: latitude
-    type: float
-    meta:
-      collection: photos
-      conditions: null
-      display: null
-      display_options: null
-      field: latitude
-      group: null
-      hidden: false
-      interface: input
-      note: Coordonnée facultative. Calculée depuis le lieu si laissée vide.
-      options:
-        step: any
-      readonly: false
-      required: false
-      searchable: true
-      sort: 5
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: latitude
-      table: photos
-      data_type: real
-      default_value: null
-      max_length: null
-      numeric_precision: 24
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: photos
-    field: longitude
-    type: float
-    meta:
-      collection: photos
-      conditions: null
-      display: null
-      display_options: null
-      field: longitude
-      group: null
-      hidden: false
-      interface: input
-      note: Coordonnée facultative. Calculée depuis le lieu si laissée vide.
-      options:
-        step: any
-      readonly: false
-      required: false
-      searchable: true
-      sort: 6
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: longitude
-      table: photos
-      data_type: real
-      default_value: null
-      max_length: null
-      numeric_precision: 24
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: photos
-    field: location
-    type: string
-    meta:
-      collection: photos
-      conditions: null
-      display: null
-      display_options: null
-      field: location
-      group: null
-      hidden: false
-      interface: travelogue-location-geocode
-      note: Géocode le lieu en tenant compte du code pays et garde latitude/longitude éditables.
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 4
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: location
-      table: photos
-      data_type: character varying
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: photos
     field: display_order
     type: integer
     meta:
@@ -1914,6 +2710,130 @@ fields:
       has_auto_increment: false
       foreign_key_table: media_assets
       foreign_key_column: id
+  - collection: photos
+    field: location
+    type: string
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: location
+      group: null
+      hidden: false
+      interface: travelogue-location-geocode
+      note: >-
+        Géocode le lieu en tenant compte du code pays et garde
+        latitude/longitude éditables.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: location
+      table: photos
+      data_type: character varying
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: photos
+    field: latitude
+    type: float
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: latitude
+      group: null
+      hidden: false
+      interface: input
+      note: Coordonnée facultative. Calculée depuis le lieu si laissée vide.
+      options:
+        step: any
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: latitude
+      table: photos
+      data_type: real
+      default_value: null
+      max_length: null
+      numeric_precision: 24
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: photos
+    field: longitude
+    type: float
+    meta:
+      collection: photos
+      conditions: null
+      display: null
+      display_options: null
+      field: longitude
+      group: null
+      hidden: false
+      interface: input
+      note: Coordonnée facultative. Calculée depuis le lieu si laissée vide.
+      options:
+        step: any
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: longitude
+      table: photos
+      data_type: real
+      default_value: null
+      max_length: null
+      numeric_precision: 24
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: posts
     field: content
     type: text
@@ -2596,6 +3516,509 @@ fields:
       max_length: 2048
       numeric_precision: null
       numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: id
+    type: integer
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: sport_events
+      data_type: integer
+      default_value: nextval('sport_events_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: sport
+    type: string
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: sport
+      group: null
+      hidden: false
+      interface: select-dropdown
+      note: Sport category.
+      options:
+        choices:
+          - text: Rugby
+            value: rugby
+          - text: Basketball
+            value: basketball
+          - text: Football américain
+            value: american-football
+          - text: Hockey sur glace
+            value: ice-hockey
+          - text: Baseball
+            value: baseball
+          - text: Football
+            value: football
+          - text: IndyCar
+            value: indycar
+          - text: Cricket
+            value: cricket
+          - text: Formule 1
+            value: formula-1
+      readonly: false
+      required: true
+      searchable: true
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: sport
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: competition
+    type: string
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: competition
+      group: null
+      hidden: false
+      interface: input
+      note: Competition name (e.g. "Top 14", "NBA", "Six Nations").
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: competition
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 160
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: trip_id
+    type: integer
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: trip_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Trip this event was attended during (optional).
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: trip_id
+      table: sport_events
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: trips
+      foreign_key_column: id
+  - collection: sport_events
+    field: event_date
+    type: date
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: event_date
+      group: null
+      hidden: false
+      interface: datetime
+      note: Date of the event (day/month/year).
+      options:
+        includeSeconds: false
+        use24: true
+      readonly: false
+      required: true
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: event_date
+      table: sport_events
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: city
+    type: string
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: city
+      group: null
+      hidden: false
+      interface: input
+      note: City where the event took place.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: city
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 120
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: country_code
+    type: string
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: country_code
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Country where the event took place.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: country_code
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 2
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: countries
+      foreign_key_column: code
+  - collection: sport_events
+    field: venue
+    type: string
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: venue
+      group: null
+      hidden: false
+      interface: input
+      note: Stadium, arena or venue name.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: venue
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 200
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: home_team
+    type: string
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: home_team
+      group: null
+      hidden: false
+      interface: input
+      note: Home team name.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 8
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: home_team
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 160
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: away_team
+    type: string
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: away_team
+      group: null
+      hidden: false
+      interface: input
+      note: Away team (visiting team) name.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: away_team
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 160
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: home_score
+    type: integer
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: home_score
+      group: null
+      hidden: false
+      interface: input
+      note: Final score of the home team (leave empty if unknown).
+      options:
+        min: 0
+      readonly: false
+      required: false
+      searchable: false
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: home_score
+      table: sport_events
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: away_score
+    type: integer
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: away_score
+      group: null
+      hidden: false
+      interface: input
+      note: Final score of the away (visiting) team.
+      options:
+        min: 0
+      readonly: false
+      required: false
+      searchable: false
+      sort: 11
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: away_score
+      table: sport_events
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
       is_nullable: true
       is_unique: false
       is_indexed: false
@@ -3521,7 +4944,7 @@ fields:
     schema:
       name: reason_for_travel
       table: trips
-      data_type: jsonb
+      data_type: json
       default_value: []
       max_length: null
       numeric_precision: null
@@ -3575,7 +4998,7 @@ fields:
     schema:
       name: trip_context
       table: trips
-      data_type: jsonb
+      data_type: json
       default_value: []
       max_length: null
       numeric_precision: null
@@ -3589,6 +5012,296 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: trips
+    field: travel_companions_people
+    type: alias
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: travel_companions_people
+      group: null
+      hidden: false
+      interface: list-m2m
+      note: Compagnons de voyage (sélectionnés depuis la liste des personnes).
+      options:
+        template: '{{people_id.display_name}}'
+      readonly: false
+      required: false
+      searchable: false
+      sort: 12
+      special:
+        - m2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+  - collection: trips
+    field: friends_family_met_people
+    type: alias
+    meta:
+      collection: trips
+      conditions: null
+      display: null
+      display_options: null
+      field: friends_family_met_people
+      group: null
+      hidden: false
+      interface: list-m2m
+      note: Personnes rencontrées sur place (famille, amis locaux...).
+      options:
+        template: '{{people_id.display_name}}'
+      readonly: false
+      required: false
+      searchable: false
+      sort: 13
+      special:
+        - m2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+  - collection: trips_friends_family_met
+    field: id
+    type: integer
+    meta:
+      collection: trips_friends_family_met
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: trips_friends_family_met
+      data_type: integer
+      default_value: nextval('trips_friends_family_met_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips_friends_family_met
+    field: trips_id
+    type: integer
+    meta:
+      collection: trips_friends_family_met
+      conditions: null
+      display: null
+      display_options: null
+      field: trips_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to trips.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: trips_id
+      table: trips_friends_family_met
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: trips
+      foreign_key_column: id
+  - collection: trips_friends_family_met
+    field: people_id
+    type: integer
+    meta:
+      collection: trips_friends_family_met
+      conditions: null
+      display: null
+      display_options: null
+      field: people_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to people.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: people_id
+      table: trips_friends_family_met
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: people
+      foreign_key_column: id
+  - collection: trips_travel_companions
+    field: id
+    type: integer
+    meta:
+      collection: trips_travel_companions
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: trips_travel_companions
+      data_type: integer
+      default_value: nextval('trips_travel_companions_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: trips_travel_companions
+    field: trips_id
+    type: integer
+    meta:
+      collection: trips_travel_companions
+      conditions: null
+      display: null
+      display_options: null
+      field: trips_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to trips.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: trips_id
+      table: trips_travel_companions
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: trips
+      foreign_key_column: id
+  - collection: trips_travel_companions
+    field: people_id
+    type: integer
+    meta:
+      collection: trips_travel_companions
+      conditions: null
+      display: null
+      display_options: null
+      field: people_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to people.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: people_id
+      table: trips_travel_companions
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: people
+      foreign_key_column: id
 systemFields:
   - collection: directus_activity
     field: timestamp
@@ -3603,6 +5316,48 @@ systemFields:
     schema:
       is_indexed: true
 relations:
+  - collection: concerts
+    field: trip_id
+    related_collection: trips
+    meta:
+      junction_field: null
+      many_collection: concerts
+      many_field: trip_id
+      one_allowed_collections: null
+      one_collection: trips
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: concerts
+      column: trip_id
+      foreign_key_table: trips
+      foreign_key_column: id
+      constraint_name: concerts_trip_id_foreign
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: concerts
+    field: country_code
+    related_collection: countries
+    meta:
+      junction_field: null
+      many_collection: concerts
+      many_field: country_code
+      one_allowed_collections: null
+      one_collection: countries
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: concerts
+      column: country_code
+      foreign_key_table: countries
+      foreign_key_column: code
+      constraint_name: concerts_country_code_foreign
+      on_update: CASCADE
+      on_delete: SET NULL
   - collection: photos
     field: trip_id
     related_collection: trips
@@ -3684,7 +5439,7 @@ relations:
       column: trip_id
       foreign_key_table: trips
       foreign_key_column: id
-      constraint_name: posts_trip_id_trips_id_fk
+      constraint_name: posts_trip_id_fkey
       on_update: CASCADE
       on_delete: SET NULL
   - collection: posts
@@ -3705,7 +5460,7 @@ relations:
       column: trip_id
       foreign_key_table: trips
       foreign_key_column: id
-      constraint_name: posts_trip_id_fkey
+      constraint_name: posts_trip_id_trips_id_fk
       on_update: CASCADE
       on_delete: SET NULL
   - collection: posts
@@ -3749,6 +5504,48 @@ relations:
       foreign_key_column: id
       constraint_name: posts_featured_image_id_foreign
       on_update: NO ACTION
+      on_delete: SET NULL
+  - collection: sport_events
+    field: trip_id
+    related_collection: trips
+    meta:
+      junction_field: null
+      many_collection: sport_events
+      many_field: trip_id
+      one_allowed_collections: null
+      one_collection: trips
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: sport_events
+      column: trip_id
+      foreign_key_table: trips
+      foreign_key_column: id
+      constraint_name: sport_events_trip_id_foreign
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: sport_events
+    field: country_code
+    related_collection: countries
+    meta:
+      junction_field: null
+      many_collection: sport_events
+      many_field: country_code
+      one_allowed_collections: null
+      one_collection: countries
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: sport_events
+      column: country_code
+      foreign_key_table: countries
+      foreign_key_column: code
+      constraint_name: sport_events_country_code_foreign
+      on_update: CASCADE
       on_delete: SET NULL
   - collection: trips
     field: country_code
@@ -3813,3 +5610,87 @@ relations:
       constraint_name: trips_journey_id_journeys_id_fk
       on_update: CASCADE
       on_delete: SET NULL
+  - collection: trips_friends_family_met
+    field: trips_id
+    related_collection: trips
+    meta:
+      junction_field: people_id
+      many_collection: trips_friends_family_met
+      many_field: trips_id
+      one_allowed_collections: null
+      one_collection: trips
+      one_collection_field: friends_family_met_people
+      one_deselect_action: nullify
+      one_field: friends_family_met_people
+      sort_field: null
+    schema:
+      table: trips_friends_family_met
+      column: trips_id
+      foreign_key_table: trips
+      foreign_key_column: id
+      constraint_name: trips_friends_family_met_trips_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
+  - collection: trips_friends_family_met
+    field: people_id
+    related_collection: people
+    meta:
+      junction_field: trips_id
+      many_collection: trips_friends_family_met
+      many_field: people_id
+      one_allowed_collections: null
+      one_collection: people
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: trips_friends_family_met
+      column: people_id
+      foreign_key_table: people
+      foreign_key_column: id
+      constraint_name: trips_friends_family_met_people_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
+  - collection: trips_travel_companions
+    field: trips_id
+    related_collection: trips
+    meta:
+      junction_field: people_id
+      many_collection: trips_travel_companions
+      many_field: trips_id
+      one_allowed_collections: null
+      one_collection: trips
+      one_collection_field: travel_companions_people
+      one_deselect_action: nullify
+      one_field: travel_companions_people
+      sort_field: null
+    schema:
+      table: trips_travel_companions
+      column: trips_id
+      foreign_key_table: trips
+      foreign_key_column: id
+      constraint_name: trips_travel_companions_trips_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
+  - collection: trips_travel_companions
+    field: people_id
+    related_collection: people
+    meta:
+      junction_field: trips_id
+      many_collection: trips_travel_companions
+      many_field: people_id
+      one_allowed_collections: null
+      one_collection: people
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: trips_travel_companions
+      column: people_id
+      foreign_key_table: people
+      foreign_key_column: id
+      constraint_name: trips_travel_companions_people_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
