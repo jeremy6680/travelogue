@@ -7,6 +7,7 @@ import {
   Map,
   Globe,
   BarChart3,
+  CalendarRange,
   Instagram,
   Twitter,
   Mail,
@@ -21,6 +22,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/atlas", label: t("navAtlas"), icon: Map },
     { href: "/posts", label: t("navJournal"), icon: BookOpen },
     { href: "/trips", label: t("navTrips"), icon: Globe },
+    { href: "/events", label: t("navEvents"), icon: CalendarRange },
     { href: "/dataviz", label: t("navDataViz"), icon: BarChart3 },
   ];
 

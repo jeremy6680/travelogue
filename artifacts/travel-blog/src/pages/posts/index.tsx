@@ -217,14 +217,6 @@ export default function PostsPage() {
   return (
     <Layout>
       <div className="mx-auto max-w-5xl space-y-10">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-foreground transition-colors">
-            {t("navHome")}
-          </Link>
-          <span>/</span>
-          <span className="text-foreground">{t("navJournal")}</span>
-        </nav>
-
         <header className="space-y-6 border-b pb-12 text-center">
           <h1 className="text-5xl font-serif font-bold tracking-tight text-foreground md:text-6xl">
             {t("travelJournal")}

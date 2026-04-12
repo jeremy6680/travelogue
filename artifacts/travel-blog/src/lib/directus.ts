@@ -19,6 +19,7 @@ import type {
   CreatePhotoBody,
   CreatePostBody,
   CreateJourneyBody,
+  Concert,
   CreateTripBody,
   GalleryImage,
   Journey,
@@ -26,8 +27,10 @@ import type {
   MediaAsset,
   Photo,
   Post,
+  SportEvent,
   TravelStats,
   Trip,
+  Wedding,
   UpdateMediaAssetBody,
   UpdateJourneyBody,
   UpdatePhotoBody,
@@ -106,6 +109,12 @@ type DirectusTrip = {
   journey_order?: number | null;
   transportation_to: string[] | string | null;
   transportation_on_site: string[] | string | null;
+  travel_companions_people?:
+    | Array<{ people_id?: { display_name?: string | null } | null }>
+    | null;
+  friends_family_met_people?:
+    | Array<{ people_id?: { display_name?: string | null } | null }>
+    | null;
   created_at: string;
   updated_at: string;
 };
@@ -145,11 +154,58 @@ type DirectusPhoto = {
 };
 
 type DirectusSchema = {
+  concerts: DirectusConcert[];
   journeys: DirectusJourney[];
   posts: DirectusPost[];
+  sport_events: DirectusSportEvent[];
   trips: DirectusTrip[];
+  weddings: DirectusWedding[];
   photos: DirectusPhoto[];
   media_assets: DirectusMediaAsset[];
+};
+
+type DirectusConcert = {
+  id: number;
+  artist: string;
+  genre: string | null;
+  subgenre: string | null;
+  event_name: string | null;
+  trip_id: number | null;
+  event_date: string;
+  city: string | null;
+  country_code: string | null;
+  venue: string | null;
+};
+
+type DirectusSportEvent = {
+  id: number;
+  sport: string;
+  competition: string | null;
+  trip_id: number | null;
+  event_date: string;
+  city: string | null;
+  country_code: string | null;
+  venue: string | null;
+  home_team: string | null;
+  away_team: string | null;
+  home_score: number | null;
+  away_score: number | null;
+};
+
+type DirectusWeddingRelation = {
+  id?: number;
+  name?: string | null;
+  display_name?: string | null;
+} | null;
+
+type DirectusWedding = {
+  id: number;
+  wedding_date: string;
+  city: string | null;
+  country_code: string | null;
+  trip_id: number | DirectusWeddingRelation;
+  groom_id: number | DirectusWeddingRelation;
+  bride_id: number | DirectusWeddingRelation;
 };
 
 const MEDIA_ASSET_FIELDS = [
@@ -216,6 +272,8 @@ const TRIP_FIELDS = [
   "journey_order",
   "transportation_to",
   "transportation_on_site",
+  { travel_companions_people: [{ people_id: ["display_name"] }] },
+  { friends_family_met_people: [{ people_id: ["display_name"] }] },
   "created_at",
   "updated_at",
 ] as const;
@@ -289,14 +347,55 @@ const LEGACY_PHOTO_FIELDS = [
   "updated_at",
 ] as const;
 
+const CONCERT_FIELDS = [
+  "id",
+  "artist",
+  "genre",
+  "subgenre",
+  "event_name",
+  "trip_id",
+  "event_date",
+  "city",
+  "country_code",
+  "venue",
+] as const;
+
+const SPORT_EVENT_FIELDS = [
+  "id",
+  "sport",
+  "competition",
+  "trip_id",
+  "event_date",
+  "city",
+  "country_code",
+  "venue",
+  "home_team",
+  "away_team",
+  "home_score",
+  "away_score",
+] as const;
+
+const WEDDING_FIELDS = [
+  "id",
+  "wedding_date",
+  "city",
+  "country_code",
+  { trip_id: ["id", "name"] },
+  { groom_id: ["id", "display_name"] },
+  { bride_id: ["id", "display_name"] },
+] as const;
+
 const directus = createDirectus<DirectusSchema>(
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8055",
 ).with(rest());
 
 export const directusQueryKeys = {
+  concerts: ["directus", "concerts"] as const,
   posts: ["directus", "posts"] as const,
   postBySlug: (slug: string | undefined) => ["directus", "posts", slug] as const,
+  sportEvents: ["directus", "sport-events"] as const,
   trips: ["directus", "trips"] as const,
+  weddings: ["directus", "weddings"] as const,
   journeys: ["directus", "journeys"] as const,
   photos: ["directus", "photos"] as const,
   mediaAssets: ["directus", "media-assets"] as const,
@@ -387,6 +486,14 @@ function mapTrip(trip: DirectusTrip): Trip {
     journeyOrder: trip.journey_order ?? null,
     transportationTo: normalizeMultiValueField(trip.transportation_to),
     transportationOnSite: normalizeMultiValueField(trip.transportation_on_site),
+    travelCompanionsPeople:
+      trip.travel_companions_people
+        ?.map((entry) => entry.people_id?.display_name?.trim() ?? "")
+        .filter(Boolean) ?? [],
+    friendsFamilyMetPeople:
+      trip.friends_family_met_people
+        ?.map((entry) => entry.people_id?.display_name?.trim() ?? "")
+        .filter(Boolean) ?? [],
     createdAt: trip.created_at,
     updatedAt: trip.updated_at,
   };
@@ -427,6 +534,64 @@ function mapPhoto(photo: DirectusPhoto): Photo {
     displayOrder: photo.display_order,
     createdAt: photo.created_at,
     updatedAt: photo.updated_at,
+  };
+}
+
+function mapConcert(concert: DirectusConcert): Concert {
+  return {
+    id: concert.id,
+    artist: concert.artist,
+    genre: concert.genre,
+    subgenre: concert.subgenre,
+    eventName: concert.event_name,
+    tripId: concert.trip_id,
+    eventDate: concert.event_date,
+    city: concert.city,
+    countryCode: concert.country_code,
+    venue: concert.venue,
+  };
+}
+
+function mapSportEvent(event: DirectusSportEvent): SportEvent {
+  return {
+    id: event.id,
+    sport: event.sport,
+    competition: event.competition,
+    tripId: event.trip_id,
+    eventDate: event.event_date,
+    city: event.city,
+    countryCode: event.country_code,
+    venue: event.venue,
+    homeTeam: event.home_team,
+    awayTeam: event.away_team,
+    homeScore: event.home_score,
+    awayScore: event.away_score,
+  };
+}
+
+function getRelationId(value: number | DirectusWeddingRelation): number | null {
+  if (typeof value === "number") return value;
+  return value?.id ?? null;
+}
+
+function getRelationName(
+  value: number | DirectusWeddingRelation,
+  key: "name" | "display_name",
+): string | null {
+  if (typeof value === "number") return null;
+  return value?.[key] ?? null;
+}
+
+function mapWedding(wedding: DirectusWedding): Wedding {
+  return {
+    id: wedding.id,
+    weddingDate: wedding.wedding_date,
+    city: wedding.city,
+    countryCode: wedding.country_code,
+    tripId: getRelationId(wedding.trip_id),
+    tripName: getRelationName(wedding.trip_id, "name"),
+    groomName: getRelationName(wedding.groom_id, "display_name"),
+    brideName: getRelationName(wedding.bride_id, "display_name"),
   };
 }
 
@@ -654,24 +819,29 @@ export async function fetchPosts(): Promise<Post[]> {
 }
 
 export async function fetchTrips(): Promise<Trip[]> {
-  const trips = await requestWithFallback(
-    () =>
-      directus.request(
-        readItems("trips", {
-          sort: ["visited_at"],
-          fields: [...TRIP_FIELDS],
-          limit: -1,
-        }),
-      ),
-    () =>
-      directus.request(
-        readItems("trips", {
-          sort: ["visited_at"],
-          fields: [...LEGACY_TRIP_FIELDS],
-          limit: -1,
-        }),
-      ),
-  );
+  let trips: DirectusTrip[];
+
+  try {
+    trips = (await directus.request(
+      readItems("trips", {
+        sort: ["visited_at"],
+        fields: [...TRIP_FIELDS] as any,
+        limit: -1,
+      }),
+    )) as unknown as DirectusTrip[];
+  } catch (error) {
+    if (!isSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    trips = (await directus.request(
+      readItems("trips", {
+        sort: ["visited_at"],
+        fields: [...LEGACY_TRIP_FIELDS],
+        limit: -1,
+      }),
+    )) as unknown as DirectusTrip[];
+  }
 
   return trips.map(mapTrip);
 }
@@ -737,6 +907,66 @@ export async function fetchMediaAssets(): Promise<MediaAsset[]> {
     );
 
     return assets.map(mapMediaAsset).filter((asset): asset is MediaAsset => Boolean(asset));
+  } catch (error) {
+    if (!isSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    return [];
+  }
+}
+
+export async function fetchConcerts(): Promise<Concert[]> {
+  try {
+    const concerts = await directus.request(
+      readItems("concerts", {
+        sort: ["-event_date", "artist"],
+        fields: [...CONCERT_FIELDS],
+        limit: -1,
+      }),
+    );
+
+    return concerts.map(mapConcert);
+  } catch (error) {
+    if (!isSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    return [];
+  }
+}
+
+export async function fetchSportEvents(): Promise<SportEvent[]> {
+  try {
+    const sportEvents = await directus.request(
+      readItems("sport_events", {
+        sort: ["-event_date", "sport", "competition"],
+        fields: [...SPORT_EVENT_FIELDS],
+        limit: -1,
+      }),
+    );
+
+    return sportEvents.map(mapSportEvent);
+  } catch (error) {
+    if (!isSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    return [];
+  }
+}
+
+export async function fetchWeddings(): Promise<Wedding[]> {
+  try {
+    const weddings = await directus.request(
+      readItems("weddings", {
+        sort: ["-wedding_date", "city"],
+        fields: [...WEDDING_FIELDS] as any,
+        limit: -1,
+      }),
+    );
+
+    return (weddings as unknown as DirectusWedding[]).map(mapWedding);
   } catch (error) {
     if (!isSchemaMismatchError(error)) {
       throw error;
@@ -889,14 +1119,14 @@ export async function deletePostWithToken(token: string, id: number): Promise<vo
 }
 
 export async function createTripWithToken(token: string, data: CreateTripBody): Promise<Trip> {
-  const trip = await directus.request(
+  const trip = (await directus.request(
     withToken(
       token,
       createItem("trips", mapCreateTripInput(data), {
-        fields: [...TRIP_FIELDS],
+        fields: [...TRIP_FIELDS] as any,
       }),
     ),
-  );
+  )) as unknown as DirectusTrip;
 
   return mapTrip(trip);
 }
@@ -906,14 +1136,14 @@ export async function updateTripWithToken(
   id: number,
   data: UpdateTripBody,
 ): Promise<Trip> {
-  const trip = await directus.request(
+  const trip = (await directus.request(
     withToken(
       token,
       updateItem("trips", id, mapCreateTripInput(data), {
-        fields: [...TRIP_FIELDS],
+        fields: [...TRIP_FIELDS] as any,
       }),
     ),
-  );
+  )) as unknown as DirectusTrip;
 
   return mapTrip(trip);
 }
@@ -1061,6 +1291,27 @@ export function usePostsQuery(): UseQueryResult<Post[]> {
   return useQuery({
     queryKey: directusQueryKeys.posts,
     queryFn: fetchPosts,
+  });
+}
+
+export function useConcertsQuery(): UseQueryResult<Concert[]> {
+  return useQuery({
+    queryKey: directusQueryKeys.concerts,
+    queryFn: fetchConcerts,
+  });
+}
+
+export function useSportEventsQuery(): UseQueryResult<SportEvent[]> {
+  return useQuery({
+    queryKey: directusQueryKeys.sportEvents,
+    queryFn: fetchSportEvents,
+  });
+}
+
+export function useWeddingsQuery(): UseQueryResult<Wedding[]> {
+  return useQuery({
+    queryKey: directusQueryKeys.weddings,
+    queryFn: fetchWeddings,
   });
 }
 

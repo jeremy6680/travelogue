@@ -113,6 +113,8 @@ export interface Trip {
   journeyOrder: number | null;
   transportationTo: string[];
   transportationOnSite: string[];
+  travelCompanionsPeople: string[];
+  friendsFamilyMetPeople: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -275,6 +277,45 @@ export interface UpdateMediaAssetBody {
   caption?: string | null;
   folder?: string | null;
   placeholderUrl?: string | null;
+}
+
+export interface Concert {
+  id: number;
+  artist: string;
+  genre: string | null;
+  subgenre: string | null;
+  eventName: string | null;
+  tripId: number | null;
+  eventDate: string;
+  city: string | null;
+  countryCode: string | null;
+  venue: string | null;
+}
+
+export interface SportEvent {
+  id: number;
+  sport: string;
+  competition: string | null;
+  tripId: number | null;
+  eventDate: string;
+  city: string | null;
+  countryCode: string | null;
+  venue: string | null;
+  homeTeam: string | null;
+  awayTeam: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
+}
+
+export interface Wedding {
+  id: number;
+  weddingDate: string;
+  city: string | null;
+  countryCode: string | null;
+  tripId: number | null;
+  tripName: string | null;
+  groomName: string | null;
+  brideName: string | null;
 }
 
 export interface MapPin {
