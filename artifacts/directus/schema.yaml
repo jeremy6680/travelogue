@@ -11,7 +11,7 @@ collections:
       collapse: open
       collection: concerts
       color: null
-      display_template: '{{artist}} — {{event_name}} ({{event_date}})'
+      display_template: "{{artist}} — {{event_name}} ({{event_date}})"
       group: null
       hidden: false
       icon: music_note
@@ -26,6 +26,30 @@ collections:
       versioning: false
     schema:
       name: concerts
+  - collection: weddings
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: weddings
+      color: null
+      display_template: "{{groom.display_name}} & {{bride.display_name}} ({{wedding_date}})"
+      group: null
+      hidden: false
+      icon: favorite
+      item_duplication_fields: null
+      note: Weddings attended, optionally linked to a trip.
+      preview_url: null
+      singleton: false
+      sort: 12
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: weddings
   - collection: countries
     meta:
       accountability: all
@@ -35,7 +59,7 @@ collections:
       collapse: open
       collection: countries
       color: null
-      display_template: '{{code}} - {{name}}'
+      display_template: "{{code}} - {{name}}"
       group: null
       hidden: false
       icon: flag
@@ -83,7 +107,7 @@ collections:
       collapse: open
       collection: media_assets
       color: null
-      display_template: '{{public_id}}'
+      display_template: "{{public_id}}"
       group: null
       hidden: false
       icon: image
@@ -107,7 +131,7 @@ collections:
       collapse: open
       collection: people
       color: null
-      display_template: '{{display_name}}'
+      display_template: "{{display_name}}"
       group: null
       hidden: false
       icon: people
@@ -179,7 +203,7 @@ collections:
       collapse: open
       collection: sport_events
       color: null
-      display_template: '{{home_team}} vs {{away_team}} ({{event_date}})'
+      display_template: "{{home_team}} vs {{away_team}} ({{event_date}})"
       group: null
       hidden: false
       icon: sports
@@ -2683,7 +2707,7 @@ fields:
       interface: select-dropdown-m2o
       note: Linked Cloudinary media asset.
       options:
-        template: '{{public_id}}'
+        template: "{{public_id}}"
       readonly: false
       required: false
       searchable: true
@@ -3456,7 +3480,7 @@ fields:
       interface: select-dropdown-m2o
       note: Featured Cloudinary media asset.
       options:
-        template: '{{public_id}}'
+        template: "{{public_id}}"
       readonly: false
       required: false
       searchable: true
@@ -4793,7 +4817,7 @@ fields:
       interface: select-dropdown-m2o
       note: null
       options:
-        template: '{{name}}'
+        template: "{{name}}"
       readonly: false
       required: false
       searchable: true
@@ -4874,7 +4898,7 @@ fields:
       interface: select-dropdown-m2o
       note: Cover Cloudinary media asset.
       options:
-        template: '{{public_id}}'
+        template: "{{public_id}}"
       readonly: false
       required: false
       searchable: true
@@ -5026,7 +5050,7 @@ fields:
       interface: list-m2m
       note: Compagnons de voyage (sélectionnés depuis la liste des personnes).
       options:
-        template: '{{people_id.display_name}}'
+        template: "{{people_id.display_name}}"
       readonly: false
       required: false
       searchable: false
@@ -5051,7 +5075,7 @@ fields:
       interface: list-m2m
       note: Personnes rencontrées sur place (famille, amis locaux...).
       options:
-        template: '{{people_id.display_name}}'
+        template: "{{people_id.display_name}}"
       readonly: false
       required: false
       searchable: false
@@ -5288,6 +5312,307 @@ fields:
     schema:
       name: people_id
       table: trips_travel_companions
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: people
+      foreign_key_column: id
+  # ─────────────────────────────────────────
+  # Collection: weddings
+  # ─────────────────────────────────────────
+  - collection: weddings
+    field: id
+    type: integer
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: weddings
+      data_type: integer
+      default_value: nextval('weddings_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+
+  - collection: weddings
+    field: wedding_date
+    type: date
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: wedding_date
+      group: null
+      hidden: false
+      interface: datetime
+      note: Date of the wedding.
+      options:
+        includeSeconds: false
+        use24: true
+      readonly: false
+      required: true
+      searchable: true
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: wedding_date
+      table: weddings
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+
+  - collection: weddings
+    field: trip_id
+    type: integer
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: trip_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Trip this wedding was attended during (optional).
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: trip_id
+      table: weddings
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: trips
+      foreign_key_column: id
+
+  - collection: weddings
+    field: city
+    type: string
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: city
+      group: null
+      hidden: false
+      interface: input
+      note: City where the wedding took place.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: city
+      table: weddings
+      data_type: character varying
+      default_value: null
+      max_length: 120
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+
+  - collection: weddings
+    field: country_code
+    type: string
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: country_code
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Country where the wedding took place.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: country_code
+      table: weddings
+      data_type: character varying
+      default_value: null
+      max_length: 2
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: countries
+      foreign_key_column: code
+
+  - collection: weddings
+    field: groom_id
+    type: integer
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: groom_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: The groom (male person from people).
+      options:
+        template: "{{display_name}}"
+        enableCreate: true
+        filter:
+          sex:
+            _eq: male
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: groom_id
+      table: weddings
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: people
+      foreign_key_column: id
+
+  - collection: weddings
+    field: bride_id
+    type: integer
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: bride_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: The bride (female person from people).
+      options:
+        template: "{{display_name}}"
+        enableCreate: true
+        filter:
+          sex:
+            _eq: female
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: bride_id
+      table: weddings
       data_type: integer
       default_value: null
       max_length: null
@@ -5694,3 +6019,94 @@ relations:
       constraint_name: trips_travel_companions_people_id_foreign
       on_update: CASCADE
       on_delete: CASCADE
+  # weddings → countries (many-to-one)
+  - collection: weddings
+    field: country_code
+    related_collection: countries
+    meta:
+      junction_field: null
+      many_collection: weddings
+      many_field: country_code
+      one_allowed_collections: null
+      one_collection: countries
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: weddings
+      column: country_code
+      foreign_key_table: countries
+      foreign_key_column: code
+      constraint_name: weddings_country_code_foreign
+      on_update: CASCADE
+      on_delete: SET NULL
+
+  # weddings → trips (many-to-one)
+  - collection: weddings
+    field: trip_id
+    related_collection: trips
+    meta:
+      junction_field: null
+      many_collection: weddings
+      many_field: trip_id
+      one_allowed_collections: null
+      one_collection: trips
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: weddings
+      column: trip_id
+      foreign_key_table: trips
+      foreign_key_column: id
+      constraint_name: weddings_trip_id_foreign
+      on_update: CASCADE
+      on_delete: SET NULL
+
+  # weddings → people (groom)
+  - collection: weddings
+    field: groom_id
+    related_collection: people
+    meta:
+      junction_field: null
+      many_collection: weddings
+      many_field: groom_id
+      one_allowed_collections: null
+      one_collection: people
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: weddings
+      column: groom_id
+      foreign_key_table: people
+      foreign_key_column: id
+      constraint_name: weddings_groom_id_foreign
+      on_update: CASCADE
+      on_delete: SET NULL
+
+  # weddings → people (bride)
+  - collection: weddings
+    field: bride_id
+    related_collection: people
+    meta:
+      junction_field: null
+      many_collection: weddings
+      many_field: bride_id
+      one_allowed_collections: null
+      one_collection: people
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: weddings
+      column: bride_id
+      foreign_key_table: people
+      foreign_key_column: id
+      constraint_name: weddings_bride_id_foreign
+      on_update: CASCADE
+      on_delete: SET NULL
