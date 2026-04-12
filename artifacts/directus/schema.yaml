@@ -11,7 +11,7 @@ collections:
       collapse: open
       collection: concerts
       color: null
-      display_template: "{{artist}} — {{event_name}} ({{event_date}})"
+      display_template: '{{artist}} — {{event_name}} ({{event_date}})'
       group: null
       hidden: false
       icon: music_note
@@ -26,30 +26,6 @@ collections:
       versioning: false
     schema:
       name: concerts
-  - collection: weddings
-    meta:
-      accountability: all
-      archive_app_filter: true
-      archive_field: null
-      archive_value: null
-      collapse: open
-      collection: weddings
-      color: null
-      display_template: "{{groom.display_name}} & {{bride.display_name}} ({{wedding_date}})"
-      group: null
-      hidden: false
-      icon: favorite
-      item_duplication_fields: null
-      note: Weddings attended, optionally linked to a trip.
-      preview_url: null
-      singleton: false
-      sort: 12
-      sort_field: null
-      translations: null
-      unarchive_value: null
-      versioning: false
-    schema:
-      name: weddings
   - collection: countries
     meta:
       accountability: all
@@ -59,7 +35,7 @@ collections:
       collapse: open
       collection: countries
       color: null
-      display_template: "{{code}} - {{name}}"
+      display_template: '{{code}} - {{name}}'
       group: null
       hidden: false
       icon: flag
@@ -107,7 +83,7 @@ collections:
       collapse: open
       collection: media_assets
       color: null
-      display_template: "{{public_id}}"
+      display_template: '{{public_id}}'
       group: null
       hidden: false
       icon: image
@@ -131,7 +107,7 @@ collections:
       collapse: open
       collection: people
       color: null
-      display_template: "{{display_name}}"
+      display_template: '{{display_name}}'
       group: null
       hidden: false
       icon: people
@@ -203,7 +179,7 @@ collections:
       collapse: open
       collection: sport_events
       color: null
-      display_template: "{{home_team}} vs {{away_team}} ({{event_date}})"
+      display_template: '{{home_team}} vs {{away_team}} ({{event_date}})'
       group: null
       hidden: false
       icon: sports
@@ -294,6 +270,30 @@ collections:
       versioning: false
     schema:
       name: trips_travel_companions
+  - collection: weddings
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: weddings
+      color: null
+      display_template: '{{groom.display_name}} & {{bride.display_name}} ({{wedding_date}})'
+      group: null
+      hidden: false
+      icon: favorite
+      item_duplication_fields: null
+      note: Weddings attended, optionally linked to a trip.
+      preview_url: null
+      singleton: false
+      sort: 12
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: weddings
 fields:
   - collection: concerts
     field: id
@@ -2707,7 +2707,7 @@ fields:
       interface: select-dropdown-m2o
       note: Linked Cloudinary media asset.
       options:
-        template: "{{public_id}}"
+        template: '{{public_id}}'
       readonly: false
       required: false
       searchable: true
@@ -3480,7 +3480,7 @@ fields:
       interface: select-dropdown-m2o
       note: Featured Cloudinary media asset.
       options:
-        template: "{{public_id}}"
+        template: '{{public_id}}'
       readonly: false
       required: false
       searchable: true
@@ -4817,7 +4817,7 @@ fields:
       interface: select-dropdown-m2o
       note: null
       options:
-        template: "{{name}}"
+        template: '{{name}}'
       readonly: false
       required: false
       searchable: true
@@ -4898,7 +4898,7 @@ fields:
       interface: select-dropdown-m2o
       note: Cover Cloudinary media asset.
       options:
-        template: "{{public_id}}"
+        template: '{{public_id}}'
       readonly: false
       required: false
       searchable: true
@@ -5050,7 +5050,7 @@ fields:
       interface: list-m2m
       note: Compagnons de voyage (sélectionnés depuis la liste des personnes).
       options:
-        template: "{{people_id.display_name}}"
+        template: '{{people_id.display_name}}'
       readonly: false
       required: false
       searchable: false
@@ -5075,7 +5075,7 @@ fields:
       interface: list-m2m
       note: Personnes rencontrées sur place (famille, amis locaux...).
       options:
-        template: "{{people_id.display_name}}"
+        template: '{{people_id.display_name}}'
       readonly: false
       required: false
       searchable: false
@@ -5326,9 +5326,6 @@ fields:
       has_auto_increment: false
       foreign_key_table: people
       foreign_key_column: id
-  # ─────────────────────────────────────────
-  # Collection: weddings
-  # ─────────────────────────────────────────
   - collection: weddings
     field: id
     type: integer
@@ -5369,7 +5366,6 @@ fields:
       has_auto_increment: true
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: weddings
     field: wedding_date
     type: date
@@ -5412,48 +5408,6 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
-  - collection: weddings
-    field: trip_id
-    type: integer
-    meta:
-      collection: weddings
-      conditions: null
-      display: null
-      display_options: null
-      field: trip_id
-      group: null
-      hidden: false
-      interface: select-dropdown-m2o
-      note: Trip this wedding was attended during (optional).
-      options: null
-      readonly: false
-      required: false
-      searchable: true
-      sort: 2
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: trip_id
-      table: weddings
-      data_type: integer
-      default_value: null
-      max_length: null
-      numeric_precision: 32
-      numeric_scale: 0
-      is_nullable: true
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: trips
-      foreign_key_column: id
-
   - collection: weddings
     field: city
     type: string
@@ -5494,7 +5448,6 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: weddings
     field: country_code
     type: string
@@ -5535,7 +5488,46 @@ fields:
       has_auto_increment: false
       foreign_key_table: countries
       foreign_key_column: code
-
+  - collection: weddings
+    field: trip_id
+    type: integer
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: trip_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Trip this wedding was attended during (optional).
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: trip_id
+      table: weddings
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: trips
+      foreign_key_column: id
   - collection: weddings
     field: groom_id
     type: integer
@@ -5550,11 +5542,11 @@ fields:
       interface: select-dropdown-m2o
       note: The groom (male person from people).
       options:
-        template: "{{display_name}}"
         enableCreate: true
         filter:
           sex:
             _eq: male
+        template: '{{display_name}}'
       readonly: false
       required: false
       searchable: true
@@ -5581,7 +5573,6 @@ fields:
       has_auto_increment: false
       foreign_key_table: people
       foreign_key_column: id
-
   - collection: weddings
     field: bride_id
     type: integer
@@ -5596,11 +5587,11 @@ fields:
       interface: select-dropdown-m2o
       note: The bride (female person from people).
       options:
-        template: "{{display_name}}"
         enableCreate: true
         filter:
           sex:
             _eq: female
+        template: '{{display_name}}'
       readonly: false
       required: false
       searchable: true
@@ -5764,7 +5755,7 @@ relations:
       column: trip_id
       foreign_key_table: trips
       foreign_key_column: id
-      constraint_name: posts_trip_id_fkey
+      constraint_name: posts_trip_id_trips_id_fk
       on_update: CASCADE
       on_delete: SET NULL
   - collection: posts
@@ -5785,7 +5776,7 @@ relations:
       column: trip_id
       foreign_key_table: trips
       foreign_key_column: id
-      constraint_name: posts_trip_id_trips_id_fk
+      constraint_name: posts_trip_id_fkey
       on_update: CASCADE
       on_delete: SET NULL
   - collection: posts
@@ -6019,7 +6010,6 @@ relations:
       constraint_name: trips_travel_companions_people_id_foreign
       on_update: CASCADE
       on_delete: CASCADE
-  # weddings → countries (many-to-one)
   - collection: weddings
     field: country_code
     related_collection: countries
@@ -6041,8 +6031,6 @@ relations:
       constraint_name: weddings_country_code_foreign
       on_update: CASCADE
       on_delete: SET NULL
-
-  # weddings → trips (many-to-one)
   - collection: weddings
     field: trip_id
     related_collection: trips
@@ -6064,8 +6052,6 @@ relations:
       constraint_name: weddings_trip_id_foreign
       on_update: CASCADE
       on_delete: SET NULL
-
-  # weddings → people (groom)
   - collection: weddings
     field: groom_id
     related_collection: people
@@ -6087,8 +6073,6 @@ relations:
       constraint_name: weddings_groom_id_foreign
       on_update: CASCADE
       on_delete: SET NULL
-
-  # weddings → people (bride)
   - collection: weddings
     field: bride_id
     related_collection: people
