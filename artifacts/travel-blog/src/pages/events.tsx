@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { Link } from "wouter";
+import { ArrowUpDown } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,6 +55,7 @@ type WeddingRow = {
   id: number;
   marriedPeople: string;
   tripName: string;
+  tripId: number | null;
   visitedAt: string;
   city: string;
   countryCode: string;
@@ -165,6 +168,28 @@ function FilterSelect({
   );
 }
 
+function SortHeaderButton({
+  label,
+  onClick,
+  className,
+}: {
+  label: string;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className={cn("h-8 px-2", className)}
+      onClick={onClick}
+    >
+      {label}
+      <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+    </Button>
+  );
+}
+
 function ViewSwitcher({
   value,
   onChange,
@@ -201,12 +226,40 @@ export default function EventsPage() {
   const [sportFilters, setSportFilters] = useState<SportFilters>(DEFAULT_SPORT_FILTERS);
   const [weddingFilters, setWeddingFilters] = useState<WeddingFilters>(DEFAULT_WEDDING_FILTERS);
 
+  const toggleConcertSort = (sortBy: ConcertFilters["sortBy"]) => {
+    setConcertFilters((current) => ({
+      ...current,
+      sortBy,
+      sortDirection:
+        current.sortBy === sortBy && current.sortDirection === "desc" ? "asc" : "desc",
+    }));
+  };
+
+  const toggleSportSort = (sortBy: SportFilters["sortBy"]) => {
+    setSportFilters((current) => ({
+      ...current,
+      sortBy,
+      sortDirection:
+        current.sortBy === sortBy && current.sortDirection === "desc" ? "asc" : "desc",
+    }));
+  };
+
+  const toggleWeddingSort = (sortBy: WeddingFilters["sortBy"]) => {
+    setWeddingFilters((current) => ({
+      ...current,
+      sortBy,
+      sortDirection:
+        current.sortBy === sortBy && current.sortDirection === "desc" ? "asc" : "desc",
+    }));
+  };
+
   const weddings = useMemo<WeddingRow[]>(() => {
     return (weddingsQuery.data ?? []).map((wedding: Wedding) => ({
       id: wedding.id,
       marriedPeople:
-        [wedding.groomName, wedding.brideName].filter(Boolean).join(" & ") || EMPTY_LABEL,
+        [wedding.brideName, wedding.groomName].filter(Boolean).join(" & ") || EMPTY_LABEL,
       tripName: wedding.tripName ?? EMPTY_LABEL,
+      tripId: wedding.tripId,
       visitedAt: wedding.weddingDate,
       city: wedding.city ?? "",
       countryCode: wedding.countryCode ?? "",
@@ -467,41 +520,6 @@ export default function EventsPage() {
                     </option>
                   ))}
                 </FilterSelect>
-                <div className="grid grid-cols-2 gap-3">
-                  <FilterSelect
-                    value={concertFilters.sortBy}
-                    onChange={(sortBy) =>
-                      setConcertFilters((current) => ({
-                        ...current,
-                        sortBy: sortBy as ConcertFilters["sortBy"],
-                      }))
-                    }
-                  >
-                    <option value="eventDate">{locale === "fr" ? "Trier par date" : "Sort by date"}</option>
-                    <option value="city">{locale === "fr" ? "Trier par ville" : "Sort by city"}</option>
-                    <option value="country">{locale === "fr" ? "Trier par pays" : "Sort by country"}</option>
-                    <option value="artist">{locale === "fr" ? "Trier par groupe" : "Sort by artist"}</option>
-                    <option value="eventName">
-                      {locale === "fr" ? "Trier par évènement" : "Sort by event"}
-                    </option>
-                    <option value="genre">{locale === "fr" ? "Trier par genre" : "Sort by genre"}</option>
-                    <option value="subgenre">
-                      {locale === "fr" ? "Trier par sous-genre" : "Sort by subgenre"}
-                    </option>
-                  </FilterSelect>
-                  <FilterSelect
-                    value={concertFilters.sortDirection}
-                    onChange={(sortDirection) =>
-                      setConcertFilters((current) => ({
-                        ...current,
-                        sortDirection: sortDirection as SortDirection,
-                      }))
-                    }
-                  >
-                    <option value="desc">DESC</option>
-                    <option value="asc">ASC</option>
-                  </FilterSelect>
-                </div>
               </div>
               <div>
                 <Button
@@ -517,13 +535,49 @@ export default function EventsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{locale === "fr" ? "Date" : "Date"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Groupe" : "Artist"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Evènement" : "Event"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Genre" : "Genre"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Sous-genre" : "Subgenre"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Ville" : "City"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Pays" : "Country"}</TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Date" : "Date"}
+                        onClick={() => toggleConcertSort("eventDate")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Groupe" : "Artist"}
+                        onClick={() => toggleConcertSort("artist")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Evènement" : "Event"}
+                        onClick={() => toggleConcertSort("eventName")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Genre" : "Genre"}
+                        onClick={() => toggleConcertSort("genre")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Sous-genre" : "Subgenre"}
+                        onClick={() => toggleConcertSort("subgenre")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Ville" : "City"}
+                        onClick={() => toggleConcertSort("city")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Pays" : "Country"}
+                        onClick={() => toggleConcertSort("country")}
+                      />
+                    </TableHead>
+                    <TableHead>{locale === "fr" ? "Voyage" : "Trip"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -539,11 +593,23 @@ export default function EventsPage() {
                         <TableCell>
                           {concert.countryCode ? countryName(concert.countryCode) : EMPTY_LABEL}
                         </TableCell>
+                        <TableCell>
+                          {concert.tripId ? (
+                            <Link
+                              href={`/trips#trip-${concert.tripId}`}
+                              className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                            >
+                              {locale === "fr" ? "Voir le voyage" : "View trip"}
+                            </Link>
+                          ) : (
+                            EMPTY_LABEL
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
                         {t("noEntries")}
                       </TableCell>
                     </TableRow>
@@ -609,37 +675,6 @@ export default function EventsPage() {
                   }
                   placeholder={locale === "fr" ? "Filtrer par compétition" : "Filter by competition"}
                 />
-                <div className="grid grid-cols-2 gap-3 md:col-span-2 xl:col-span-1">
-                  <FilterSelect
-                    value={sportFilters.sortBy}
-                    onChange={(sortBy) =>
-                      setSportFilters((current) => ({
-                        ...current,
-                        sortBy: sortBy as SportFilters["sortBy"],
-                      }))
-                    }
-                  >
-                    <option value="eventDate">{locale === "fr" ? "Trier par date" : "Sort by date"}</option>
-                    <option value="city">{locale === "fr" ? "Trier par ville" : "Sort by city"}</option>
-                    <option value="country">{locale === "fr" ? "Trier par pays" : "Sort by country"}</option>
-                    <option value="sport">{locale === "fr" ? "Trier par sport" : "Sort by sport"}</option>
-                    <option value="competition">
-                      {locale === "fr" ? "Trier par compétition" : "Sort by competition"}
-                    </option>
-                  </FilterSelect>
-                  <FilterSelect
-                    value={sportFilters.sortDirection}
-                    onChange={(sortDirection) =>
-                      setSportFilters((current) => ({
-                        ...current,
-                        sortDirection: sortDirection as SortDirection,
-                      }))
-                    }
-                  >
-                    <option value="desc">DESC</option>
-                    <option value="asc">ASC</option>
-                  </FilterSelect>
-                </div>
               </div>
               <div>
                 <Button
@@ -655,13 +690,39 @@ export default function EventsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{locale === "fr" ? "Date" : "Date"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Sport" : "Sport"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Compétition" : "Competition"}</TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Date" : "Date"}
+                        onClick={() => toggleSportSort("eventDate")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Sport" : "Sport"}
+                        onClick={() => toggleSportSort("sport")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Compétition" : "Competition"}
+                        onClick={() => toggleSportSort("competition")}
+                      />
+                    </TableHead>
                     <TableHead>{locale === "fr" ? "Affiche" : "Matchup"}</TableHead>
                     <TableHead>{locale === "fr" ? "Score" : "Score"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Ville" : "City"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Pays" : "Country"}</TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Ville" : "City"}
+                        onClick={() => toggleSportSort("city")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Pays" : "Country"}
+                        onClick={() => toggleSportSort("country")}
+                      />
+                    </TableHead>
+                    <TableHead>{locale === "fr" ? "Voyage" : "Trip"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -683,11 +744,23 @@ export default function EventsPage() {
                         <TableCell>
                           {event.countryCode ? countryName(event.countryCode) : EMPTY_LABEL}
                         </TableCell>
+                        <TableCell>
+                          {event.tripId ? (
+                            <Link
+                              href={`/trips#trip-${event.tripId}`}
+                              className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                            >
+                              {locale === "fr" ? "Voir le voyage" : "View trip"}
+                            </Link>
+                          ) : (
+                            EMPTY_LABEL
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
                         {t("noEntries")}
                       </TableCell>
                     </TableRow>
@@ -735,36 +808,6 @@ export default function EventsPage() {
                     </option>
                   ))}
                 </FilterSelect>
-                <div className="grid grid-cols-2 gap-3">
-                  <FilterSelect
-                    value={weddingFilters.sortBy}
-                    onChange={(sortBy) =>
-                      setWeddingFilters((current) => ({
-                        ...current,
-                        sortBy: sortBy as WeddingFilters["sortBy"],
-                      }))
-                    }
-                  >
-                    <option value="visitedAt">{locale === "fr" ? "Trier par date" : "Sort by date"}</option>
-                    <option value="city">{locale === "fr" ? "Trier par ville" : "Sort by city"}</option>
-                    <option value="country">{locale === "fr" ? "Trier par pays" : "Sort by country"}</option>
-                    <option value="marriedPeople">
-                      {locale === "fr" ? "Trier par mariés" : "Sort by married people"}
-                    </option>
-                  </FilterSelect>
-                  <FilterSelect
-                    value={weddingFilters.sortDirection}
-                    onChange={(sortDirection) =>
-                      setWeddingFilters((current) => ({
-                        ...current,
-                        sortDirection: sortDirection as SortDirection,
-                      }))
-                    }
-                  >
-                    <option value="desc">DESC</option>
-                    <option value="asc">ASC</option>
-                  </FilterSelect>
-                </div>
               </div>
               <div>
                 <Button
@@ -780,11 +823,31 @@ export default function EventsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{locale === "fr" ? "Date" : "Date"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Mariés" : "Married people"}</TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Date" : "Date"}
+                        onClick={() => toggleWeddingSort("visitedAt")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Mariés" : "Married people"}
+                        onClick={() => toggleWeddingSort("marriedPeople")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Ville" : "City"}
+                        onClick={() => toggleWeddingSort("city")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Pays" : "Country"}
+                        onClick={() => toggleWeddingSort("country")}
+                      />
+                    </TableHead>
                     <TableHead>{locale === "fr" ? "Voyage" : "Trip"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Ville" : "City"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Pays" : "Country"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -793,9 +856,20 @@ export default function EventsPage() {
                       <TableRow key={event.id}>
                         <TableCell>{formatDate(event.visitedAt, "short")}</TableCell>
                         <TableCell className="font-medium">{event.marriedPeople}</TableCell>
-                        <TableCell>{event.tripName}</TableCell>
                         <TableCell>{event.city || EMPTY_LABEL}</TableCell>
                         <TableCell>{countryName(event.countryCode)}</TableCell>
+                        <TableCell>
+                          {event.tripId ? (
+                            <Link
+                              href={`/trips#trip-${event.tripId}`}
+                              className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                            >
+                              {locale === "fr" ? "Voir le voyage" : "View trip"}
+                            </Link>
+                          ) : (
+                            EMPTY_LABEL
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (

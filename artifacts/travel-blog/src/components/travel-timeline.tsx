@@ -238,7 +238,10 @@ function renderTripCard(
   const tripContextLabel = formatTripContextLabels(trip.tripContext, locale);
 
   return (
-    <div className="bg-card border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+    <div
+      id={`trip-${trip.id}`}
+      className="scroll-mt-28 bg-card border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300"
+    >
       <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
         <div>
           <h3 className="font-serif text-3xl font-bold flex items-center gap-3 text-foreground">
