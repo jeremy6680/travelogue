@@ -18,6 +18,7 @@ import {
   useSportEventsQuery,
   useWeddingsQuery,
 } from "@/lib/directus";
+import { getEventDetailHref } from "@/lib/event-links";
 import { useI18n } from "@/lib/i18n";
 import type { Concert, SportEvent, Wedding } from "@/lib/travel-types";
 import { cn } from "@/lib/utils";
@@ -716,7 +717,14 @@ export default function EventsPage() {
                     filteredConcerts.map((concert) => (
                       <TableRow key={concert.id}>
                         <TableCell>{formatDate(concert.eventDate, "short")}</TableCell>
-                        <TableCell className="font-medium">{concert.artist}</TableCell>
+                        <TableCell className="font-medium">
+                          <Link
+                            href={getEventDetailHref("concerts", concert.id)}
+                            className="underline decoration-[rgba(20,70,90,0.22)] underline-offset-4 transition-colors hover:text-primary"
+                          >
+                            {concert.artist}
+                          </Link>
+                        </TableCell>
                         <TableCell className="max-w-[180px] truncate">
                           {concert.eventName || EMPTY_LABEL}
                         </TableCell>
@@ -899,7 +907,14 @@ export default function EventsPage() {
                     filteredSportEvents.map((event) => (
                       <TableRow key={event.id}>
                         <TableCell>{formatDate(event.eventDate, "short")}</TableCell>
-                        <TableCell className="font-medium">{event.sport}</TableCell>
+                        <TableCell className="font-medium">
+                          <Link
+                            href={getEventDetailHref("sport-events", event.id)}
+                            className="underline decoration-[rgba(20,70,90,0.22)] underline-offset-4 transition-colors hover:text-primary"
+                          >
+                            {event.sport}
+                          </Link>
+                        </TableCell>
                         <TableCell>{event.competition || EMPTY_LABEL}</TableCell>
                         <TableCell>
                           {[event.homeTeam, event.awayTeam].filter(Boolean).join(" vs ") || EMPTY_LABEL}
@@ -1052,7 +1067,14 @@ export default function EventsPage() {
                     filteredWeddings.map((event) => (
                       <TableRow key={event.id}>
                         <TableCell>{formatDate(event.visitedAt, "short")}</TableCell>
-                        <TableCell className="font-medium">{event.marriedPeople}</TableCell>
+                        <TableCell className="font-medium">
+                          <Link
+                            href={getEventDetailHref("weddings", event.id)}
+                            className="underline decoration-[rgba(20,70,90,0.22)] underline-offset-4 transition-colors hover:text-primary"
+                          >
+                            {event.marriedPeople}
+                          </Link>
+                        </TableCell>
                         <TableCell>{event.city || EMPTY_LABEL}</TableCell>
                         <TableCell>{countryName(event.countryCode)}</TableCell>
                         <TableCell>

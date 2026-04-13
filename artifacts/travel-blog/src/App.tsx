@@ -9,6 +9,7 @@ import PostsPage from "@/pages/posts/index";
 import PostDetail from "@/pages/posts/detail";
 import TripsPage from "@/pages/trips/index";
 import EventsPage from "@/pages/events";
+import EventDetailPage from "@/pages/events/detail";
 import AdminPage from "@/pages/admin";
 import GalleryPage from "@/pages/gallery";
 import NotFound from "@/pages/not-found";
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/posts" component={PostsPage} />
       <Route path="/posts/:slug" component={PostDetail} />
       <Route path="/trips" component={TripsPage} />
+      <Route path="/events/:kind/:id" component={EventDetailPage} />
       <Route path="/events" component={EventsPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/galeries/:slug" component={GalleryPage} />

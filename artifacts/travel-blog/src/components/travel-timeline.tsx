@@ -2,9 +2,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { CountryFlag } from "@/components/country-flag";
 import { getMediaAssetImageUrl } from "@/lib/cloudinary";
-import { useJourneysQuery, usePostsQuery, useTripsQuery } from "@/lib/directus";
+import {
+  useConcertsQuery,
+  useJourneysQuery,
+  usePostsQuery,
+  useSportEventsQuery,
+  useTripsQuery,
+  useWeddingsQuery,
+} from "@/lib/directus";
+import { getEventDetailHref } from "@/lib/event-links";
 import { getPostHref, isExternalPost } from "@/lib/post-links";
 import { blogPostTitleHoverClass } from "@/lib/post-title-hover";
+import { usePCloudPublicGallery } from "@/lib/pcloud";
 import type { Journey, Post, Trip } from "@/lib/travel-types";
 import { motion } from "framer-motion";
 import { differenceInCalendarDays } from "date-fns";
@@ -87,6 +96,75 @@ function formatList(values: string[]) {
 }
 
 const tripDetailIconClassName = "w-4 h-4 text-primary mt-0.5 shrink-0";
+
+type LinkedTripEvent = {
+  id: number;
+  title: string;
+  subtitle: string;
+  href: string;
+  photosLink: string | null;
+};
+
+function EventThumb({ photosLink }: { photosLink: string | null }) {
+  const { data = [] } = usePCloudPublicGallery(photosLink);
+  const image = data[0];
+
+  if (image) {
+    return (
+      <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden shrink-0 shadow-sm">
+        <img
+          src={image.thumbUrl}
+          alt=""
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-16 h-16 rounded-lg bg-primary/5 flex items-center justify-center shrink-0 border border-primary/10">
+      <MapPin className="w-6 h-6 text-primary/40" />
+    </div>
+  );
+}
+
+function LinkedTripEventsList({
+  events,
+  locale,
+}: {
+  events: LinkedTripEvent[];
+  locale: ReturnType<typeof useI18n>["locale"];
+}) {
+  if (events.length === 0) return null;
+
+  return (
+    <div className="mt-6 pt-6 border-t border-border/60">
+      <h4 className="font-serif font-medium mb-4 text-foreground/80 flex items-center gap-2">
+        <span className="w-8 h-px bg-border inline-block" />
+        {locale === "fr" ? "Evènements liés à ce voyage" : "Events linked to this trip"}
+      </h4>
+      <div className="grid gap-3">
+        {events.map((event) => (
+          <a
+            key={event.href}
+            href={event.href}
+            className="group flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50"
+          >
+            <EventThumb photosLink={event.photosLink} />
+            <div className="pl-2">
+              <p className="text-xs text-muted-foreground font-mono uppercase tracking-[0.2em]">
+                {event.title}
+              </p>
+              <h5 className={cn("font-serif font-bold text-base", blogPostTitleHoverClass)}>
+                {event.subtitle}
+              </h5>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function getCountryFilterOptions(
   trips: Trip[],
@@ -199,6 +277,7 @@ function getFacetOptions(values: string[][], locale: string) {
 function renderTripCard(
   trip: Trip,
   tripPosts: Post[],
+  linkedEvents: LinkedTripEvent[],
   distanceKm: number | null,
   i18n: ReturnType<typeof useI18n>,
   metadata?: string,
@@ -435,6 +514,8 @@ function renderTripCard(
           </div>
         </div>
       )}
+
+      <LinkedTripEventsList events={linkedEvents} locale={locale} />
     </div>
   );
 }
@@ -792,6 +873,9 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const { data: journeys = [] } = useJourneysQuery();
   const { data: trips = [], isLoading } = useTripsQuery();
   const { data: posts = [] } = usePostsQuery();
+  const { data: concerts = [] } = useConcertsQuery();
+  const { data: sportEvents = [] } = useSportEventsQuery();
+  const { data: weddings = [] } = useWeddingsQuery();
   const [filterTrip, setFilterTrip] = useState<string[]>([]);
   const [filterRegion, setFilterRegion] = useState<string[]>([]);
   const [filterTripContext, setFilterTripContext] = useState<string[]>([]);
@@ -877,6 +961,56 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
       ),
     [journeys, trips],
   );
+
+  const linkedEventsByTripId = useMemo(() => {
+    const grouped = new Map<number, LinkedTripEvent[]>();
+
+    for (const concert of concerts) {
+      if (!concert.tripId) continue;
+      const current = grouped.get(concert.tripId) ?? [];
+      current.push({
+        id: concert.id,
+        title: locale === "fr" ? "Concert" : "Concert",
+        subtitle: concert.eventName ? `${concert.artist} - ${concert.eventName}` : concert.artist,
+        href: getEventDetailHref("concerts", concert.id),
+        photosLink: concert.photosLink,
+      });
+      grouped.set(concert.tripId, current);
+    }
+
+    for (const event of sportEvents) {
+      if (!event.tripId) continue;
+      const current = grouped.get(event.tripId) ?? [];
+      const matchup = [event.homeTeam, event.awayTeam].filter(Boolean).join(" - ");
+      current.push({
+        id: event.id,
+        title: locale === "fr" ? "Evènement sportif" : "Sport event",
+        subtitle: event.competition
+          ? `${matchup || event.sport} - ${event.competition}`
+          : matchup || event.sport,
+        href: getEventDetailHref("sport-events", event.id),
+        photosLink: event.photosLink,
+      });
+      grouped.set(event.tripId, current);
+    }
+
+    for (const wedding of weddings) {
+      if (!wedding.tripId) continue;
+      const current = grouped.get(wedding.tripId) ?? [];
+      current.push({
+        id: wedding.id,
+        title: locale === "fr" ? "Mariage" : "Wedding",
+        subtitle:
+          [wedding.brideName, wedding.groomName].filter(Boolean).join(" - ") ||
+          (locale === "fr" ? "Mariage" : "Wedding"),
+        href: getEventDetailHref("weddings", wedding.id),
+        photosLink: wedding.photosLink,
+      });
+      grouped.set(wedding.tripId, current);
+    }
+
+    return grouped;
+  }, [concerts, locale, sportEvents, weddings]);
 
   const filteredSorted = useMemo<TimelineItem[]>(() => {
     let list = [...trips];
@@ -1215,6 +1349,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                 renderTripCard(
                   item.trip,
                   posts.filter((post) => post.tripId === item.trip.id),
+                  linkedEventsByTripId.get(item.trip.id) ?? [],
                   item.distanceKm,
                   i18n,
                   undefined,
@@ -1259,6 +1394,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
                         {renderTripCard(
                           trip,
                           posts.filter((post) => post.tripId === trip.id),
+                          linkedEventsByTripId.get(trip.id) ?? [],
                           computeJourneyTripDistance(item.journey, item.trips, tripIndex),
                           i18n,
                           `${t("stepOf")} ${tripIndex + 1} / ${item.trips.length}`,
