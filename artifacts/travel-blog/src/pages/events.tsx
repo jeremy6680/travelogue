@@ -707,9 +707,7 @@ export default function EventsPage() {
                         onClick={() => toggleConcertSort("country")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Photos" : "Photos"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Article" : "Article"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Voyage" : "Trip"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Détails" : "Details"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -734,34 +732,18 @@ export default function EventsPage() {
                           {concert.countryCode ? countryName(concert.countryCode) : EMPTY_LABEL}
                         </TableCell>
                         <TableCell>
-                          <EventLink
-                            href={concert.photosLink}
-                            label={locale === "fr" ? "Voir" : "View"}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <EventLink
-                            href={concert.articleLink}
-                            label={locale === "fr" ? "Lire" : "Read"}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {concert.tripId ? (
-                            <Link
-                              href={`/trips#trip-${concert.tripId}`}
-                              className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                            >
-                              {locale === "fr" ? "En savoir +" : "Learn more"}
-                            </Link>
-                          ) : (
-                            EMPTY_LABEL
-                          )}
+                          <Link
+                            href={getEventDetailHref("concerts", concert.id)}
+                            className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                          >
+                            {locale === "fr" ? "Voir la fiche" : "View details"}
+                          </Link>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
                         {t("noEntries")}
                       </TableCell>
                     </TableRow>
@@ -897,9 +879,7 @@ export default function EventsPage() {
                         onClick={() => toggleSportSort("country")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Photos" : "Photos"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Article" : "Article"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Voyage" : "Trip"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Détails" : "Details"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -929,34 +909,18 @@ export default function EventsPage() {
                           {event.countryCode ? countryName(event.countryCode) : EMPTY_LABEL}
                         </TableCell>
                         <TableCell>
-                          <EventLink
-                            href={event.photosLink}
-                            label={locale === "fr" ? "Voir" : "View"}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <EventLink
-                            href={event.articleLink}
-                            label={locale === "fr" ? "Lire" : "Read"}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {event.tripId ? (
-                            <Link
-                              href={`/trips#trip-${event.tripId}`}
-                              className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                            >
-                              {locale === "fr" ? "En savoir +" : "Learn more"}
-                            </Link>
-                          ) : (
-                            EMPTY_LABEL
-                          )}
+                          <Link
+                            href={getEventDetailHref("sport-events", event.id)}
+                            className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                          >
+                            {locale === "fr" ? "Voir la fiche" : "View details"}
+                          </Link>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={10} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
                         {t("noEntries")}
                       </TableCell>
                     </TableRow>
@@ -1057,9 +1021,7 @@ export default function EventsPage() {
                         onClick={() => toggleWeddingSort("country")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Photos" : "Photos"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Article" : "Article"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Voyage" : "Trip"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Détails" : "Details"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1078,34 +1040,18 @@ export default function EventsPage() {
                         <TableCell>{event.city || EMPTY_LABEL}</TableCell>
                         <TableCell>{countryName(event.countryCode)}</TableCell>
                         <TableCell>
-                          <EventLink
-                            href={event.photosLink}
-                            label={locale === "fr" ? "Voir" : "View"}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <EventLink
-                            href={event.articleLink}
-                            label={locale === "fr" ? "Lire" : "Read"}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {event.tripId ? (
-                            <Link
-                              href={`/trips#trip-${event.tripId}`}
-                              className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                            >
-                              {locale === "fr" ? "En savoir +" : "Learn more"}
-                            </Link>
-                          ) : (
-                            EMPTY_LABEL
-                          )}
+                          <Link
+                            href={getEventDetailHref("weddings", event.id)}
+                            className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                          >
+                            {locale === "fr" ? "Voir la fiche" : "View details"}
+                          </Link>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                         {t("noEntries")}
                       </TableCell>
                     </TableRow>
