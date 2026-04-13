@@ -682,7 +682,7 @@ export default function EventsPage() {
                         onClick={() => toggleConcertSort("artist")}
                       />
                     </TableHead>
-                    <TableHead>
+                    <TableHead className="w-[180px]">
                       <SortHeaderButton
                         label={locale === "fr" ? "Evènement" : "Event"}
                         onClick={() => toggleConcertSort("eventName")}
@@ -717,7 +717,9 @@ export default function EventsPage() {
                       <TableRow key={concert.id}>
                         <TableCell>{formatDate(concert.eventDate, "short")}</TableCell>
                         <TableCell className="font-medium">{concert.artist}</TableCell>
-                        <TableCell>{concert.eventName || EMPTY_LABEL}</TableCell>
+                        <TableCell className="max-w-[180px] truncate">
+                          {concert.eventName || EMPTY_LABEL}
+                        </TableCell>
                         <TableCell>{getConcertGenreLabel(concert) || EMPTY_LABEL}</TableCell>
                         <TableCell>{concert.city || EMPTY_LABEL}</TableCell>
                         <TableCell>
