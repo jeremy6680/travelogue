@@ -607,18 +607,27 @@ function TopListCard({
       <CardContent>
         {rows.length > 0 ? (
           <div className="space-y-3">
-            {rows.map((row, index) => (
-              <div key={`${row.label}-${index}`} className="flex items-center justify-between gap-4">
-                <div className="min-w-0 text-sm font-medium text-foreground">
-                  <p className="truncate">
-                    {index + 1} - {row.label}
-                  </p>
+            {rows.map((row, index) => {
+              let rank = 1;
+              for (let currentIndex = 1; currentIndex <= index; currentIndex += 1) {
+                if (rows[currentIndex].count !== rows[currentIndex - 1].count) {
+                  rank = currentIndex + 1;
+                }
+              }
+
+              return (
+                <div key={`${row.label}-${index}`} className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 text-sm font-medium text-foreground">
+                    <p className="truncate">
+                      {rank} - {row.label}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-foreground">
+                    {row.count}
+                  </span>
                 </div>
-                <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-foreground">
-                  {row.count}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">{emptyLabel}</p>
@@ -942,7 +951,9 @@ export default function EventsPage() {
 
   const overviewOptions = useMemo(
     () => ({
-      years: getSingleFacetOptions(overviewRows.map((event) => getYear(event.date)), locale),
+      years: getSingleFacetOptions(overviewRows.map((event) => getYear(event.date)), locale).toSorted(
+        (left, right) => Number.parseInt(right.value, 10) - Number.parseInt(left.value, 10),
+      ),
       cities: getSingleFacetOptions(overviewRows.map((event) => event.city), locale),
       countries: getSingleFacetOptions(
         overviewRows.map((event) => event.countryCode),
@@ -1350,7 +1361,7 @@ export default function EventsPage() {
     const heatmapRows =
       firstYear && lastYear
         ? Array.from({ length: lastYear - firstYear + 1 }, (_, index) => {
-            const year = firstYear + index;
+            const year = lastYear - index;
             return {
               year,
               months: EVENT_STATS_MONTHS.map((month) => ({
@@ -1397,8 +1408,9 @@ export default function EventsPage() {
     const topConcertVenues = Array.from(
       (concertsQuery.data ?? []).reduce((accumulator, concert) => {
         if (!concert.venue) return accumulator;
-        const key = `${normalizeValue(concert.venue)}::${concert.eventDate}`;
-        accumulator.set(key, concert.venue);
+        const label = concert.city ? `${concert.venue} (${concert.city})` : concert.venue;
+        const key = `${normalizeValue(concert.venue)}::${normalizeValue(concert.city)}::${concert.eventDate}`;
+        accumulator.set(key, label);
         return accumulator;
       }, new Map<string, string>()).values(),
     ).reduce((accumulator, venue) => {
@@ -1408,7 +1420,8 @@ export default function EventsPage() {
 
     const topSportVenues = (sportEventsQuery.data ?? []).reduce((accumulator, event) => {
       if (!event.venue) return accumulator;
-      accumulator.set(event.venue, (accumulator.get(event.venue) ?? 0) + 1);
+      const label = event.city ? `${event.venue} (${event.city})` : event.venue;
+      accumulator.set(label, (accumulator.get(label) ?? 0) + 1);
       return accumulator;
     }, new Map<string, number>());
 
@@ -1425,9 +1438,11 @@ export default function EventsPage() {
     }, new Map<string, number>());
 
     const topTeams = (sportEventsQuery.data ?? []).reduce((accumulator, event) => {
+      const sportLabel = formatSportLabel(event.sport, locale) || event.sport;
       for (const team of [event.homeTeam, event.awayTeam]) {
         if (!team) continue;
-        accumulator.set(team, (accumulator.get(team) ?? 0) + 1);
+        const label = `${team} (${sportLabel})`;
+        accumulator.set(label, (accumulator.get(label) ?? 0) + 1);
       }
       return accumulator;
     }, new Map<string, number>());
@@ -1539,7 +1554,12 @@ export default function EventsPage() {
       topTeams: buildTopRows(topTeams),
       topCompanions: buildTopRows(companionCounts),
       topCountries: buildTopRows(
-        new Map(countryRows.map((row) => [row.country, row.count])),
+        new Map(
+          Array.from(countryCounts.entries()).map(([countryCode, count]) => [
+            countryName(countryCode),
+            count,
+          ]),
+        ),
       ),
       runningProgressRows,
     };
@@ -1881,7 +1901,23 @@ export default function EventsPage() {
                           axisLine={false}
                           width={92}
                         />
-                        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                        <ChartTooltip
+                          content={
+                            <ChartTooltipContent
+                              hideLabel
+                              formatter={(value) => (
+                                <>
+                                  <span className="text-muted-foreground">
+                                    {locale === "fr" ? "Total :" : "Total:"}
+                                  </span>
+                                  <span className="font-mono font-medium tabular-nums text-foreground">
+                                    {Number(value)} {locale === "fr" ? "évènements" : "events"}
+                                  </span>
+                                </>
+                              )}
+                            />
+                          }
+                        />
                         <Bar dataKey="count" radius={8}>
                           {eventStats.categoryRows.map((row) => (
                             <Cell key={row.key} fill={row.fill} />
