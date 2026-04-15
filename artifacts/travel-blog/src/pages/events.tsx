@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
-import { Link } from "wouter";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "wouter";
 import { ArrowUpDown, ExternalLink } from "lucide-react";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { Layout } from "@/components/layout";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useConcertsQuery,
   useRunningQuery,
@@ -100,6 +102,12 @@ type RunningFilters = {
   sortDirection: SortDirection;
 };
 
+type OverviewFilters = {
+  year: string[];
+  city: string[];
+  country: string[];
+};
+
 type WeddingRow = {
   id: number;
   marriedPeople: string;
@@ -143,7 +151,27 @@ type RunningRow = {
   attendeesPeople: string[];
 };
 
+type UnifiedEventRow = {
+  id: string;
+  kind: Exclude<EventView, "all">;
+  detailHref: string;
+  date: string;
+  categoryLabel: string;
+  categoryClassName: string;
+  title: string;
+  city: string;
+  countryCode: string;
+};
+
 const EMPTY_LABEL = "—";
+const EVENT_VIEWS: EventView[] = [
+  "all",
+  "concerts",
+  "sport-events",
+  "tech-events",
+  "running",
+  "weddings",
+];
 
 const DEFAULT_CONCERT_FILTERS: ConcertFilters = {
   year: [],
@@ -201,6 +229,12 @@ const DEFAULT_RUNNING_FILTERS: RunningFilters = {
   keyword: "",
   sortBy: "eventDate",
   sortDirection: "desc",
+};
+
+const DEFAULT_OVERVIEW_FILTERS: OverviewFilters = {
+  year: [],
+  city: [],
+  country: [],
 };
 
 function getYear(value: string | null | undefined) {
@@ -370,6 +404,41 @@ function formatRunningPace(
   }`;
 }
 
+function isEventView(value: string | null | undefined): value is EventView {
+  return EVENT_VIEWS.includes((value ?? "") as EventView);
+}
+
+function parseEventView(search: string) {
+  const params = new URLSearchParams(search.startsWith("?") ? search : `?${search}`);
+  const tab = params.get("tab");
+  return isEventView(tab) ? tab : "all";
+}
+
+function getSportEventTitle(event: SportEvent, locale: "fr" | "en") {
+  const matchup = [event.homeTeam, event.awayTeam].filter(Boolean).join(" vs ");
+
+  if (event.competition && matchup) {
+    return `${event.competition} — ${matchup}`;
+  }
+
+  return matchup || event.competition || formatSportLabel(event.sport, locale);
+}
+
+function getCategoryBadgeClassName(kind: Exclude<EventView, "all">) {
+  switch (kind) {
+    case "concerts":
+      return "border-rose-200 bg-rose-50 text-rose-700";
+    case "sport-events":
+      return "border-blue-200 bg-blue-50 text-blue-700";
+    case "tech-events":
+      return "border-violet-200 bg-violet-50 text-violet-700";
+    case "running":
+      return "border-amber-200 bg-amber-50 text-amber-700";
+    case "weddings":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+}
+
 function compareValues(left: string, right: string, direction: SortDirection) {
   const factor = direction === "asc" ? 1 : -1;
   return left.localeCompare(right, "fr", { sensitivity: "base" }) * factor;
@@ -419,13 +488,15 @@ function EventLink({
 function SectionTitle({
   title,
   count,
+  titleClassName,
 }: {
   title: string;
   count: number;
+  titleClassName?: string;
 }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <CardTitle className="text-2xl font-serif">{title}</CardTitle>
+      <CardTitle className={cn("text-2xl font-serif", titleClassName)}>{title}</CardTitle>
       <span className="text-sm text-muted-foreground">{count}</span>
     </div>
   );
@@ -453,45 +524,44 @@ function SortHeaderButton({
   );
 }
 
-function ViewSwitcher({
-  value,
-  onChange,
-  labels,
-}: {
-  value: EventView;
-  onChange: (value: EventView) => void;
-  labels: Record<EventView, string>;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {(Object.keys(labels) as EventView[]).map((option) => (
-        <Button
-          key={option}
-          type="button"
-          variant={value === option ? "default" : "outline"}
-          onClick={() => onChange(option)}
-          className={cn("rounded-full", value === option && "shadow-sm")}
-        >
-          {labels[option]}
-        </Button>
-      ))}
-    </div>
-  );
-}
-
 export default function EventsPage() {
   const { t, formatDate, countryName, locale } = useI18n();
+  const [location, setLocation] = useLocation();
   const concertsQuery = useConcertsQuery();
   const runningQuery = useRunningQuery();
   const sportEventsQuery = useSportEventsQuery();
   const techEventsQuery = useTechEventsQuery();
   const weddingsQuery = useWeddingsQuery();
   const [view, setView] = useState<EventView>("all");
+  const [overviewFilters, setOverviewFilters] = useState<OverviewFilters>(DEFAULT_OVERVIEW_FILTERS);
   const [concertFilters, setConcertFilters] = useState<ConcertFilters>(DEFAULT_CONCERT_FILTERS);
   const [runningFilters, setRunningFilters] = useState<RunningFilters>(DEFAULT_RUNNING_FILTERS);
   const [sportFilters, setSportFilters] = useState<SportFilters>(DEFAULT_SPORT_FILTERS);
   const [techEventFilters, setTechEventFilters] = useState<TechEventFilters>(DEFAULT_TECH_EVENT_FILTERS);
   const [weddingFilters, setWeddingFilters] = useState<WeddingFilters>(DEFAULT_WEDDING_FILTERS);
+
+  useEffect(() => {
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    setView(parseEventView(search));
+  }, [location]);
+
+  const handleViewChange = (nextView: string) => {
+    if (!isEventView(nextView)) return;
+
+    setView(nextView);
+
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    const params = new URLSearchParams(search.startsWith("?") ? search : `?${search}`);
+
+    if (nextView === "all") {
+      params.delete("tab");
+    } else {
+      params.set("tab", nextView);
+    }
+
+    const query = params.toString();
+    setLocation(query ? `/events?${query}` : "/events");
+  };
 
   const toggleConcertSort = (sortBy: ConcertFilters["sortBy"]) => {
     setConcertFilters((current) => ({
@@ -699,6 +769,94 @@ export default function EventsPage() {
     }),
     [countryName, locale, runningEvents],
   );
+
+  const overviewRows = useMemo<UnifiedEventRow[]>(() => {
+    const concerts = (concertsQuery.data ?? []).map((concert) => ({
+      id: `concerts-${concert.id}`,
+      kind: "concerts" as const,
+      detailHref: getEventDetailHref("concerts", concert.id),
+      date: concert.eventDate,
+      categoryLabel: locale === "fr" ? "Concert" : "Concert",
+      categoryClassName: getCategoryBadgeClassName("concerts"),
+      title: [concert.artist, concert.eventName].filter(Boolean).join(" — ") || concert.artist,
+      city: concert.city ?? "",
+      countryCode: concert.countryCode ?? "",
+    }));
+
+    const sportEvents = (sportEventsQuery.data ?? []).map((event) => ({
+      id: `sport-events-${event.id}`,
+      kind: "sport-events" as const,
+      detailHref: getEventDetailHref("sport-events", event.id),
+      date: event.eventDate,
+      categoryLabel: locale === "fr" ? "Sport" : "Sport",
+      categoryClassName: getCategoryBadgeClassName("sport-events"),
+      title: getSportEventTitle(event, locale),
+      city: event.city ?? "",
+      countryCode: event.countryCode ?? "",
+    }));
+
+    const tech = techEvents.map((event) => ({
+      id: `tech-events-${event.id}`,
+      kind: "tech-events" as const,
+      detailHref: getEventDetailHref("tech-events", event.id),
+      date: event.startDate,
+      categoryLabel: locale === "fr" ? "Tech" : "Tech",
+      categoryClassName: getCategoryBadgeClassName("tech-events"),
+      title: event.eventName,
+      city: event.city,
+      countryCode: event.countryCode,
+    }));
+
+    const running = runningEvents.map((event) => ({
+      id: `running-${event.id}`,
+      kind: "running" as const,
+      detailHref: getEventDetailHref("running", event.id),
+      date: event.eventDate,
+      categoryLabel: locale === "fr" ? "Running" : "Running",
+      categoryClassName: getCategoryBadgeClassName("running"),
+      title: event.eventName,
+      city: event.city,
+      countryCode: event.countryCode,
+    }));
+
+    const weddingsOverview = weddings.map((event) => ({
+      id: `weddings-${event.id}`,
+      kind: "weddings" as const,
+      detailHref: getEventDetailHref("weddings", event.id),
+      date: event.visitedAt,
+      categoryLabel: locale === "fr" ? "Mariage" : "Wedding",
+      categoryClassName: getCategoryBadgeClassName("weddings"),
+      title: event.marriedPeople,
+      city: event.city,
+      countryCode: event.countryCode,
+    }));
+
+    return [...concerts, ...sportEvents, ...tech, ...running, ...weddingsOverview].toSorted(
+      (left, right) => compareDates(left.date, right.date, "desc"),
+    );
+  }, [concertsQuery.data, locale, runningEvents, sportEventsQuery.data, techEvents, weddings]);
+
+  const overviewOptions = useMemo(
+    () => ({
+      years: getSingleFacetOptions(overviewRows.map((event) => getYear(event.date)), locale),
+      cities: getSingleFacetOptions(overviewRows.map((event) => event.city), locale),
+      countries: getSingleFacetOptions(
+        overviewRows.map((event) => event.countryCode),
+        locale,
+        (value) => countryName(value),
+      ),
+    }),
+    [countryName, locale, overviewRows],
+  );
+
+  const filteredOverviewRows = useMemo(() => {
+    return overviewRows.filter((event) => {
+      if (!includesSelectedValue(getYear(event.date), overviewFilters.year)) return false;
+      if (!includesSelectedValue(event.city, overviewFilters.city)) return false;
+      if (!includesSelectedValue(event.countryCode, overviewFilters.country)) return false;
+      return true;
+    });
+  }, [overviewFilters, overviewRows]);
 
   const filteredConcerts = useMemo(() => {
     const rows = (concertsQuery.data ?? []).filter((concert) => {
@@ -957,7 +1115,7 @@ export default function EventsPage() {
   }, [countryName, runningEvents, runningFilters]);
 
   const viewLabels: Record<EventView, string> = {
-    all: locale === "fr" ? "Tous" : "All",
+    all: locale === "fr" ? "Tout" : "All",
     concerts: locale === "fr" ? "Concerts" : "Concerts",
     "sport-events": locale === "fr" ? "Evènements sportifs" : "Sport events",
     "tech-events": locale === "fr" ? "Evènements tech" : "Tech events",
@@ -993,7 +1151,19 @@ export default function EventsPage() {
                 : "Concerts, sport events, tech conferences, races, and weddings gathered in one place to browse memories through dates, cities, and countries."}
             </p>
           </div>
-          <ViewSwitcher value={view} onChange={setView} labels={viewLabels} />
+          <Tabs value={view} onValueChange={handleViewChange}>
+            <TabsList className="h-auto flex-wrap justify-start rounded-2xl bg-muted/70 p-1">
+              {EVENT_VIEWS.map((option) => (
+                <TabsTrigger
+                  key={option}
+                  value={option}
+                  className="rounded-xl px-4 py-2"
+                >
+                  {viewLabels[option]}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </header>
 
         {isLoading ? (
@@ -1014,12 +1184,118 @@ export default function EventsPage() {
           </Card>
         ) : null}
 
-        {!isLoading && !hasError && (view === "all" || view === "concerts") ? (
+        {!isLoading && !hasError && view === "all" ? (
+          <Card>
+            <CardHeader className="space-y-6">
+              <SectionTitle
+                title={locale === "fr" ? "Vue d’ensemble" : "Overview"}
+                count={filteredOverviewRows.length}
+              />
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <MultiSelectFilter
+                  label={locale === "fr" ? "Années" : "Years"}
+                  placeholder={locale === "fr" ? "Années" : "Years"}
+                  options={overviewOptions.years.map((option) => ({
+                    value: option.value,
+                    label: buildFilterLabel(option.text, option.count),
+                    triggerLabel: option.text,
+                  }))}
+                  selectedValues={overviewFilters.year}
+                  onChange={(year) => setOverviewFilters((current) => ({ ...current, year }))}
+                  className="w-full"
+                />
+                <MultiSelectFilter
+                  label={locale === "fr" ? "Villes" : "Cities"}
+                  placeholder={locale === "fr" ? "Villes" : "Cities"}
+                  options={overviewOptions.cities.map((option) => ({
+                    value: option.value,
+                    label: buildFilterLabel(option.text, option.count),
+                    triggerLabel: option.text,
+                  }))}
+                  selectedValues={overviewFilters.city}
+                  onChange={(city) => setOverviewFilters((current) => ({ ...current, city }))}
+                  className="w-full"
+                />
+                <MultiSelectFilter
+                  label={locale === "fr" ? "Pays" : "Countries"}
+                  placeholder={locale === "fr" ? "Tous les pays" : "All countries"}
+                  options={overviewOptions.countries.map((option) => ({
+                    value: option.value,
+                    label: buildFilterLabel(option.text, option.count),
+                    triggerLabel: option.text,
+                  }))}
+                  selectedValues={overviewFilters.country}
+                  onChange={(country) =>
+                    setOverviewFilters((current) => ({ ...current, country }))
+                  }
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setOverviewFilters(DEFAULT_OVERVIEW_FILTERS)}
+                >
+                  {t("clearFilters")}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{locale === "fr" ? "Date" : "Date"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Catégorie" : "Category"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Titre / nom" : "Title / name"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Ville" : "City"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Pays" : "Country"}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredOverviewRows.length ? (
+                    filteredOverviewRows.map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell>{formatDate(event.date, "short")}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={event.categoryClassName}>
+                            {event.categoryLabel}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <Link
+                            href={event.detailHref}
+                            className="underline decoration-[rgba(20,70,90,0.22)] underline-offset-4 transition-colors hover:text-primary"
+                          >
+                            {event.title || EMPTY_LABEL}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{event.city || EMPTY_LABEL}</TableCell>
+                        <TableCell>
+                          {event.countryCode ? countryName(event.countryCode) : EMPTY_LABEL}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                        {t("noEntries")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {!isLoading && !hasError && view === "concerts" ? (
           <Card>
             <CardHeader className="space-y-6">
               <SectionTitle
                 title={locale === "fr" ? "Concerts" : "Concerts"}
                 count={filteredConcerts.length}
+                titleClassName="text-rose-700"
               />
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <MultiSelectFilter
@@ -1225,12 +1501,13 @@ export default function EventsPage() {
           </Card>
         ) : null}
 
-        {!isLoading && !hasError && (view === "all" || view === "sport-events") ? (
+        {!isLoading && !hasError && view === "sport-events" ? (
           <Card>
             <CardHeader className="space-y-6">
               <SectionTitle
                 title={locale === "fr" ? "Evènements sportifs" : "Sport events"}
                 count={filteredSportEvents.length}
+                titleClassName="text-blue-700"
               />
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <MultiSelectFilter
@@ -1427,12 +1704,13 @@ export default function EventsPage() {
           </Card>
         ) : null}
 
-        {!isLoading && !hasError && (view === "all" || view === "tech-events") ? (
+        {!isLoading && !hasError && view === "tech-events" ? (
           <Card>
             <CardHeader className="space-y-6">
               <SectionTitle
                 title={locale === "fr" ? "Evènements tech" : "Tech events"}
                 count={filteredTechEvents.length}
+                titleClassName="text-violet-700"
               />
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <MultiSelectFilter
@@ -1590,12 +1868,13 @@ export default function EventsPage() {
           </Card>
         ) : null}
 
-        {!isLoading && !hasError && (view === "all" || view === "running") ? (
+        {!isLoading && !hasError && view === "running" ? (
           <Card>
             <CardHeader className="space-y-6">
               <SectionTitle
                 title={locale === "fr" ? "Running" : "Running"}
                 count={filteredRunning.length}
+                titleClassName="text-amber-700"
               />
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <MultiSelectFilter
@@ -1764,12 +2043,13 @@ export default function EventsPage() {
           </Card>
         ) : null}
 
-        {!isLoading && !hasError && (view === "all" || view === "weddings") ? (
+        {!isLoading && !hasError && view === "weddings" ? (
           <Card>
             <CardHeader className="space-y-6">
               <SectionTitle
                 title={locale === "fr" ? "Mariages" : "Weddings"}
                 count={filteredWeddings.length}
+                titleClassName="text-emerald-700"
               />
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <MultiSelectFilter
