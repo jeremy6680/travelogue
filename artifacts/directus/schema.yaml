@@ -2662,6 +2662,8 @@ fields:
             value: travel-friend
           - text: Ami club de sport
             value: sports-club-friend
+          - text: Collègue de travail
+            value: work-colleague
           - text: Autre ami
             value: other-friend
           - text: Animal de compagnie
