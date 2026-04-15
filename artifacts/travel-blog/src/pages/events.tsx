@@ -1,11 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ArrowUpDown, ExternalLink } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { Layout } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -41,7 +52,9 @@ type EventView =
   | "sport-events"
   | "tech-events"
   | "running"
-  | "weddings";
+  | "weddings"
+  | "stats";
+type EventCategoryView = Exclude<EventView, "all" | "stats">;
 type SortDirection = "asc" | "desc";
 
 type ConcertFilters = {
@@ -153,7 +166,7 @@ type RunningRow = {
 
 type UnifiedEventRow = {
   id: string;
-  kind: Exclude<EventView, "all">;
+  kind: EventCategoryView;
   detailHref: string;
   date: string;
   categoryLabel: string;
@@ -164,6 +177,14 @@ type UnifiedEventRow = {
 };
 
 const EMPTY_LABEL = "—";
+const EVENT_STATS_MONTHS = Array.from({ length: 12 }, (_, index) => index);
+const EVENT_CHART_COLORS = {
+  concerts: "#e11d48",
+  "sport-events": "#2563eb",
+  "tech-events": "#7c3aed",
+  running: "#d97706",
+  weddings: "#059669",
+} as const;
 const EVENT_VIEWS: EventView[] = [
   "all",
   "concerts",
@@ -171,6 +192,7 @@ const EVENT_VIEWS: EventView[] = [
   "tech-events",
   "running",
   "weddings",
+  "stats",
 ];
 
 const DEFAULT_CONCERT_FILTERS: ConcertFilters = {
@@ -436,7 +458,51 @@ function getCategoryBadgeClassName(kind: Exclude<EventView, "all">) {
       return "border-amber-200 bg-amber-50 text-amber-700";
     case "weddings":
       return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "stats":
+      return "border-slate-200 bg-slate-50 text-slate-700";
   }
+}
+
+function getStatsHeatmapIntensity(value: number, maxValue: number) {
+  if (value <= 0 || maxValue <= 0) {
+    return "bg-muted/40 text-muted-foreground";
+  }
+
+  const ratio = value / maxValue;
+  if (ratio >= 0.8) return "bg-primary text-primary-foreground";
+  if (ratio >= 0.55) return "bg-primary/80 text-primary-foreground";
+  if (ratio >= 0.3) return "bg-primary/55 text-foreground";
+  return "bg-primary/20 text-foreground";
+}
+
+function formatDurationFromSeconds(totalSeconds: number | null | undefined) {
+  if (!totalSeconds || totalSeconds <= 0) return EMPTY_LABEL;
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function formatPaceFromSeconds(totalSeconds: number | null | undefined) {
+  if (!totalSeconds || totalSeconds <= 0) return EMPTY_LABEL;
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")} / km`;
+}
+
+function getRunningDistanceBucketLabel(distanceKm: number | null | undefined, locale: "fr" | "en") {
+  if (!distanceKm) return null;
+  if (Math.abs(distanceKm - 10) <= 0.4) return locale === "fr" ? "10 km" : "10K";
+  if (Math.abs(distanceKm - 21.1) <= 0.6) return locale === "fr" ? "Semi-marathon" : "Half marathon";
+  if (Math.abs(distanceKm - 42.2) <= 0.8) return locale === "fr" ? "Marathon" : "Marathon";
+  return null;
 }
 
 function compareValues(left: string, right: string, direction: SortDirection) {
@@ -521,6 +587,44 @@ function SortHeaderButton({
       {label}
       <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
     </Button>
+  );
+}
+
+function TopListCard({
+  title,
+  rows,
+  emptyLabel,
+}: {
+  title: string;
+  rows: Array<{ label: string; count: number }>;
+  emptyLabel: string;
+}) {
+  return (
+    <Card className="border-border/60">
+      <CardHeader>
+        <CardTitle className="font-serif text-xl">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {rows.length > 0 ? (
+          <div className="space-y-3">
+            {rows.map((row, index) => (
+              <div key={`${row.label}-${index}`} className="flex items-center justify-between gap-4">
+                <div className="min-w-0 text-sm font-medium text-foreground">
+                  <p className="truncate">
+                    {index + 1} - {row.label}
+                  </p>
+                </div>
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-foreground">
+                  {row.count}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">{emptyLabel}</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1121,6 +1225,358 @@ export default function EventsPage() {
     "tech-events": locale === "fr" ? "Evènements tech" : "Tech events",
     running: locale === "fr" ? "Running" : "Running",
     weddings: locale === "fr" ? "Mariages" : "Weddings",
+    stats: locale === "fr" ? "Stats" : "Stats",
+  };
+
+  const eventStats = useMemo(() => {
+    const distinctConcertsByDate = new Map<string, Concert>();
+    for (const concert of concertsQuery.data ?? []) {
+      if (!distinctConcertsByDate.has(concert.eventDate)) {
+        distinctConcertsByDate.set(concert.eventDate, concert);
+      }
+    }
+
+    const statsEventRows: Array<{
+      id: string;
+      kind: EventCategoryView;
+      date: string;
+      countryCode: string;
+      city: string;
+    }> = [
+      ...Array.from(distinctConcertsByDate.values()).map((concert) => ({
+        id: `concert-${concert.eventDate}`,
+        kind: "concerts" as const,
+        date: concert.eventDate,
+        countryCode: concert.countryCode ?? "",
+        city: concert.city ?? "",
+      })),
+      ...(sportEventsQuery.data ?? []).map((event) => ({
+        id: `sport-${event.id}`,
+        kind: "sport-events" as const,
+        date: event.eventDate,
+        countryCode: event.countryCode ?? "",
+        city: event.city ?? "",
+      })),
+      ...techEvents.map((event) => ({
+        id: `tech-${event.id}`,
+        kind: "tech-events" as const,
+        date: event.startDate,
+        countryCode: event.countryCode,
+        city: event.city,
+      })),
+      ...runningEvents.map((event) => ({
+        id: `running-${event.id}`,
+        kind: "running" as const,
+        date: event.eventDate,
+        countryCode: event.countryCode,
+        city: event.city,
+      })),
+      ...weddings.map((event) => ({
+        id: `wedding-${event.id}`,
+        kind: "weddings" as const,
+        date: event.visitedAt,
+        countryCode: event.countryCode,
+        city: event.city,
+      })),
+    ];
+
+    const totalEvents = statsEventRows.length;
+    const distinctCountries = new Set(statsEventRows.map((event) => event.countryCode).filter(Boolean)).size;
+    const distinctCities = new Set(statsEventRows.map((event) => normalizeValue(event.city)).filter(Boolean)).size;
+    const years = statsEventRows
+      .map((event) => Number.parseInt(event.date.slice(0, 4), 10))
+      .filter((value) => Number.isFinite(value));
+    const firstYear = years.length ? Math.min(...years) : null;
+    const lastYear = years.length ? Math.max(...years) : null;
+
+    const countsByCategory = new Map<EventCategoryView, number>();
+    for (const row of statsEventRows) {
+      countsByCategory.set(row.kind, (countsByCategory.get(row.kind) ?? 0) + 1);
+    }
+
+    const categoryRows = (Object.entries(viewLabels) as Array<[EventView, string]>)
+      .filter(([key]) => key !== "all" && key !== "stats")
+      .map(([key, label]) => ({
+        key: key as EventCategoryView,
+        label,
+        count: countsByCategory.get(key as EventCategoryView) ?? 0,
+        fill: EVENT_CHART_COLORS[key as EventCategoryView],
+      }))
+      .filter((row) => row.count > 0);
+
+    const countryCounts = new Map<string, number>();
+    for (const row of statsEventRows) {
+      if (!row.countryCode) continue;
+      countryCounts.set(row.countryCode, (countryCounts.get(row.countryCode) ?? 0) + 1);
+    }
+
+    const countryRows = Array.from(countryCounts.entries())
+      .map(([countryCode, count]) => ({
+        countryCode,
+        country: countryName(countryCode),
+        count,
+      }))
+      .sort((left, right) => {
+        if (right.count !== left.count) return right.count - left.count;
+        return left.country.localeCompare(right.country, locale);
+      })
+      .slice(0, 8);
+
+    const cityCounts = new Map<string, { city: string; count: number }>();
+    for (const row of statsEventRows) {
+      if (!row.city) continue;
+      const key = normalizeValue(row.city);
+      const current = cityCounts.get(key) ?? { city: row.city, count: 0 };
+      current.count += 1;
+      cityCounts.set(key, current);
+    }
+
+    const yearCounts = new Map<string, number>();
+    for (const row of statsEventRows) {
+      const year = row.date.slice(0, 4);
+      if (!year) continue;
+      yearCounts.set(year, (yearCounts.get(year) ?? 0) + 1);
+    }
+
+    const heatmap = new Map<string, number>();
+    for (const row of statsEventRows) {
+      const year = Number.parseInt(row.date.slice(0, 4), 10);
+      const month = Number.parseInt(row.date.slice(5, 7), 10) - 1;
+      if (!Number.isFinite(year) || !Number.isFinite(month) || month < 0 || month > 11) continue;
+      const key = `${year}-${month}`;
+      heatmap.set(key, (heatmap.get(key) ?? 0) + 1);
+    }
+
+    const heatmapRows =
+      firstYear && lastYear
+        ? Array.from({ length: lastYear - firstYear + 1 }, (_, index) => {
+            const year = firstYear + index;
+            return {
+              year,
+              months: EVENT_STATS_MONTHS.map((month) => ({
+                month,
+                label: formatDate(new Date(Date.UTC(year, month, 1)), "monthYear").slice(0, 3),
+                count: heatmap.get(`${year}-${month}`) ?? 0,
+              })),
+            };
+          })
+        : [];
+
+    const maxHeatmapCount = Math.max(
+      0,
+      ...heatmapRows.flatMap((row) => row.months.map((month) => month.count)),
+    );
+
+    const kindCountryDistribution = categoryRows.map((category) => {
+      const rows = statsEventRows.filter((event) => event.kind === category.key);
+      const distribution = new Map<string, number>();
+
+      for (const row of rows) {
+        if (!row.countryCode) continue;
+        distribution.set(row.countryCode, (distribution.get(row.countryCode) ?? 0) + 1);
+      }
+
+      return {
+        key: category.key,
+        label: category.label,
+        total: rows.length,
+        rows: Array.from(distribution.entries())
+          .map(([countryCode, count]) => ({
+            countryCode,
+            country: countryName(countryCode),
+            count,
+            share: rows.length > 0 ? count / rows.length : 0,
+          }))
+          .sort((left, right) => {
+            if (right.count !== left.count) return right.count - left.count;
+            return left.country.localeCompare(right.country, locale);
+          }),
+      };
+    });
+
+    const topConcertVenues = Array.from(
+      (concertsQuery.data ?? []).reduce((accumulator, concert) => {
+        if (!concert.venue) return accumulator;
+        const key = `${normalizeValue(concert.venue)}::${concert.eventDate}`;
+        accumulator.set(key, concert.venue);
+        return accumulator;
+      }, new Map<string, string>()).values(),
+    ).reduce((accumulator, venue) => {
+      accumulator.set(venue, (accumulator.get(venue) ?? 0) + 1);
+      return accumulator;
+    }, new Map<string, number>());
+
+    const topSportVenues = (sportEventsQuery.data ?? []).reduce((accumulator, event) => {
+      if (!event.venue) return accumulator;
+      accumulator.set(event.venue, (accumulator.get(event.venue) ?? 0) + 1);
+      return accumulator;
+    }, new Map<string, number>());
+
+    const topArtists = (concertsQuery.data ?? []).reduce((accumulator, concert) => {
+      accumulator.set(concert.artist, (accumulator.get(concert.artist) ?? 0) + 1);
+      return accumulator;
+    }, new Map<string, number>());
+
+    const topGenres = (concertsQuery.data ?? []).reduce((accumulator, concert) => {
+      const label = formatConcertGenreLabel(concert.genre, concert.subgenre, locale);
+      if (!label) return accumulator;
+      accumulator.set(label, (accumulator.get(label) ?? 0) + 1);
+      return accumulator;
+    }, new Map<string, number>());
+
+    const topTeams = (sportEventsQuery.data ?? []).reduce((accumulator, event) => {
+      for (const team of [event.homeTeam, event.awayTeam]) {
+        if (!team) continue;
+        accumulator.set(team, (accumulator.get(team) ?? 0) + 1);
+      }
+      return accumulator;
+    }, new Map<string, number>());
+
+    const buildTopRows = (counts: Map<string, number>) =>
+      Array.from(counts.entries())
+        .map(([label, count]) => ({ label, count }))
+        .sort((left, right) => {
+          if (right.count !== left.count) return right.count - left.count;
+          return left.label.localeCompare(right.label, locale);
+        })
+        .slice(0, 5);
+
+    const companionCounts = new Map<string, number>();
+    const companionByKind = categoryRows.map((category) => {
+      const distribution = new Map<string, number>();
+      const sourceGroups =
+        category.key === "concerts"
+          ? (concertsQuery.data ?? []).map((item) => item.attendeesPeople)
+          : category.key === "sport-events"
+            ? (sportEventsQuery.data ?? []).map((item) => item.attendeesPeople)
+            : category.key === "tech-events"
+              ? techEvents.map((item) => item.attendeesPeople)
+              : category.key === "running"
+                ? runningEvents.map((item) => item.attendeesPeople)
+                : weddings.map((item) => item.attendeesPeople);
+
+      for (const people of sourceGroups) {
+        for (const person of new Set(people.filter(Boolean))) {
+          distribution.set(person, (distribution.get(person) ?? 0) + 1);
+          companionCounts.set(person, (companionCounts.get(person) ?? 0) + 1);
+        }
+      }
+
+      const total = Array.from(distribution.values()).reduce((sum, count) => sum + count, 0);
+
+      return {
+        key: category.key,
+        label: category.label,
+        rows: Array.from(distribution.entries())
+          .map(([person, count]) => ({
+            person,
+            count,
+            share: total > 0 ? count / total : 0,
+          }))
+          .sort((left, right) => {
+            if (right.count !== left.count) return right.count - left.count;
+            return left.person.localeCompare(right.person, locale);
+          }),
+      };
+    });
+
+    const runningProgressPoints = runningEvents
+      .filter((event) => event.distanceKm && event.duration)
+      .map((event) => {
+        const totalSeconds = parseDurationToSeconds(event.duration);
+        if (!totalSeconds) return null;
+        if (!event.distanceKm || event.distanceKm <= 0) return null;
+        const distanceLabel = getRunningDistanceBucketLabel(event.distanceKm, locale);
+        if (!distanceLabel) return null;
+        const paceSeconds = Math.round(totalSeconds / event.distanceKm);
+
+        return {
+          id: event.id,
+          eventDate: event.eventDate,
+          eventName: event.eventName,
+          distanceKm: event.distanceKm,
+          distanceLabel,
+          paceSeconds,
+          averagePace: formatPaceFromSeconds(paceSeconds),
+        };
+      })
+      .filter((event): event is NonNullable<typeof event> => Boolean(event))
+      .toSorted((left, right) => compareDates(left.eventDate, right.eventDate, "asc"));
+
+    const runningProgressRows = runningProgressPoints.map((point) => ({
+      eventDate: point.eventDate,
+      eventName: point.eventName,
+      distanceKm: point.distanceKm,
+      paceLabel: point.averagePace,
+      tenKm: point.distanceLabel === (locale === "fr" ? "10 km" : "10K") ? point.paceSeconds : null,
+      semiMarathon:
+        point.distanceLabel === (locale === "fr" ? "Semi-marathon" : "Half marathon")
+          ? point.paceSeconds
+          : null,
+      marathon: point.distanceLabel === "Marathon" ? point.paceSeconds : null,
+    }));
+
+    return {
+      totalEvents,
+      distinctCountries,
+      distinctCities,
+      firstYear,
+      lastYear,
+      categoryRows,
+      countryRows,
+      cityRows: buildTopRows(
+        new Map(Array.from(cityCounts.values()).map((entry) => [entry.city, entry.count])),
+      ),
+      yearRows: buildTopRows(yearCounts),
+      heatmapRows,
+      maxHeatmapCount,
+      kindCountryDistribution,
+      companionByKind,
+      topConcertVenues: buildTopRows(topConcertVenues),
+      topSportVenues: buildTopRows(topSportVenues),
+      topArtists: buildTopRows(topArtists),
+      topGenres: buildTopRows(topGenres),
+      topTeams: buildTopRows(topTeams),
+      topCompanions: buildTopRows(companionCounts),
+      topCountries: buildTopRows(
+        new Map(countryRows.map((row) => [row.country, row.count])),
+      ),
+      runningProgressRows,
+    };
+  }, [
+    concertsQuery.data,
+    countryName,
+    formatDate,
+    locale,
+    runningEvents,
+    sportEventsQuery.data,
+    techEvents,
+    weddings,
+    viewLabels,
+  ]);
+
+  const eventCategoryChartConfig = useMemo(
+    () =>
+      Object.fromEntries(
+        eventStats.categoryRows.map((row) => [
+          row.key,
+          { label: row.label, color: row.fill },
+        ]),
+      ),
+    [eventStats.categoryRows],
+  );
+
+  const eventCountryChartConfig = {
+    events: {
+      label: locale === "fr" ? "Evènements" : "Events",
+      color: "#0f766e",
+    },
+  };
+
+  const runningProgressChartConfig = {
+    tenKm: { label: locale === "fr" ? "10 km" : "10K", color: "#2563eb" },
+    semiMarathon: { label: locale === "fr" ? "Semi-marathon" : "Half marathon", color: "#d97706" },
+    marathon: { label: locale === "fr" ? "Marathon" : "Marathon", color: "#059669" },
   };
 
   const isLoading =
@@ -1287,6 +1743,458 @@ export default function EventsPage() {
               </Table>
             </CardContent>
           </Card>
+        ) : null}
+
+        {!isLoading && !hasError && view === "stats" ? (
+          <div className="space-y-6">
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <Card className="border-border/60">
+                <CardHeader className="pb-2">
+                  <p className="text-xs font-mono uppercase tracking-[0.24em] text-muted-foreground">
+                    {locale === "fr" ? "Évènements" : "Events"}
+                  </p>
+                  <CardTitle className="text-3xl font-serif">{eventStats.totalEvents}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                  {locale === "fr" ? "Entrées totales dans le journal d’évènements." : "Total entries across the event journal."}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/60">
+                <CardHeader className="pb-2">
+                  <p className="text-xs font-mono uppercase tracking-[0.24em] text-muted-foreground">
+                    {locale === "fr" ? "Pays" : "Countries"}
+                  </p>
+                  <CardTitle className="text-3xl font-serif">{eventStats.distinctCountries}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                  {locale === "fr" ? "Pays différents couverts par des évènements." : "Distinct countries covered by events."}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/60">
+                <CardHeader className="pb-2">
+                  <p className="text-xs font-mono uppercase tracking-[0.24em] text-muted-foreground">
+                    {locale === "fr" ? "Villes" : "Cities"}
+                  </p>
+                  <CardTitle className="text-3xl font-serif">{eventStats.distinctCities}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                  {locale === "fr" ? "Villes distinctes dans les souvenirs d’évènements." : "Distinct cities represented in event memories."}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/60">
+                <CardHeader className="pb-2">
+                  <p className="text-xs font-mono uppercase tracking-[0.24em] text-muted-foreground">
+                    {locale === "fr" ? "Période" : "Timespan"}
+                  </p>
+                  <CardTitle className="text-3xl font-serif">
+                    {eventStats.firstYear && eventStats.lastYear
+                      ? `${eventStats.firstYear}–${eventStats.lastYear}`
+                      : EMPTY_LABEL}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                  {locale === "fr" ? "Amplitude temporelle couverte par la collection." : "Temporal span covered by the collection."}
+                </CardContent>
+              </Card>
+            </section>
+
+            <section className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
+              <Card className="border-border/60">
+                <CardHeader>
+                  <CardTitle className="font-serif text-2xl">
+                    {locale === "fr" ? "Densité des évènements dans le temps" : "Event density over time"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {eventStats.heatmapRows.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-[auto_repeat(12,minmax(0,1fr))_minmax(2.75rem,max-content)] gap-2 text-xs">
+                        <div />
+                        {EVENT_STATS_MONTHS.map((month) => (
+                          <div key={month} className="text-center text-muted-foreground">
+                            {formatDate(new Date(Date.UTC(2024, month, 1)), "monthYear").slice(0, 3)}
+                          </div>
+                        ))}
+                        <div className="text-center text-muted-foreground">
+                          {locale === "fr" ? "Total" : "Total"}
+                        </div>
+
+                        {eventStats.heatmapRows.map((row) => (
+                          <div key={row.year} className="contents">
+                            <div className="pr-2 text-sm font-medium text-foreground">{row.year}</div>
+                            {row.months.map((month) => (
+                              <div
+                                key={`${row.year}-${month.month}`}
+                                className={`flex aspect-square items-center justify-center rounded-md text-xs font-semibold transition-colors ${getStatsHeatmapIntensity(
+                                  month.count,
+                                  eventStats.maxHeatmapCount,
+                                )}`}
+                                title={`${row.year} · ${month.label} · ${month.count} ${locale === "fr" ? "évènements" : "events"}`}
+                              >
+                                {month.count > 0 ? month.count : ""}
+                              </div>
+                            ))}
+                            <div className="flex items-center justify-center rounded-md bg-primary/10 px-2 text-xs font-semibold text-foreground">
+                              {row.months.reduce((sum, month) => sum + month.count, 0)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {locale === "fr"
+                          ? "Plus la case est dense, plus le mois a concentré d’évènements."
+                          : "Darker cells indicate months with more events."}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t("noEntries")}</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/60">
+                <CardHeader>
+                  <CardTitle className="font-serif text-2xl">
+                    {locale === "fr" ? "Répartition par catégorie" : "Category split"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {eventStats.categoryRows.length > 0 ? (
+                    <ChartContainer
+                      config={eventCategoryChartConfig}
+                      className="h-[320px] w-full aspect-auto"
+                    >
+                      <BarChart
+                        data={eventStats.categoryRows}
+                        layout="vertical"
+                        margin={{ left: 12, right: 12 }}
+                      >
+                        <CartesianGrid horizontal={false} />
+                        <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
+                        <YAxis
+                          type="category"
+                          dataKey="label"
+                          tickLine={false}
+                          axisLine={false}
+                          width={92}
+                        />
+                        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                        <Bar dataKey="count" radius={8}>
+                          {eventStats.categoryRows.map((row) => (
+                            <Cell key={row.key} fill={row.fill} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ChartContainer>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t("noEntries")}</p>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
+
+            <section className="grid gap-6 xl:grid-cols-2">
+              <Card className="border-border/60">
+                <CardHeader>
+                  <CardTitle className="font-serif text-2xl">
+                    {locale === "fr" ? "Pays les plus présents" : "Top countries"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {eventStats.countryRows.length > 0 ? (
+                    <ChartContainer
+                      config={eventCountryChartConfig}
+                      className="h-[340px] w-full aspect-auto"
+                    >
+                      <BarChart
+                        data={eventStats.countryRows}
+                        layout="vertical"
+                        margin={{ left: 12, right: 12 }}
+                      >
+                        <CartesianGrid horizontal={false} />
+                        <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
+                        <YAxis
+                          type="category"
+                          dataKey="country"
+                          tickLine={false}
+                          axisLine={false}
+                          width={118}
+                        />
+                        <ChartTooltip
+                          content={
+                            <ChartTooltipContent
+                              hideLabel
+                              formatter={(value, name, item) => (
+                                <>
+                                  <span className="text-muted-foreground">
+                                    {item.payload.country}:
+                                  </span>
+                                  <span className="font-mono font-medium tabular-nums text-foreground">
+                                    {Number(value)} {locale === "fr" ? "évènements" : "events"}
+                                  </span>
+                                </>
+                              )}
+                            />
+                          }
+                        />
+                        <Bar dataKey="count" fill="var(--color-events)" radius={8} />
+                      </BarChart>
+                    </ChartContainer>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t("noEntries")}</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/60">
+                <CardHeader>
+                  <CardTitle className="font-serif text-2xl">
+                    {locale === "fr" ? "Progression running" : "Running progression"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {eventStats.runningProgressRows.length > 1 ? (
+                    <ChartContainer
+                      config={runningProgressChartConfig}
+                      className="h-[340px] w-full aspect-auto"
+                    >
+                      <LineChart
+                        data={eventStats.runningProgressRows}
+                        margin={{ top: 12, right: 16, bottom: 12, left: 8 }}
+                      >
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                          dataKey="eventDate"
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(value) => String(value).slice(0, 4)}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(value) => formatPaceFromSeconds(Number(value))}
+                        />
+                        <ChartTooltip
+                          content={
+                            <ChartTooltipContent
+                              labelFormatter={(_, payload) =>
+                                payload?.[0]?.payload?.eventName ?? EMPTY_LABEL
+                              }
+                              formatter={(value, _, item) => (
+                                <>
+                                  <div className="space-y-1">
+                                    <div className="text-muted-foreground">
+                                      {formatDate(item.payload.eventDate, "short")}
+                                    </div>
+                                    <div className="text-muted-foreground">
+                                      {(item.payload.distanceKm as number).toLocaleString(locale, {
+                                        maximumFractionDigits: 1,
+                                      })}{" "}
+                                      km
+                                    </div>
+                                    <div className="text-muted-foreground">
+                                      {item.payload.paceLabel}
+                                    </div>
+                                  </div>
+                                  <span className="font-mono font-medium tabular-nums text-foreground">
+                                    {formatPaceFromSeconds(Number(value))}
+                                  </span>
+                                </>
+                              )}
+                            />
+                          }
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="tenKm"
+                          name={locale === "fr" ? "10 km" : "10K"}
+                          stroke="var(--color-tenKm)"
+                          strokeWidth={2.5}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                          connectNulls={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="semiMarathon"
+                          name={locale === "fr" ? "Semi-marathon" : "Half marathon"}
+                          stroke="var(--color-semiMarathon)"
+                          strokeWidth={2.5}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                          connectNulls={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="marathon"
+                          name={locale === "fr" ? "Marathon" : "Marathon"}
+                          stroke="var(--color-marathon)"
+                          strokeWidth={2.5}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                          connectNulls={false}
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {locale === "fr"
+                        ? "Ajoute au moins deux courses chronométrées pour voir une progression."
+                        : "Add at least two timed races to display a progression."}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
+
+            <section className="space-y-4">
+              <div>
+                <h2 className="font-serif text-2xl font-bold text-foreground">
+                  {locale === "fr"
+                    ? "Répartition des pays par type d’évènement"
+                    : "Country share by event type"}
+                </h2>
+              </div>
+              <div className="grid gap-6 xl:grid-cols-2">
+                {eventStats.kindCountryDistribution.map((group) => (
+                  <Card key={group.key} className="border-border/60">
+                    <CardHeader>
+                      <CardTitle className="font-serif text-xl">{group.label}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {group.rows.length > 0 ? (
+                        <div className="space-y-3">
+                          {group.rows.map((row) => (
+                            <div key={`${group.key}-${row.countryCode}`} className="space-y-1">
+                              <div className="flex items-center justify-between gap-4 text-sm">
+                                <span className="font-medium text-foreground">{row.country}</span>
+                                <span className="text-muted-foreground">
+                                  {Math.round(row.share * 100)}% · {row.count}
+                                </span>
+                              </div>
+                              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                                <div
+                                  className="h-full rounded-full"
+                                  style={{
+                                    width: `${row.share * 100}%`,
+                                    backgroundColor: EVENT_CHART_COLORS[group.key],
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{t("noEntries")}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <div>
+                <h2 className="font-serif text-2xl font-bold text-foreground">
+                  {locale === "fr"
+                    ? "Répartition des compagnons par type d’évènement"
+                    : "Companion share by event type"}
+                </h2>
+              </div>
+              <div className="grid gap-6 xl:grid-cols-2">
+                {eventStats.companionByKind.map((group) => (
+                  <Card key={group.key} className="border-border/60">
+                    <CardHeader>
+                      <CardTitle className="font-serif text-xl">{group.label}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {group.rows.length > 0 ? (
+                        <div className="space-y-3">
+                          {group.rows.map((row) => (
+                            <div key={`${group.key}-${row.person}`} className="space-y-1">
+                              <div className="flex items-center justify-between gap-4 text-sm">
+                                <span className="font-medium text-foreground">{row.person}</span>
+                                <span className="text-muted-foreground">
+                                  {Math.round(row.share * 100)}% · {row.count}
+                                </span>
+                              </div>
+                              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                                <div
+                                  className="h-full rounded-full"
+                                  style={{
+                                    width: `${row.share * 100}%`,
+                                    backgroundColor: EVENT_CHART_COLORS[group.key],
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{t("noEntries")}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <div>
+                <h2 className="font-serif text-2xl font-bold text-foreground">Top 5</h2>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <TopListCard
+                  title={locale === "fr" ? "Salles de concerts les plus fréquentées" : "Most visited concert venues"}
+                  rows={eventStats.topConcertVenues}
+                  emptyLabel={t("noEntries")}
+                />
+                <TopListCard
+                  title={locale === "fr" ? "Stades les plus fréquentés" : "Most visited stadiums"}
+                  rows={eventStats.topSportVenues}
+                  emptyLabel={t("noEntries")}
+                />
+                <TopListCard
+                  title={locale === "fr" ? "Groupes les plus vus" : "Most seen artists"}
+                  rows={eventStats.topArtists}
+                  emptyLabel={t("noEntries")}
+                />
+                <TopListCard
+                  title={locale === "fr" ? "Genres les plus vus en concert" : "Most seen music genres"}
+                  rows={eventStats.topGenres}
+                  emptyLabel={t("noEntries")}
+                />
+                <TopListCard
+                  title={locale === "fr" ? "Équipes les plus vues" : "Most seen teams"}
+                  rows={eventStats.topTeams}
+                  emptyLabel={t("noEntries")}
+                />
+                <TopListCard
+                  title={locale === "fr" ? "Années avec le plus d’évènements distincts" : "Years with the most distinct events"}
+                  rows={eventStats.yearRows}
+                  emptyLabel={t("noEntries")}
+                />
+                <TopListCard
+                  title={locale === "fr" ? "Pays où tu as vu le plus d’évènements" : "Countries with the most events"}
+                  rows={eventStats.topCountries}
+                  emptyLabel={t("noEntries")}
+                />
+                <TopListCard
+                  title={locale === "fr" ? "Villes où tu as vu le plus d’évènements" : "Cities with the most events"}
+                  rows={eventStats.cityRows}
+                  emptyLabel={t("noEntries")}
+                />
+                <TopListCard
+                  title={locale === "fr" ? "Personnes qui ont fait le plus d’évènements avec toi" : "People who attended the most events with you"}
+                  rows={eventStats.topCompanions}
+                  emptyLabel={t("noEntries")}
+                />
+              </div>
+            </section>
+          </div>
         ) : null}
 
         {!isLoading && !hasError && view === "concerts" ? (
