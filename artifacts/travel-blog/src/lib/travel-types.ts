@@ -292,6 +292,7 @@ export interface Concert {
   venue: string | null;
   photosLink: string | null;
   articleLink: string | null;
+  notes: string | null;
   attendeesPeople: string[];
 }
 
@@ -310,6 +311,7 @@ export interface SportEvent {
   awayScore: number | null;
   photosLink: string | null;
   articleLink: string | null;
+  notes: string | null;
   attendeesPeople: string[];
 }
 
@@ -324,6 +326,38 @@ export interface Wedding {
   brideName: string | null;
   photosLink: string | null;
   articleLink: string | null;
+  notes: string | null;
+  attendeesPeople: string[];
+}
+
+export interface TechEvent {
+  id: number;
+  eventName: string;
+  startDate: string;
+  endDate: string | null;
+  city: string | null;
+  countryCode: string | null;
+  tripId: number | null;
+  tripName: string | null;
+  photosLink: string | null;
+  articleLink: string | null;
+  notes: string | null;
+  attendeesPeople: string[];
+}
+
+export interface RunningEvent {
+  id: number;
+  eventName: string;
+  eventDate: string;
+  city: string | null;
+  countryCode: string | null;
+  distanceKm: number | null;
+  duration: string | null;
+  tripId: number | null;
+  tripName: string | null;
+  photosLink: string | null;
+  articleLink: string | null;
+  notes: string | null;
   attendeesPeople: string[];
 }
 

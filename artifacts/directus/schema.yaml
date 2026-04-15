@@ -196,6 +196,54 @@ collections:
       versioning: false
     schema:
       name: posts
+  - collection: running
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: running
+      color: null
+      display_template: '{{event_name}} ({{event_date}})'
+      group: null
+      hidden: false
+      icon: directions_run
+      item_duplication_fields: null
+      note: Running races attended, optionally linked to a trip.
+      preview_url: null
+      singleton: false
+      sort: 16
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: running
+  - collection: running_attendees
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: running_attendees
+      color: null
+      display_template: null
+      group: null
+      hidden: true
+      icon: import_export
+      item_duplication_fields: null
+      note: Junction table linking running races to attendees (people present at the event).
+      preview_url: null
+      singleton: false
+      sort: 17
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: running_attendees
   - collection: sport_events
     meta:
       accountability: all
@@ -246,6 +294,54 @@ collections:
       versioning: false
     schema:
       name: sport_events_attendees
+  - collection: tech_events
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: tech_events
+      color: null
+      display_template: '{{event_name}} ({{start_date}})'
+      group: null
+      hidden: false
+      icon: developer_mode
+      item_duplication_fields: null
+      note: Tech conferences and events attended, optionally linked to a trip.
+      preview_url: null
+      singleton: false
+      sort: 18
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: tech_events
+  - collection: tech_events_attendees
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: tech_events_attendees
+      color: null
+      display_template: null
+      group: null
+      hidden: true
+      icon: import_export
+      item_duplication_fields: null
+      note: Junction table linking tech events to attendees (people present at the event).
+      preview_url: null
+      singleton: false
+      sort: 19
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: tech_events_attendees
   - collection: trips
     meta:
       accountability: all
@@ -547,6 +643,10 @@ fields:
             value: pop
           - text: Punk
             value: punk
+          - text: Post-hardcore
+            value: post-hardcore
+          - text: Post-rock
+            value: post-rock
       readonly: false
       required: false
       searchable: true
@@ -2510,6 +2610,10 @@ fields:
             value: cousin-in-law-female
           - text: Ami d'enfance
             value: childhood-friend
+          - text: Ami du lycée
+            value: high-school-friend
+          - text: Ami de l'école EF
+            value: ef-school-friend
           - text: Ami de la fac
             value: university-friend
           - text: Ami de Couchsurfing
@@ -6379,6 +6483,1265 @@ fields:
       has_auto_increment: false
       foreign_key_table: people
       foreign_key_column: id
+  - collection: concerts
+    field: notes
+    type: text
+    meta:
+      collection: concerts
+      conditions: null
+      display: null
+      display_options: null
+      field: notes
+      group: null
+      hidden: false
+      interface: input-multiline
+      note: Optional note displayed with the event subtitle on the frontend.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 11
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: notes
+      table: concerts
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: notes
+    type: text
+    meta:
+      collection: sport_events
+      conditions: null
+      display: null
+      display_options: null
+      field: notes
+      group: null
+      hidden: false
+      interface: input-multiline
+      note: Optional note displayed with the event subtitle on the frontend.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 15
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: notes
+      table: sport_events
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: weddings
+    field: notes
+    type: text
+    meta:
+      collection: weddings
+      conditions: null
+      display: null
+      display_options: null
+      field: notes
+      group: null
+      hidden: false
+      interface: input-multiline
+      note: Optional note displayed with the event subtitle on the frontend.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: notes
+      table: weddings
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tech_events
+    field: id
+    type: integer
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: tech_events
+      data_type: integer
+      default_value: nextval('tech_events_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tech_events
+    field: event_name
+    type: string
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: event_name
+      group: null
+      hidden: false
+      interface: input
+      note: Conference or event name.
+      options: null
+      readonly: false
+      required: true
+      searchable: true
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: event_name
+      table: tech_events
+      data_type: character varying
+      default_value: null
+      max_length: 250
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tech_events
+    field: start_date
+    type: date
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: start_date
+      group: null
+      hidden: false
+      interface: datetime
+      note: Start date of the event.
+      options:
+        includeSeconds: false
+        use24: true
+      readonly: false
+      required: true
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: start_date
+      table: tech_events
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tech_events
+    field: end_date
+    type: date
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: end_date
+      group: null
+      hidden: false
+      interface: datetime
+      note: End date of the event. Leave empty for a one-day event.
+      options:
+        includeSeconds: false
+        use24: true
+      readonly: false
+      required: false
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: end_date
+      table: tech_events
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tech_events
+    field: city
+    type: string
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: city
+      group: null
+      hidden: false
+      interface: input
+      note: City where the event took place.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: city
+      table: tech_events
+      data_type: character varying
+      default_value: null
+      max_length: 120
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tech_events
+    field: country_code
+    type: string
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: country_code
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Country where the event took place.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: country_code
+      table: tech_events
+      data_type: character varying
+      default_value: null
+      max_length: 2
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: countries
+      foreign_key_column: code
+  - collection: tech_events
+    field: trip_id
+    type: integer
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: trip_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Trip linked to this tech event (optional).
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: trip_id
+      table: tech_events
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: trips
+      foreign_key_column: id
+  - collection: tech_events
+    field: photos_link
+    type: string
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: photos_link
+      group: null
+      hidden: false
+      interface: input
+      note: External URL pointing to photos from this event.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: photos_link
+      table: tech_events
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tech_events
+    field: article_link
+    type: string
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: article_link
+      group: null
+      hidden: false
+      interface: input
+      note: External or internal URL pointing to the related article.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 8
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: article_link
+      table: tech_events
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tech_events
+    field: notes
+    type: text
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: notes
+      group: null
+      hidden: false
+      interface: input-multiline
+      note: Optional note displayed with the event subtitle on the frontend.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: notes
+      table: tech_events
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tech_events
+    field: attendees_people
+    type: alias
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: attendees_people
+      group: null
+      hidden: false
+      interface: list-m2m
+      note: Personnes présentes à l'évènement.
+      options:
+        enableCreate: true
+        template: '{{people_id.display_name}}'
+      readonly: false
+      required: false
+      searchable: false
+      sort: 10
+      special:
+        - m2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+  - collection: tech_events_attendees
+    field: id
+    type: integer
+    meta:
+      collection: tech_events_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: tech_events_attendees
+      data_type: integer
+      default_value: nextval('tech_events_attendees_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tech_events_attendees
+    field: tech_events_id
+    type: integer
+    meta:
+      collection: tech_events_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: tech_events_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to tech_events.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: tech_events_id
+      table: tech_events_attendees
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: tech_events
+      foreign_key_column: id
+  - collection: tech_events_attendees
+    field: people_id
+    type: integer
+    meta:
+      collection: tech_events_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: people_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to people.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: people_id
+      table: tech_events_attendees
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: people
+      foreign_key_column: id
+  - collection: running
+    field: id
+    type: integer
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: running
+      data_type: integer
+      default_value: nextval('running_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: running
+    field: event_name
+    type: string
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: event_name
+      group: null
+      hidden: false
+      interface: input
+      note: Race or running event name.
+      options: null
+      readonly: false
+      required: true
+      searchable: true
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: event_name
+      table: running
+      data_type: character varying
+      default_value: null
+      max_length: 250
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: running
+    field: event_date
+    type: date
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: event_date
+      group: null
+      hidden: false
+      interface: datetime
+      note: Date of the race.
+      options:
+        includeSeconds: false
+        use24: true
+      readonly: false
+      required: true
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: event_date
+      table: running
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: running
+    field: city
+    type: string
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: city
+      group: null
+      hidden: false
+      interface: input
+      note: City where the race took place.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: city
+      table: running
+      data_type: character varying
+      default_value: null
+      max_length: 120
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: running
+    field: country_code
+    type: string
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: country_code
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Country where the race took place.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: country_code
+      table: running
+      data_type: character varying
+      default_value: null
+      max_length: 2
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: countries
+      foreign_key_column: code
+  - collection: running
+    field: distance_km
+    type: float
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: distance_km
+      group: null
+      hidden: false
+      interface: input
+      note: Distance in kilometers.
+      options:
+        min: 0
+      readonly: false
+      required: false
+      searchable: false
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: distance_km
+      table: running
+      data_type: real
+      default_value: null
+      max_length: null
+      numeric_precision: 24
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: running
+    field: duration
+    type: string
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: duration
+      group: null
+      hidden: false
+      interface: input
+      note: Race time in hh:mm:ss or mm:ss format.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: duration
+      table: running
+      data_type: character varying
+      default_value: null
+      max_length: 20
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: running
+    field: trip_id
+    type: integer
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: trip_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Trip linked to this running event (optional).
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: trip_id
+      table: running
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: trips
+      foreign_key_column: id
+  - collection: running
+    field: photos_link
+    type: string
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: photos_link
+      group: null
+      hidden: false
+      interface: input
+      note: External URL pointing to photos from this race.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 8
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: photos_link
+      table: running
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: running
+    field: article_link
+    type: string
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: article_link
+      group: null
+      hidden: false
+      interface: input
+      note: External or internal URL pointing to the related article.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: article_link
+      table: running
+      data_type: character varying
+      default_value: null
+      max_length: 2048
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: running
+    field: notes
+    type: text
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: notes
+      group: null
+      hidden: false
+      interface: input-multiline
+      note: Optional note displayed with the event subtitle on the frontend.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: notes
+      table: running
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: running
+    field: attendees_people
+    type: alias
+    meta:
+      collection: running
+      conditions: null
+      display: null
+      display_options: null
+      field: attendees_people
+      group: null
+      hidden: false
+      interface: list-m2m
+      note: Personnes présentes à l'évènement.
+      options:
+        enableCreate: true
+        template: '{{people_id.display_name}}'
+      readonly: false
+      required: false
+      searchable: false
+      sort: 11
+      special:
+        - m2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+  - collection: running_attendees
+    field: id
+    type: integer
+    meta:
+      collection: running_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: running_attendees
+      data_type: integer
+      default_value: nextval('running_attendees_id_seq'::regclass)
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: running_attendees
+    field: running_id
+    type: integer
+    meta:
+      collection: running_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: running_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to running.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: running_id
+      table: running_attendees
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: running
+      foreign_key_column: id
+  - collection: running_attendees
+    field: people_id
+    type: integer
+    meta:
+      collection: running_attendees
+      conditions: null
+      display: null
+      display_options: null
+      field: people_id
+      group: null
+      hidden: true
+      interface: null
+      note: FK to people.
+      options: null
+      readonly: true
+      required: false
+      searchable: false
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: people_id
+      table: running_attendees
+      data_type: integer
+      default_value: null
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: people
+      foreign_key_column: id
 systemFields:
   - collection: directus_activity
     field: timestamp
@@ -6979,5 +8342,173 @@ relations:
       foreign_key_table: people
       foreign_key_column: id
       constraint_name: weddings_attendees_people_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
+  - collection: tech_events
+    field: trip_id
+    related_collection: trips
+    meta:
+      junction_field: null
+      many_collection: tech_events
+      many_field: trip_id
+      one_allowed_collections: null
+      one_collection: trips
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: tech_events
+      column: trip_id
+      foreign_key_table: trips
+      foreign_key_column: id
+      constraint_name: tech_events_trip_id_foreign
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: tech_events
+    field: country_code
+    related_collection: countries
+    meta:
+      junction_field: null
+      many_collection: tech_events
+      many_field: country_code
+      one_allowed_collections: null
+      one_collection: countries
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: tech_events
+      column: country_code
+      foreign_key_table: countries
+      foreign_key_column: code
+      constraint_name: tech_events_country_code_foreign
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: tech_events_attendees
+    field: tech_events_id
+    related_collection: tech_events
+    meta:
+      junction_field: people_id
+      many_collection: tech_events_attendees
+      many_field: tech_events_id
+      one_allowed_collections: null
+      one_collection: tech_events
+      one_collection_field: attendees_people
+      one_deselect_action: nullify
+      one_field: attendees_people
+      sort_field: null
+    schema:
+      table: tech_events_attendees
+      column: tech_events_id
+      foreign_key_table: tech_events
+      foreign_key_column: id
+      constraint_name: tech_events_attendees_tech_events_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
+  - collection: tech_events_attendees
+    field: people_id
+    related_collection: people
+    meta:
+      junction_field: tech_events_id
+      many_collection: tech_events_attendees
+      many_field: people_id
+      one_allowed_collections: null
+      one_collection: people
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: tech_events_attendees
+      column: people_id
+      foreign_key_table: people
+      foreign_key_column: id
+      constraint_name: tech_events_attendees_people_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
+  - collection: running
+    field: trip_id
+    related_collection: trips
+    meta:
+      junction_field: null
+      many_collection: running
+      many_field: trip_id
+      one_allowed_collections: null
+      one_collection: trips
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: running
+      column: trip_id
+      foreign_key_table: trips
+      foreign_key_column: id
+      constraint_name: running_trip_id_foreign
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: running
+    field: country_code
+    related_collection: countries
+    meta:
+      junction_field: null
+      many_collection: running
+      many_field: country_code
+      one_allowed_collections: null
+      one_collection: countries
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: running
+      column: country_code
+      foreign_key_table: countries
+      foreign_key_column: code
+      constraint_name: running_country_code_foreign
+      on_update: CASCADE
+      on_delete: SET NULL
+  - collection: running_attendees
+    field: running_id
+    related_collection: running
+    meta:
+      junction_field: people_id
+      many_collection: running_attendees
+      many_field: running_id
+      one_allowed_collections: null
+      one_collection: running
+      one_collection_field: attendees_people
+      one_deselect_action: nullify
+      one_field: attendees_people
+      sort_field: null
+    schema:
+      table: running_attendees
+      column: running_id
+      foreign_key_table: running
+      foreign_key_column: id
+      constraint_name: running_attendees_running_id_foreign
+      on_update: CASCADE
+      on_delete: CASCADE
+  - collection: running_attendees
+    field: people_id
+    related_collection: people
+    meta:
+      junction_field: running_id
+      many_collection: running_attendees
+      many_field: people_id
+      one_allowed_collections: null
+      one_collection: people
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: running_attendees
+      column: people_id
+      foreign_key_table: people
+      foreign_key_column: id
+      constraint_name: running_attendees_people_id_foreign
       on_update: CASCADE
       on_delete: CASCADE

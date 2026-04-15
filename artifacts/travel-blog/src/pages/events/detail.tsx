@@ -8,14 +8,25 @@ import {
   Film,
   Globe2,
   Heart,
+  Laptop2,
   MapPin,
   Mic2,
+  Timer,
   Trophy,
   Users,
 } from "lucide-react";
 import { PCloudGallery } from "@/components/gallery/PCloudGallery";
 import { Layout } from "@/components/layout";
-import { useConcertsQuery, useJourneysQuery, useSportEventsQuery, useTripsQuery, useWeddingsQuery } from "@/lib/directus";
+import {
+  useConcertsQuery,
+  useJourneysQuery,
+  useRunningQuery,
+  useSportEventsQuery,
+  useTechEventsQuery,
+  useTripsQuery,
+  useWeddingsQuery,
+} from "@/lib/directus";
+import { formatConcertGenreLabel, formatSportLabel, formatSportLabelLowercase } from "@/lib/event-options";
 import { getEventDetailHref, type EventKind } from "@/lib/event-links";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -24,7 +35,7 @@ import {
   formatTravelReasonLabels,
   formatTripContextLabels,
 } from "@/lib/trip-options";
-import type { Concert, Journey, SportEvent, Trip, Wedding } from "@/lib/travel-types";
+import type { Concert, Journey, RunningEvent, SportEvent, TechEvent, Trip, Wedding } from "@/lib/travel-types";
 import NotFound from "@/pages/not-found";
 
 type EventDetailModel = {
@@ -209,7 +220,13 @@ const YOUTUBE_HOSTS = new Set([
 ]);
 
 function isEventKind(value: string | undefined): value is EventKind {
-  return value === "concerts" || value === "sport-events" || value === "weddings";
+  return (
+    value === "concerts" ||
+    value === "sport-events" ||
+    value === "tech-events" ||
+    value === "running" ||
+    value === "weddings"
+  );
 }
 
 function parseRecordId(value: string | undefined) {
@@ -249,6 +266,15 @@ function buildLocation(city: string | null, countryCode: string | null, countryN
   return [city, countryCode ? countryName(countryCode) : null].filter(Boolean).join(", ");
 }
 
+function buildVenueLocation(
+  venue: string | null | undefined,
+  city: string | null,
+  countryCode: string | null,
+  countryName: (code: string) => string,
+) {
+  return [venue, city, countryCode ? countryName(countryCode) : null].filter(Boolean).join(", ");
+}
+
 function splitMediaLinks(articleLink: string | null, photosLink: string | null) {
   const articleVideoEmbedUrl = extractYouTubeEmbedUrl(articleLink);
   const photosVideoEmbedUrl = extractYouTubeEmbedUrl(photosLink);
@@ -286,13 +312,65 @@ function formatTripDateRange(
     : `${formatDate(start, "long")} to ${formatDate(end, "long")}`;
 }
 
+function appendNoteToSubtitle(subtitle: string, notes: string | null | undefined) {
+  const note = notes?.trim();
+  return note ? `${subtitle} — ${note}` : subtitle;
+}
+
+function getEventDateRangeLabel(
+  start: string,
+  end: string | null | undefined,
+  locale: "fr" | "en",
+  formatDate: (value: string | Date, style: "short" | "long" | "monthYear") => string,
+) {
+  const normalizedEnd = end ?? start;
+  if (normalizedEnd === start) {
+    return formatDate(start, "long");
+  }
+
+  return locale === "fr"
+    ? `${formatDate(start, "long")} au ${formatDate(normalizedEnd, "long")}`
+    : `${formatDate(start, "long")} to ${formatDate(normalizedEnd, "long")}`;
+}
+
+function parseDurationToSeconds(value: string | null | undefined) {
+  if (!value) return null;
+  const parts = value.trim().split(":").map((part) => Number.parseInt(part, 10));
+  if (parts.some((part) => !Number.isFinite(part))) return null;
+
+  if (parts.length === 2) {
+    const [minutes, seconds] = parts;
+    return minutes * 60 + seconds;
+  }
+
+  if (parts.length === 3) {
+    const [hours, minutes, seconds] = parts;
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+
+  return null;
+}
+
+function formatRunningPace(
+  distanceKm: number | null | undefined,
+  duration: string | null | undefined,
+) {
+  if (!distanceKm || distanceKm <= 0) return "—";
+  const totalSeconds = parseDurationToSeconds(duration);
+  if (!totalSeconds) return "—";
+  const paceSeconds = Math.round(totalSeconds / distanceKm);
+  const minutes = Math.floor(paceSeconds / 60);
+  const seconds = paceSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")} / km`;
+}
+
 function getConcertRelatedLabel(entry: Concert) {
   return entry.eventName ? `${entry.artist} · ${entry.eventName}` : entry.artist;
 }
 
-function getSportRelatedLabel(entry: SportEvent) {
+function getSportRelatedLabel(entry: SportEvent, locale: "fr" | "en") {
   const matchup = [entry.homeTeam, entry.awayTeam].filter(Boolean).join(" vs ");
-  return matchup || entry.competition || entry.sport;
+  return matchup || entry.competition || formatSportLabelLowercase(entry.sport, locale);
 }
 
 function getWeddingRelatedLabel(entry: Wedding, locale: "fr" | "en") {
@@ -300,6 +378,14 @@ function getWeddingRelatedLabel(entry: Wedding, locale: "fr" | "en") {
     [entry.brideName, entry.groomName].filter(Boolean).join(" & ") ||
     (locale === "fr" ? "Mariage" : "Wedding")
   );
+}
+
+function getTechRelatedLabel(entry: TechEvent) {
+  return entry.eventName;
+}
+
+function getRunningRelatedLabel(entry: RunningEvent) {
+  return entry.eventName;
 }
 
 function SectionLinks({
@@ -339,17 +425,19 @@ function buildConcertDetail(
     concert.photosLink,
   );
   const genreLabel =
-    concert.genre === "rock" && concert.subgenre ? concert.subgenre : (concert.subgenre ?? concert.genre ?? "");
+    formatConcertGenreLabel(concert.genre, concert.subgenre, locale);
 
   return {
     kind: "concerts",
     kindLabel: locale === "fr" ? "Concert" : "Concert",
     icon: Mic2,
     title: concert.artist,
-    subtitle:
+    subtitle: appendNoteToSubtitle(
       concert.eventName ||
-      buildLocation(concert.city, concert.countryCode, countryName) ||
-      (locale === "fr" ? "Souvenir live" : "Live memory"),
+        buildLocation(concert.city, concert.countryCode, countryName) ||
+        (locale === "fr" ? "Souvenir live" : "Live memory"),
+      concert.notes,
+    ),
     date: concert.eventDate,
     city: concert.city,
     countryCode: concert.countryCode,
@@ -393,8 +481,11 @@ function buildSportDetail(
     kind: "sport-events",
     kindLabel: locale === "fr" ? "Evènement sportif" : "Sport event",
     icon: Trophy,
-    title: matchup || event.sport,
-    subtitle: event.competition ?? event.sport,
+    title: matchup || formatSportLabelLowercase(event.sport, locale),
+    subtitle: appendNoteToSubtitle(
+      event.competition ?? formatSportLabelLowercase(event.sport, locale),
+      event.notes,
+    ),
     date: event.eventDate,
     city: event.city,
     countryCode: event.countryCode,
@@ -406,12 +497,12 @@ function buildSportDetail(
     storyLink,
     videoEmbedUrl,
     meta: [
-      { label: locale === "fr" ? "Sport" : "Sport", value: event.sport },
+      { label: locale === "fr" ? "Sport" : "Sport", value: formatSportLabelLowercase(event.sport, locale) },
       { label: locale === "fr" ? "Compétition" : "Competition", value: event.competition ?? "—" },
       { label: locale === "fr" ? "Score" : "Score", value: score },
       {
         label: locale === "fr" ? "Lieu" : "Location",
-        value: buildLocation(event.city, event.countryCode, countryName) || "—",
+        value: buildVenueLocation(event.venue, event.city, event.countryCode, countryName) || "—",
       },
     ],
   };
@@ -435,9 +526,11 @@ function buildWeddingDetail(
     kindLabel: locale === "fr" ? "Mariage" : "Wedding",
     icon: Heart,
     title: marriedPeople,
-    subtitle:
+    subtitle: appendNoteToSubtitle(
       buildLocation(wedding.city, wedding.countryCode, countryName) ||
-      (locale === "fr" ? "Cérémonie" : "Ceremony"),
+        (locale === "fr" ? "Cérémonie" : "Ceremony"),
+      wedding.notes,
+    ),
     date: wedding.weddingDate,
     city: wedding.city,
     countryCode: wedding.countryCode,
@@ -463,12 +556,104 @@ function buildWeddingDetail(
   };
 }
 
+function buildTechDetail(
+  event: TechEvent,
+  locale: "fr" | "en",
+  countryName: (code: string) => string,
+  formatDate: (value: string | Date, style: "short" | "long" | "monthYear") => string,
+): EventDetailModel {
+  const { videoEmbedUrl, galleryLink, storyLink } = splitMediaLinks(
+    event.articleLink,
+    event.photosLink,
+  );
+
+  return {
+    kind: "tech-events",
+    kindLabel: locale === "fr" ? "Evènement tech" : "Tech event",
+    icon: Laptop2,
+    title: event.eventName,
+    subtitle: appendNoteToSubtitle(
+      buildLocation(event.city, event.countryCode, countryName) ||
+        (locale === "fr" ? "Conférence" : "Conference"),
+      event.notes,
+    ),
+    date: event.startDate,
+    city: event.city,
+    countryCode: event.countryCode,
+    venue: null,
+    tripId: event.tripId,
+    tripName: event.tripName,
+    attendees: event.attendeesPeople,
+    galleryLink,
+    storyLink,
+    videoEmbedUrl,
+    meta: [
+      { label: locale === "fr" ? "Evènement" : "Event", value: event.eventName },
+      {
+        label: locale === "fr" ? "Dates" : "Dates",
+        value: getEventDateRangeLabel(event.startDate, event.endDate, locale, formatDate),
+      },
+      {
+        label: locale === "fr" ? "Lieu" : "Location",
+        value: buildLocation(event.city, event.countryCode, countryName) || "—",
+      },
+      { label: locale === "fr" ? "Voyage lié" : "Linked trip", value: event.tripName ?? "—" },
+    ],
+  };
+}
+
+function buildRunningDetail(
+  event: RunningEvent,
+  locale: "fr" | "en",
+  countryName: (code: string) => string,
+): EventDetailModel {
+  const { videoEmbedUrl, galleryLink, storyLink } = splitMediaLinks(
+    event.articleLink,
+    event.photosLink,
+  );
+  const distanceLabel = event.distanceKm != null ? `${event.distanceKm} km` : "—";
+
+  return {
+    kind: "running",
+    kindLabel: locale === "fr" ? "Running" : "Running",
+    icon: Timer,
+    title: event.eventName,
+    subtitle: appendNoteToSubtitle(
+      buildLocation(event.city, event.countryCode, countryName) ||
+        (locale === "fr" ? "Course" : "Race"),
+      event.notes,
+    ),
+    date: event.eventDate,
+    city: event.city,
+    countryCode: event.countryCode,
+    venue: null,
+    tripId: event.tripId,
+    tripName: event.tripName,
+    attendees: event.attendeesPeople,
+    galleryLink,
+    storyLink,
+    videoEmbedUrl,
+    meta: [
+      { label: locale === "fr" ? "Epreuve" : "Race", value: event.eventName },
+      { label: locale === "fr" ? "Distance" : "Distance", value: distanceLabel },
+      { label: locale === "fr" ? "Temps" : "Time", value: event.duration ?? "—" },
+      { label: locale === "fr" ? "Moyenne" : "Pace", value: formatRunningPace(event.distanceKm, event.duration) },
+      {
+        label: locale === "fr" ? "Lieu" : "Location",
+        value: buildLocation(event.city, event.countryCode, countryName) || "—",
+      },
+    ],
+  };
+}
+
 export default function EventDetailPage() {
   const { kind, id } = useParams<{ kind?: string; id?: string }>();
   const { locale, formatDate, countryName } = useI18n();
   const concertsQuery = useConcertsQuery();
   const journeysQuery = useJourneysQuery();
+  const runningQuery = useRunningQuery();
   const sportEventsQuery = useSportEventsQuery();
+  const techEventsQuery = useTechEventsQuery();
   const weddingsQuery = useWeddingsQuery();
   const tripsQuery = useTripsQuery();
 
@@ -477,7 +662,9 @@ export default function EventDetailPage() {
   const isLoading =
     concertsQuery.isLoading ||
     journeysQuery.isLoading ||
+    runningQuery.isLoading ||
     sportEventsQuery.isLoading ||
+    techEventsQuery.isLoading ||
     weddingsQuery.isLoading ||
     tripsQuery.isLoading;
 
@@ -493,12 +680,32 @@ export default function EventDetailPage() {
         const event = (sportEventsQuery.data ?? []).find((entry) => entry.id === recordId);
         return event ? buildSportDetail(event, locale, countryName) : null;
       }
+      case "tech-events": {
+        const event = (techEventsQuery.data ?? []).find((entry) => entry.id === recordId);
+        return event ? buildTechDetail(event, locale, countryName, formatDate) : null;
+      }
+      case "running": {
+        const event = (runningQuery.data ?? []).find((entry) => entry.id === recordId);
+        return event ? buildRunningDetail(event, locale, countryName) : null;
+      }
       case "weddings": {
         const wedding = (weddingsQuery.data ?? []).find((entry) => entry.id === recordId);
         return wedding ? buildWeddingDetail(wedding, locale, countryName) : null;
       }
     }
-  }, [concertsQuery.data, countryName, isValidKind, kind, locale, recordId, sportEventsQuery.data, weddingsQuery.data]);
+  }, [
+    concertsQuery.data,
+    countryName,
+    formatDate,
+    isValidKind,
+    kind,
+    locale,
+    recordId,
+    runningQuery.data,
+    sportEventsQuery.data,
+    techEventsQuery.data,
+    weddingsQuery.data,
+  ]);
 
   const trip = useMemo(
     () => (detail ? (tripsQuery.data ?? []).find((entry) => entry.id === detail.tripId) ?? null : null),
@@ -511,7 +718,11 @@ export default function EventDetailPage() {
         : null,
     [journeysQuery.data, trip],
   );
-  const locationLabel = detail ? buildLocation(detail.city, detail.countryCode, countryName) : "";
+  const locationLabel = detail
+    ? detail.kind === "sport-events"
+      ? buildVenueLocation(detail.venue, detail.city, detail.countryCode, countryName)
+      : buildLocation(detail.city, detail.countryCode, countryName)
+    : "";
   const hasPCloudGallery = detail ? isPCloudGalleryLink(detail.galleryLink) : false;
   const hasGallery = Boolean(detail?.galleryLink);
   const hasVideo = Boolean(detail?.videoEmbedUrl);
@@ -519,13 +730,21 @@ export default function EventDetailPage() {
     locale === "fr"
       ? detail?.kind === "concerts"
         ? "Concerts"
+        : detail?.kind === "running"
+          ? "Running"
         : detail?.kind === "sport-events"
           ? "Evènements sportifs"
+          : detail?.kind === "tech-events"
+            ? "Evènements tech"
           : "Mariages"
       : detail?.kind === "concerts"
         ? "Concerts"
+        : detail?.kind === "running"
+          ? "Running"
         : detail?.kind === "sport-events"
           ? "Sport events"
+          : detail?.kind === "tech-events"
+            ? "Tech events"
           : "Weddings";
 
   const sameCategorySameTrip = useMemo<RelatedEventLink[]>(() => {
@@ -547,8 +766,26 @@ export default function EventDetailPage() {
           .slice(0, 6)
           .map((entry) => ({
             id: entry.id,
-            label: getSportRelatedLabel(entry),
+            label: getSportRelatedLabel(entry, locale),
             href: getEventDetailHref("sport-events", entry.id),
+          }));
+      case "tech-events":
+        return (techEventsQuery.data ?? [])
+          .filter((entry) => entry.id !== recordId && entry.tripId === trip.id)
+          .slice(0, 6)
+          .map((entry) => ({
+            id: entry.id,
+            label: getTechRelatedLabel(entry),
+            href: getEventDetailHref("tech-events", entry.id),
+          }));
+      case "running":
+        return (runningQuery.data ?? [])
+          .filter((entry) => entry.id !== recordId && entry.tripId === trip.id)
+          .slice(0, 6)
+          .map((entry) => ({
+            id: entry.id,
+            label: getRunningRelatedLabel(entry),
+            href: getEventDetailHref("running", entry.id),
           }));
       case "weddings":
         return (weddingsQuery.data ?? [])
@@ -560,7 +797,17 @@ export default function EventDetailPage() {
             href: getEventDetailHref("weddings", entry.id),
           }));
     }
-  }, [concertsQuery.data, detail, locale, recordId, sportEventsQuery.data, trip, weddingsQuery.data]);
+  }, [
+    concertsQuery.data,
+    detail,
+    locale,
+    recordId,
+    runningQuery.data,
+    sportEventsQuery.data,
+    techEventsQuery.data,
+    trip,
+    weddingsQuery.data,
+  ]);
 
   const otherCategoriesSameTrip = useMemo<
     Array<{ title: string; items: RelatedEventLink[] }>
@@ -593,7 +840,7 @@ export default function EventDetailPage() {
         .slice(0, 6)
         .map((entry) => ({
           id: entry.id,
-          label: getSportRelatedLabel(entry),
+          label: getSportRelatedLabel(entry, locale),
           href: getEventDetailHref("sport-events", entry.id),
         }));
 
@@ -603,6 +850,42 @@ export default function EventDetailPage() {
             locale === "fr"
               ? "Evènements sportifs du même voyage"
               : "Sport events from the same trip",
+          items,
+        });
+      }
+    }
+
+    if (detail.kind !== "tech-events") {
+      const items = (techEventsQuery.data ?? [])
+        .filter((entry) => entry.tripId === trip.id)
+        .slice(0, 6)
+        .map((entry) => ({
+          id: entry.id,
+          label: getTechRelatedLabel(entry),
+          href: getEventDetailHref("tech-events", entry.id),
+        }));
+
+      if (items.length > 0) {
+        sections.push({
+          title: locale === "fr" ? "Evènements tech du même voyage" : "Tech events from the same trip",
+          items,
+        });
+      }
+    }
+
+    if (detail.kind !== "running") {
+      const items = (runningQuery.data ?? [])
+        .filter((entry) => entry.tripId === trip.id)
+        .slice(0, 6)
+        .map((entry) => ({
+          id: entry.id,
+          label: getRunningRelatedLabel(entry),
+          href: getEventDetailHref("running", entry.id),
+        }));
+
+      if (items.length > 0) {
+        sections.push({
+          title: locale === "fr" ? "Courses du même voyage" : "Running events from the same trip",
           items,
         });
       }
@@ -627,7 +910,16 @@ export default function EventDetailPage() {
     }
 
     return sections;
-  }, [concertsQuery.data, detail, locale, sportEventsQuery.data, trip, weddingsQuery.data]);
+  }, [
+    concertsQuery.data,
+    detail,
+    locale,
+    runningQuery.data,
+    sportEventsQuery.data,
+    techEventsQuery.data,
+    trip,
+    weddingsQuery.data,
+  ]);
 
   const sameCategoryOtherTrips = useMemo<RelatedEventLink[]>(() => {
     if (!detail) return [];
@@ -648,8 +940,26 @@ export default function EventDetailPage() {
           .slice(0, 3)
           .map((entry) => ({
             id: entry.id,
-            label: getSportRelatedLabel(entry),
+            label: getSportRelatedLabel(entry, locale),
             href: getEventDetailHref("sport-events", entry.id),
+          }));
+      case "tech-events":
+        return (techEventsQuery.data ?? [])
+          .filter((entry) => entry.id !== recordId && entry.tripId !== detail.tripId)
+          .slice(0, 6)
+          .map((entry) => ({
+            id: entry.id,
+            label: getTechRelatedLabel(entry),
+            href: getEventDetailHref("tech-events", entry.id),
+          }));
+      case "running":
+        return (runningQuery.data ?? [])
+          .filter((entry) => entry.id !== recordId && entry.tripId !== detail.tripId)
+          .slice(0, 6)
+          .map((entry) => ({
+            id: entry.id,
+            label: getRunningRelatedLabel(entry),
+            href: getEventDetailHref("running", entry.id),
           }));
       case "weddings":
         return (weddingsQuery.data ?? [])
@@ -661,7 +971,16 @@ export default function EventDetailPage() {
             href: getEventDetailHref("weddings", entry.id),
           }));
     }
-  }, [concertsQuery.data, detail, locale, recordId, sportEventsQuery.data, weddingsQuery.data]);
+  }, [
+    concertsQuery.data,
+    detail,
+    locale,
+    recordId,
+    runningQuery.data,
+    sportEventsQuery.data,
+    techEventsQuery.data,
+    weddingsQuery.data,
+  ]);
 
   if (!isValidKind || !recordId) {
     return <NotFound />;
