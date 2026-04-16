@@ -2051,7 +2051,7 @@ export default function EventsPage() {
                           strokeWidth={2.5}
                           dot={{ r: 3 }}
                           activeDot={{ r: 5 }}
-                          connectNulls={false}
+                          connectNulls
                         />
                         <Line
                           type="monotone"
@@ -2061,7 +2061,7 @@ export default function EventsPage() {
                           strokeWidth={2.5}
                           dot={{ r: 3 }}
                           activeDot={{ r: 5 }}
-                          connectNulls={false}
+                          connectNulls
                         />
                         <Line
                           type="monotone"
@@ -2071,7 +2071,7 @@ export default function EventsPage() {
                           strokeWidth={2.5}
                           dot={{ r: 3 }}
                           activeDot={{ r: 5 }}
-                          connectNulls={false}
+                          connectNulls
                         />
                       </LineChart>
                     </ChartContainer>
