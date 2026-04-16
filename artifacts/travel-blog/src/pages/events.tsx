@@ -1511,6 +1511,7 @@ export default function EventsPage() {
           eventName: event.eventName,
           distanceKm: event.distanceKm,
           distanceLabel,
+          durationLabel: formatDurationFromSeconds(totalSeconds),
           paceSeconds,
           averagePace: formatPaceFromSeconds(paceSeconds),
         };
@@ -1522,6 +1523,7 @@ export default function EventsPage() {
       eventDate: point.eventDate,
       eventName: point.eventName,
       distanceKm: point.distanceKm,
+      durationLabel: point.durationLabel,
       paceLabel: point.averagePace,
       tenKm: point.distanceLabel === (locale === "fr" ? "10 km" : "10K") ? point.paceSeconds : null,
       semiMarathon:
@@ -2033,7 +2035,7 @@ export default function EventsPage() {
                                       km
                                     </div>
                                     <div className="text-muted-foreground">
-                                      {item.payload.paceLabel}
+                                      {item.payload.durationLabel}
                                     </div>
                                   </div>
                                   <span className="font-mono font-medium tabular-nums text-foreground">
