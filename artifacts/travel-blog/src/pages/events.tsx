@@ -2013,7 +2013,7 @@ export default function EventsPage() {
                         <YAxis
                           tickLine={false}
                           axisLine={false}
-                          domain={[240, 480]}
+                          domain={[240, 420]}
                           tickFormatter={(value) => formatPaceFromSeconds(Number(value))}
                         />
                         <ChartTooltip
