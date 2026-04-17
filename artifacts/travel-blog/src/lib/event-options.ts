@@ -104,6 +104,12 @@ export function getSportEventResultItems(event: SportEvent, locale: Locale) {
 }
 
 export function getSportEventResultSummary(event: SportEvent, locale: Locale) {
+  if (isRacePodiumSport(event.sport)) {
+    return event.winnerName
+      ? `${locale === "fr" ? "1er" : "1st"} : ${event.winnerName}`
+      : "";
+  }
+
   const items = getSportEventResultItems(event, locale);
   if (!items.length) return "";
 

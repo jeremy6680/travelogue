@@ -32,6 +32,7 @@ import {
   formatSportLabelLowercase,
   getSportEventName,
   getSportEventResultItems,
+  isRacePodiumSport,
 } from "@/lib/event-options";
 import { getEventDetailHref, type EventKind } from "@/lib/event-links";
 import { useI18n } from "@/lib/i18n";
@@ -476,6 +477,17 @@ function buildSportDetail(
   );
   const eventName = getSportEventName(event, locale);
   const resultItems = getSportEventResultItems(event, locale);
+  const competitionLabel =
+    isRacePodiumSport(event.sport) && event.raceName
+      ? [event.competition, event.raceName].filter(Boolean).join(" - ")
+      : (event.competition ?? "—");
+  const podiumValue =
+    isRacePodiumSport(event.sport) && resultItems.length
+      ? resultItems
+          .map((item) => item.value)
+          .filter(Boolean)
+          .join(", ")
+      : null;
 
   return {
     kind: "sport-events",
@@ -498,11 +510,10 @@ function buildSportDetail(
     videoEmbedUrl,
     meta: [
       { label: locale === "fr" ? "Sport" : "Sport", value: formatSportLabelLowercase(event.sport, locale) },
-      { label: locale === "fr" ? "Compétition" : "Competition", value: event.competition ?? "—" },
-      ...(event.raceName
-        ? [{ label: locale === "fr" ? "Nom de la course" : "Race name", value: event.raceName }]
-        : []),
-      ...resultItems.map((item) => ({ label: item.label, value: item.value ?? "—" })),
+      { label: locale === "fr" ? "Compétition" : "Competition", value: competitionLabel },
+      ...(podiumValue
+        ? [{ label: locale === "fr" ? "Podium" : "Podium", value: podiumValue }]
+        : resultItems.map((item) => ({ label: item.label, value: item.value ?? "—" }))),
       {
         label: locale === "fr" ? "Lieu" : "Location",
         value: buildVenueLocation(event.venue, event.city, event.countryCode, countryName) || "—",
