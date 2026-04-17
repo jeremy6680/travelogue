@@ -86,6 +86,7 @@ const CHART_COLORS = [
 ];
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index);
+const MAX_REASON_ROWS = 8;
 const TRANSPORT_EMISSION_FACTORS_KG_PER_KM: Record<string, number> = {
   plane: 0.255,
   "own car": 0.192,
@@ -1204,6 +1205,11 @@ export default function DataVizPage() {
         averageDurationDays: row.trips > 0 ? row.totalDurationDays / row.trips : 0,
         averageCarbonKg: row.trips > 0 ? row.totalCarbonKg / row.trips : 0,
       }))
+      .sort((left, right) => {
+        if (right.trips !== left.trips) return right.trips - left.trips;
+        return right.averageDistanceKm - left.averageDistanceKm;
+      })
+      .slice(0, MAX_REASON_ROWS)
       .sort((left, right) => right.averageDistanceKm - left.averageDistanceKm);
     const scatterRows = Array.from(scatterByContinent.entries()).map(
       ([continent, values]) => ({
@@ -2458,7 +2464,7 @@ export default function DataVizPage() {
             </CardHeader>
             <CardContent>
               {analytics.nightsByCountryRows.length > 0 ? (
-                <Table>
+                <Table className="min-w-[32rem]">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">#</TableHead>
@@ -2527,7 +2533,8 @@ export default function DataVizPage() {
             <CardContent>
               {analytics.heatmapRows.length > 0 ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-[auto_repeat(12,minmax(0,1fr))_minmax(2.75rem,max-content)] gap-2 text-xs">
+                  <div className="overflow-x-auto pb-1">
+                    <div className="grid min-w-[40rem] grid-cols-[minmax(2.5rem,max-content)_repeat(12,minmax(2rem,1fr))_minmax(2.25rem,2.75rem)] gap-1.5 text-[11px] sm:gap-2 sm:text-xs">
                     <div />
                     {MONTHS.map((month) => (
                       <div key={month} className="text-center text-muted-foreground">
@@ -2545,7 +2552,7 @@ export default function DataVizPage() {
                         {row.months.map((month) => (
                           <div
                             key={`${row.year}-${month.month}`}
-                            className={`flex aspect-square items-center justify-center rounded-md text-xs font-semibold transition-colors ${getHeatmapIntensity(
+                            className={`flex aspect-square items-center justify-center rounded-md text-[11px] font-semibold leading-none transition-colors sm:text-xs ${getHeatmapIntensity(
                               month.count,
                               analytics.maxHeatmapCount,
                             )}`}
@@ -2556,13 +2563,14 @@ export default function DataVizPage() {
                             {month.count > 0 ? month.count : ""}
                           </div>
                         ))}
-                        <div className="flex items-center justify-center rounded-md bg-primary/10 px-2 text-xs font-semibold text-foreground">
+                        <div className="flex items-center justify-center rounded-md bg-primary/10 px-1 py-0.5 text-[10px] font-semibold leading-none text-foreground sm:px-1.5 sm:text-[11px]">
                           {row.months
                             .reduce((sum, month) => sum + month.count, 0)
                             .toLocaleString(numberLocale)}
                         </div>
                       </div>
                     ))}
+                  </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {locale === "fr"
@@ -2653,18 +2661,19 @@ export default function DataVizPage() {
               {analytics.reasonRows.length > 0 ? (
                 <ChartContainer
                   config={reasonConfig}
-                  className="h-[360px] w-full aspect-auto"
+                  className="h-[420px] w-full aspect-auto"
                 >
-                  <BarChart data={analytics.reasonRows} margin={{ left: 12, right: 12 }}>
+                  <BarChart data={analytics.reasonRows} margin={{ top: 8, left: 12, right: 12, bottom: 28 }}>
                     <CartesianGrid vertical={false} />
                     <XAxis
                       dataKey="label"
                       tickLine={false}
                       axisLine={false}
                       interval={0}
-                      angle={-18}
+                      angle={-32}
                       textAnchor="end"
-                      height={64}
+                      height={92}
+                      tick={{ fontSize: 11 }}
                     />
                     <YAxis yAxisId="distance" tickLine={false} axisLine={false} />
                     <YAxis
@@ -2760,6 +2769,11 @@ export default function DataVizPage() {
                     <ChartTooltip
                       content={
                         <ChartTooltipContent
+                          labelFormatter={(value) =>
+                            locale === "fr"
+                              ? `Cumul à la fin des ${String(value)}`
+                              : `Cumulative total at the end of the ${String(value)}`
+                          }
                           formatter={(value, name) => (
                             <>
                               <span className="text-muted-foreground">

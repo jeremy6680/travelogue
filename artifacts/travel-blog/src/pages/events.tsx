@@ -1833,7 +1833,8 @@ export default function EventsPage() {
                 <CardContent>
                   {eventStats.heatmapRows.length > 0 ? (
                     <div className="space-y-4">
-                      <div className="grid grid-cols-[auto_repeat(12,minmax(0,1fr))_minmax(2.75rem,max-content)] gap-2 text-xs">
+                      <div className="overflow-x-auto pb-1">
+                        <div className="grid min-w-[40rem] grid-cols-[minmax(2.5rem,max-content)_repeat(12,minmax(2rem,1fr))_minmax(2.25rem,2.75rem)] gap-1.5 text-[11px] sm:gap-2 sm:text-xs">
                         <div />
                         {EVENT_STATS_MONTHS.map((month) => (
                           <div key={month} className="text-center text-muted-foreground">
@@ -1850,7 +1851,7 @@ export default function EventsPage() {
                             {row.months.map((month) => (
                               <div
                                 key={`${row.year}-${month.month}`}
-                                className={`flex aspect-square items-center justify-center rounded-md text-xs font-semibold transition-colors ${getStatsHeatmapIntensity(
+                                className={`flex aspect-square items-center justify-center rounded-md text-[11px] font-semibold leading-none transition-colors sm:text-xs ${getStatsHeatmapIntensity(
                                   month.count,
                                   eventStats.maxHeatmapCount,
                                 )}`}
@@ -1859,11 +1860,12 @@ export default function EventsPage() {
                                 {month.count > 0 ? month.count : ""}
                               </div>
                             ))}
-                            <div className="flex items-center justify-center rounded-md bg-primary/10 px-2 text-xs font-semibold text-foreground">
+                            <div className="flex items-center justify-center rounded-md bg-primary/10 px-1 py-0.5 text-[10px] font-semibold leading-none text-foreground sm:px-1.5 sm:text-[11px]">
                               {row.months.reduce((sum, month) => sum + month.count, 0)}
                             </div>
                           </div>
                         ))}
+                      </div>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {locale === "fr"

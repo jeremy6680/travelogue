@@ -27,8 +27,10 @@ export function WorldMap() {
   const { t } = useI18n();
   const { data: pins = [] } = useMapPinsQuery();
   const { data: trips = [] } = useTripsQuery();
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 8;
   const [activePin, setActivePin] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(MIN_ZOOM);
   const [center, setCenter] = useState<[number, number]>([10, 20]);
   const [popoverPos, setPopoverPos] = useState<{ x: number; y: number } | null>(null);
   const outerRef = useRef<HTMLDivElement>(null);
@@ -75,8 +77,8 @@ export function WorldMap() {
     <div ref={outerRef} className="w-full relative">
       {/* Map container */}
       <div
-        className="w-full relative overflow-hidden rounded-3xl border border-border/40 shadow-xl"
-        style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d1f3c 40%, #0f2840 100%)", minHeight: "320px" }}
+        className="relative w-full overflow-hidden rounded-3xl border border-border/40 shadow-xl min-h-[420px] md:min-h-[560px] lg:min-h-[680px]"
+        style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d1f3c 40%, #0f2840 100%)" }}
       >
         {/* Subtle grid overlay */}
         <div
@@ -105,21 +107,21 @@ export function WorldMap() {
         {/* Zoom controls */}
         <div className="absolute top-4 right-4 z-10 flex flex-col gap-1">
           <button
-            onClick={() => setZoom(z => Math.min(z + 0.5, 4))}
+            onClick={() => setZoom((z) => Math.min(z + 0.5, MAX_ZOOM))}
             className="w-8 h-8 rounded-md bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur transition-colors"
             data-testid="button-zoom-in"
           >
             <ZoomIn className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setZoom(z => Math.max(z - 0.5, 0.5))}
+            onClick={() => setZoom((z) => Math.max(z - 0.5, MIN_ZOOM))}
             className="w-8 h-8 rounded-md bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur transition-colors"
             data-testid="button-zoom-out"
           >
             <ZoomOut className="w-4 h-4" />
           </button>
           <button
-            onClick={() => { setZoom(1); setCenter([10, 20]); }}
+            onClick={() => { setZoom(MIN_ZOOM); setCenter([10, 20]); }}
             className="w-8 h-8 rounded-md bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur transition-colors"
             data-testid="button-reset-zoom"
           >
@@ -129,12 +131,21 @@ export function WorldMap() {
 
         <ComposableMap
           width={1200}
-          height={540}
-          projectionConfig={{ scale: 176, center }}
-          style={{ width: "100%", height: "auto", minHeight: "330px" }}
+          height={720}
+          projectionConfig={{ scale: 185 }}
+          style={{ width: "100%", height: "100%" }}
           onClick={handleMapClick}
         >
-          <ZoomableGroup zoom={zoom} onMoveEnd={({ coordinates }) => setCenter(coordinates as [number, number])}>
+          <ZoomableGroup
+            center={center}
+            zoom={zoom}
+            minZoom={MIN_ZOOM}
+            maxZoom={MAX_ZOOM}
+            onMoveEnd={({ coordinates, zoom: nextZoom }) => {
+              setCenter(coordinates as [number, number]);
+              setZoom(nextZoom);
+            }}
+          >
             <Geographies geography={geoUrl}>
               {({ geographies }) =>
                 geographies.map((geo) => {
