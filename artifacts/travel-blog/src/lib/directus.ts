@@ -196,8 +196,12 @@ type DirectusSportEvent = {
   city: string | null;
   country_code: string | null;
   venue: string | null;
+  race_name: string | null;
   home_team: string | null;
   away_team: string | null;
+  winner_name: string | null;
+  second_place_name: string | null;
+  third_place_name: string | null;
   home_score: number | null;
   away_score: number | null;
   photos_link: string | null;
@@ -428,8 +432,12 @@ const SPORT_EVENT_FIELDS = [
   "city",
   "country_code",
   "venue",
+  "race_name",
   "home_team",
   "away_team",
+  "winner_name",
+  "second_place_name",
+  "third_place_name",
   "home_score",
   "away_score",
   "photos_link",
@@ -708,8 +716,12 @@ function mapSportEvent(event: DirectusSportEvent): SportEvent {
     city: event.city,
     countryCode: event.country_code,
     venue: event.venue,
+    raceName: event.race_name,
     homeTeam: event.home_team,
     awayTeam: event.away_team,
+    winnerName: event.winner_name,
+    secondPlaceName: event.second_place_name,
+    thirdPlaceName: event.third_place_name,
     homeScore: event.home_score,
     awayScore: event.away_score,
     photosLink: event.photos_link,

@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n";
+import type { SportEvent } from "@/lib/travel-types";
 
 type OptionLabel = Record<Locale, string>;
 
@@ -12,6 +13,7 @@ const SPORT_LABELS = new Map<string, OptionLabel>([
   ["indycar", { fr: "IndyCar", en: "IndyCar" }],
   ["cricket", { fr: "Cricket", en: "Cricket" }],
   ["formula-1", { fr: "Formule 1", en: "Formula 1" }],
+  ["motorsport", { fr: "Sport auto", en: "Motorsport" }],
   ["cycling", { fr: "Cyclisme", en: "Cycling" }],
   ["tennis", { fr: "Tennis", en: "Tennis" }],
 ]);
@@ -56,6 +58,56 @@ export function formatSportLabel(value: string | null | undefined, locale: Local
 export function formatSportLabelLowercase(value: string | null | undefined, locale: Locale) {
   const label = formatSportLabel(value, locale) || value?.trim() || "";
   return label.toLocaleLowerCase(locale);
+}
+
+export function isRacePodiumSport(value: string | null | undefined) {
+  const normalizedValue = value?.trim().toLowerCase();
+  return normalizedValue === "motorsport" || normalizedValue === "cycling";
+}
+
+export function getSportEventMatchup(event: SportEvent) {
+  return [event.homeTeam, event.awayTeam].filter(Boolean).join(" vs ");
+}
+
+export function getSportEventName(event: SportEvent, locale: Locale) {
+  if (isRacePodiumSport(event.sport)) {
+    return event.raceName || event.competition || formatSportLabel(event.sport, locale) || event.sport;
+  }
+
+  return getSportEventMatchup(event) || event.competition || formatSportLabel(event.sport, locale) || event.sport;
+}
+
+export function getSportEventTitle(event: SportEvent, locale: Locale) {
+  const eventName = getSportEventName(event, locale);
+
+  if (event.competition && eventName && event.competition !== eventName) {
+    return `${event.competition} — ${eventName}`;
+  }
+
+  return eventName;
+}
+
+export function getSportEventResultItems(event: SportEvent, locale: Locale) {
+  if (isRacePodiumSport(event.sport)) {
+    return [
+      { label: locale === "fr" ? "Vainqueur" : "Winner", value: event.winnerName },
+      { label: locale === "fr" ? "2e place" : "2nd place", value: event.secondPlaceName },
+      { label: locale === "fr" ? "3e place" : "3rd place", value: event.thirdPlaceName },
+    ].filter((item) => Boolean(item.value));
+  }
+
+  if (event.homeScore !== null && event.awayScore !== null) {
+    return [{ label: locale === "fr" ? "Score" : "Score", value: `${event.homeScore} - ${event.awayScore}` }];
+  }
+
+  return [];
+}
+
+export function getSportEventResultSummary(event: SportEvent, locale: Locale) {
+  const items = getSportEventResultItems(event, locale);
+  if (!items.length) return "";
+
+  return items.map((item) => `${item.label}: ${item.value}`).join(" · ");
 }
 
 export function getConcertGenreValue(genre: string | null | undefined, subgenre: string | null | undefined) {

@@ -305,8 +305,12 @@ export interface SportEvent {
   city: string | null;
   countryCode: string | null;
   venue: string | null;
+  raceName: string | null;
   homeTeam: string | null;
   awayTeam: string | null;
+  winnerName: string | null;
+  secondPlaceName: string | null;
+  thirdPlaceName: string | null;
   homeScore: number | null;
   awayScore: number | null;
   photosLink: string | null;

@@ -40,6 +40,9 @@ import {
   formatSportLabel,
   formatSportLabelLowercase,
   getConcertGenreValue,
+  getSportEventName,
+  getSportEventResultSummary,
+  getSportEventTitle,
 } from "@/lib/event-options";
 import { getEventDetailHref } from "@/lib/event-links";
 import { useI18n } from "@/lib/i18n";
@@ -434,16 +437,6 @@ function parseEventView(search: string) {
   const params = new URLSearchParams(search.startsWith("?") ? search : `?${search}`);
   const tab = params.get("tab");
   return isEventView(tab) ? tab : "all";
-}
-
-function getSportEventTitle(event: SportEvent, locale: "fr" | "en") {
-  const matchup = [event.homeTeam, event.awayTeam].filter(Boolean).join(" vs ");
-
-  if (event.competition && matchup) {
-    return `${event.competition} — ${matchup}`;
-  }
-
-  return matchup || event.competition || formatSportLabel(event.sport, locale);
 }
 
 function getCategoryBadgeClassName(kind: Exclude<EventView, "all">) {
@@ -1045,8 +1038,12 @@ export default function EventsPage() {
             formatSportLabelLowercase(event.sport, locale),
             event.competition,
             event.venue,
+            event.raceName,
             event.homeTeam,
             event.awayTeam,
+            event.winnerName,
+            event.secondPlaceName,
+            event.thirdPlaceName,
             event.city,
             countryName(event.countryCode ?? ""),
             ...event.attendeesPeople,
@@ -2586,7 +2583,8 @@ export default function EventsPage() {
                         onClick={() => toggleSportSort("competition")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Affiche" : "Matchup"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Course / affiche" : "Race / matchup"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Résultat" : "Result"}</TableHead>
                     <TableHead>
                       <SortHeaderButton
                         label={locale === "fr" ? "Stade" : "Venue"}
@@ -2622,8 +2620,9 @@ export default function EventsPage() {
                           </Link>
                         </TableCell>
                         <TableCell>{event.competition || EMPTY_LABEL}</TableCell>
-                        <TableCell>
-                          {[event.homeTeam, event.awayTeam].filter(Boolean).join(" vs ") || EMPTY_LABEL}
+                        <TableCell>{getSportEventName(event, locale) || EMPTY_LABEL}</TableCell>
+                        <TableCell className="max-w-[240px]">
+                          {getSportEventResultSummary(event, locale) || EMPTY_LABEL}
                         </TableCell>
                         <TableCell>{event.venue || EMPTY_LABEL}</TableCell>
                         <TableCell>{event.city || EMPTY_LABEL}</TableCell>
@@ -2642,7 +2641,7 @@ export default function EventsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                         {t("noEntries")}
                       </TableCell>
                     </TableRow>

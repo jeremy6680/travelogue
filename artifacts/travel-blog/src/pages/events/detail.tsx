@@ -26,7 +26,13 @@ import {
   useTripsQuery,
   useWeddingsQuery,
 } from "@/lib/directus";
-import { formatConcertGenreLabel, formatSportLabel, formatSportLabelLowercase } from "@/lib/event-options";
+import {
+  formatConcertGenreLabel,
+  formatSportLabel,
+  formatSportLabelLowercase,
+  getSportEventName,
+  getSportEventResultItems,
+} from "@/lib/event-options";
 import { getEventDetailHref, type EventKind } from "@/lib/event-links";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -369,8 +375,7 @@ function getConcertRelatedLabel(entry: Concert) {
 }
 
 function getSportRelatedLabel(entry: SportEvent, locale: "fr" | "en") {
-  const matchup = [entry.homeTeam, entry.awayTeam].filter(Boolean).join(" vs ");
-  return matchup || entry.competition || formatSportLabelLowercase(entry.sport, locale);
+  return getSportEventName(entry, locale) || formatSportLabelLowercase(entry.sport, locale);
 }
 
 function getWeddingRelatedLabel(entry: Wedding, locale: "fr" | "en") {
@@ -469,19 +474,14 @@ function buildSportDetail(
     event.articleLink,
     event.photosLink,
   );
-  const matchup = [event.homeTeam, event.awayTeam].filter(Boolean).join(" vs ");
-  const score =
-    event.homeScore !== null && event.awayScore !== null
-      ? `${event.homeScore} - ${event.awayScore}`
-      : locale === "fr"
-        ? "Score non renseigné"
-        : "Score not available";
+  const eventName = getSportEventName(event, locale);
+  const resultItems = getSportEventResultItems(event, locale);
 
   return {
     kind: "sport-events",
     kindLabel: locale === "fr" ? "Evènement sportif" : "Sport event",
     icon: Trophy,
-    title: matchup || formatSportLabelLowercase(event.sport, locale),
+    title: eventName || formatSportLabelLowercase(event.sport, locale),
     subtitle: appendNoteToSubtitle(
       event.competition ?? formatSportLabelLowercase(event.sport, locale),
       event.notes,
@@ -499,7 +499,10 @@ function buildSportDetail(
     meta: [
       { label: locale === "fr" ? "Sport" : "Sport", value: formatSportLabelLowercase(event.sport, locale) },
       { label: locale === "fr" ? "Compétition" : "Competition", value: event.competition ?? "—" },
-      { label: locale === "fr" ? "Score" : "Score", value: score },
+      ...(event.raceName
+        ? [{ label: locale === "fr" ? "Nom de la course" : "Race name", value: event.raceName }]
+        : []),
+      ...resultItems.map((item) => ({ label: item.label, value: item.value ?? "—" })),
       {
         label: locale === "fr" ? "Lieu" : "Location",
         value: buildVenueLocation(event.venue, event.city, event.countryCode, countryName) || "—",

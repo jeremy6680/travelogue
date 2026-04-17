@@ -4662,6 +4662,8 @@ fields:
             value: cricket
           - text: Formule 1
             value: formula-1
+          - text: Sport auto
+            value: motorsport
           - text: Cyclisme
             value: cycling
           - text: Tennis
@@ -4939,7 +4941,17 @@ fields:
     type: string
     meta:
       collection: sport_events
-      conditions: null
+      conditions:
+        - hidden: true
+          name: Hide for motorsport or cycling
+          options: {}
+          readonly: false
+          required: false
+          rule:
+            sport:
+              _in:
+                - motorsport
+                - cycling
       display: null
       display_options: null
       field: home_team
@@ -4951,7 +4963,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 8
+      sort: 9
       special: null
       translations: null
       validation: null
@@ -4979,7 +4991,17 @@ fields:
     type: string
     meta:
       collection: sport_events
-      conditions: null
+      conditions:
+        - hidden: true
+          name: Hide for motorsport or cycling
+          options: {}
+          readonly: false
+          required: false
+          rule:
+            sport:
+              _in:
+                - motorsport
+                - cycling
       display: null
       display_options: null
       field: away_team
@@ -4991,7 +5013,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 9
+      sort: 10
       special: null
       translations: null
       validation: null
@@ -5019,7 +5041,17 @@ fields:
     type: integer
     meta:
       collection: sport_events
-      conditions: null
+      conditions:
+        - hidden: true
+          name: Hide for motorsport or cycling
+          options: {}
+          readonly: false
+          required: false
+          rule:
+            sport:
+              _in:
+                - motorsport
+                - cycling
       display: null
       display_options: null
       field: home_score
@@ -5032,7 +5064,7 @@ fields:
       readonly: false
       required: false
       searchable: false
-      sort: 10
+      sort: 14
       special: null
       translations: null
       validation: null
@@ -5060,7 +5092,17 @@ fields:
     type: integer
     meta:
       collection: sport_events
-      conditions: null
+      conditions:
+        - hidden: true
+          name: Hide for motorsport or cycling
+          options: {}
+          readonly: false
+          required: false
+          rule:
+            sport:
+              _in:
+                - motorsport
+                - cycling
       display: null
       display_options: null
       field: away_score
@@ -5073,7 +5115,7 @@ fields:
       readonly: false
       required: false
       searchable: false
-      sort: 11
+      sort: 15
       special: null
       translations: null
       validation: null
@@ -5113,7 +5155,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 12
+      sort: 16
       special: null
       translations: null
       validation: null
@@ -5153,7 +5195,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 13
+      sort: 17
       special: null
       translations: null
       validation: null
@@ -5195,7 +5237,7 @@ fields:
       readonly: false
       required: false
       searchable: false
-      sort: 14
+      sort: 18
       special:
         - m2m
       translations: null
@@ -5219,7 +5261,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 15
+      sort: 19
       special: null
       translations: null
       validation: null
@@ -5231,6 +5273,206 @@ fields:
       data_type: text
       default_value: null
       max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: race_name
+    type: string
+    meta:
+      collection: sport_events
+      conditions:
+        - hidden: true
+          name: Hide if not motorsport or cycling
+          options: {}
+          readonly: false
+          required: false
+          rule:
+            sport:
+              _nin:
+                - motorsport
+                - cycling
+      display: null
+      display_options: null
+      field: race_name
+      group: null
+      hidden: false
+      interface: input
+      note: Name of the race for motorsport or cycling events.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 8
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: race_name
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 200
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: winner_name
+    type: string
+    meta:
+      collection: sport_events
+      conditions:
+        - hidden: true
+          name: Hide if not motorsport or cycling
+          options: {}
+          readonly: false
+          required: false
+          rule:
+            sport:
+              _nin:
+                - motorsport
+                - cycling
+      display: null
+      display_options: null
+      field: winner_name
+      group: null
+      hidden: false
+      interface: input
+      note: Winner of the motorsport or cycling race.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 11
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: winner_name
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 160
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: second_place_name
+    type: string
+    meta:
+      collection: sport_events
+      conditions:
+        - hidden: true
+          name: Hide if not motorsport or cycling
+          options: {}
+          readonly: false
+          required: false
+          rule:
+            sport:
+              _nin:
+                - motorsport
+                - cycling
+      display: null
+      display_options: null
+      field: second_place_name
+      group: null
+      hidden: false
+      interface: input
+      note: Second place finisher for motorsport or cycling events.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 12
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: second_place_name
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 160
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: sport_events
+    field: third_place_name
+    type: string
+    meta:
+      collection: sport_events
+      conditions:
+        - hidden: true
+          name: Hide if not motorsport or cycling
+          options: {}
+          readonly: false
+          required: false
+          rule:
+            sport:
+              _nin:
+                - motorsport
+                - cycling
+      display: null
+      display_options: null
+      field: third_place_name
+      group: null
+      hidden: false
+      interface: input
+      note: Third place finisher for motorsport or cycling events.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 13
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: third_place_name
+      table: sport_events
+      data_type: character varying
+      default_value: null
+      max_length: 160
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
