@@ -37,6 +37,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useConcertsQuery,
+  useOtherEventsQuery,
   useRunningQuery,
   useSportEventsQuery,
   useTechEventsQuery,
@@ -56,7 +57,14 @@ import {
 } from "@/lib/event-options";
 import { getEventDetailHref } from "@/lib/event-links";
 import { useI18n } from "@/lib/i18n";
-import type { Concert, RunningEvent, SportEvent, TechEvent, Wedding } from "@/lib/travel-types";
+import type {
+  Concert,
+  OtherEvent,
+  RunningEvent,
+  SportEvent,
+  TechEvent,
+  Wedding,
+} from "@/lib/travel-types";
 import { cn } from "@/lib/utils";
 
 type EventView =
@@ -64,6 +72,7 @@ type EventView =
   | "concerts"
   | "sport-events"
   | "tech-events"
+  | "other-events"
   | "running"
   | "weddings"
   | "stats";
@@ -136,6 +145,17 @@ type RunningFilters = {
   sortDirection: SortDirection;
 };
 
+type OtherEventFilters = {
+  year: string[];
+  city: string[];
+  country: string[];
+  eventName: string[];
+  companion: string[];
+  keyword: string;
+  sortBy: "startDate" | "endDate" | "city" | "country" | "eventName";
+  sortDirection: SortDirection;
+};
+
 type OverviewFilters = {
   year: string[];
   city: string[];
@@ -185,6 +205,20 @@ type RunningRow = {
   attendeesPeople: string[];
 };
 
+type OtherEventRow = {
+  id: number;
+  eventName: string;
+  startDate: string;
+  endDate: string;
+  city: string;
+  countryCode: string;
+  tripName: string;
+  tripId: number | null;
+  photosLink: string | null;
+  articleLink: string | null;
+  attendeesPeople: string[];
+};
+
 type UnifiedEventRow = {
   id: string;
   kind: EventCategoryView;
@@ -220,6 +254,7 @@ const EVENT_CHART_COLORS = {
   concerts: "#e11d48",
   "sport-events": "#2563eb",
   "tech-events": "#7c3aed",
+  "other-events": "#0f766e",
   running: "#d97706",
   weddings: "#059669",
 } as const;
@@ -228,6 +263,7 @@ const EVENT_VIEWS: EventView[] = [
   "concerts",
   "sport-events",
   "tech-events",
+  "other-events",
   "running",
   "weddings",
   "stats",
@@ -296,6 +332,17 @@ const DEFAULT_RUNNING_FILTERS: RunningFilters = {
   companion: [],
   keyword: "",
   sortBy: "eventDate",
+  sortDirection: "desc",
+};
+
+const DEFAULT_OTHER_EVENT_FILTERS: OtherEventFilters = {
+  year: [],
+  city: [],
+  country: [],
+  eventName: [],
+  companion: [],
+  keyword: "",
+  sortBy: "startDate",
   sortDirection: "desc",
 };
 
@@ -421,6 +468,10 @@ function getRunningCountry(event: RunningRow) {
   return event.countryCode;
 }
 
+function getOtherEventCountry(event: OtherEventRow) {
+  return event.countryCode;
+}
+
 function formatEventDateRange(
   start: string,
   end: string,
@@ -490,6 +541,8 @@ function getCategoryBadgeClassName(kind: Exclude<EventView, "all">) {
       return "border-blue-200 bg-blue-50 text-blue-700";
     case "tech-events":
       return "border-violet-200 bg-violet-50 text-violet-700";
+    case "other-events":
+      return "border-teal-200 bg-teal-50 text-teal-700";
     case "running":
       return "border-amber-200 bg-amber-50 text-amber-700";
     case "weddings":
@@ -754,6 +807,7 @@ export default function EventsPage() {
   const { t, formatDate, countryName, locale } = useI18n();
   const [location, setLocation] = useLocation();
   const concertsQuery = useConcertsQuery();
+  const otherEventsQuery = useOtherEventsQuery();
   const runningQuery = useRunningQuery();
   const sportEventsQuery = useSportEventsQuery();
   const techEventsQuery = useTechEventsQuery();
@@ -762,6 +816,9 @@ export default function EventsPage() {
   const [overviewFilters, setOverviewFilters] = useState<OverviewFilters>(DEFAULT_OVERVIEW_FILTERS);
   const [concertFilters, setConcertFilters] = useState<ConcertFilters>(DEFAULT_CONCERT_FILTERS);
   const [runningFilters, setRunningFilters] = useState<RunningFilters>(DEFAULT_RUNNING_FILTERS);
+  const [otherEventFilters, setOtherEventFilters] = useState<OtherEventFilters>(
+    DEFAULT_OTHER_EVENT_FILTERS,
+  );
   const [sportFilters, setSportFilters] = useState<SportFilters>(DEFAULT_SPORT_FILTERS);
   const [sportPlayerStatsFilters, setSportPlayerStatsFilters] = useState<SportPlayerStatsFilters>(
     DEFAULT_SPORT_PLAYER_STATS_FILTERS,
@@ -837,6 +894,15 @@ export default function EventsPage() {
     }));
   };
 
+  const toggleOtherEventSort = (sortBy: OtherEventFilters["sortBy"]) => {
+    setOtherEventFilters((current) => ({
+      ...current,
+      sortBy,
+      sortDirection:
+        current.sortBy === sortBy && current.sortDirection === "desc" ? "asc" : "desc",
+    }));
+  };
+
   const toggleWeddingSort = (sortBy: WeddingFilters["sortBy"]) => {
     setWeddingFilters((current) => ({
       ...current,
@@ -895,6 +961,22 @@ export default function EventsPage() {
       attendeesPeople: event.attendeesPeople,
     }));
   }, [locale, runningQuery.data]);
+
+  const otherEvents = useMemo<OtherEventRow[]>(() => {
+    return (otherEventsQuery.data ?? []).map((event: OtherEvent) => ({
+      id: event.id,
+      eventName: event.eventName,
+      startDate: event.startDate,
+      endDate: event.endDate ?? event.startDate,
+      city: event.city ?? "",
+      countryCode: event.countryCode ?? "",
+      tripName: event.tripName ?? EMPTY_LABEL,
+      tripId: event.tripId,
+      photosLink: event.photosLink,
+      articleLink: event.articleLink,
+      attendeesPeople: event.attendeesPeople,
+    }));
+  }, [otherEventsQuery.data]);
 
   const sportPlayerStatsRows = useMemo<SportPlayerStatsRow[]>(() => {
     const rows = new Map<
@@ -1128,6 +1210,22 @@ export default function EventsPage() {
     [countryName, locale, techEvents],
   );
 
+  const otherEventOptions = useMemo(
+    () => ({
+      years: getSingleFacetOptions(otherEvents.map((event) => getYear(event.startDate)), locale),
+      cities: getSingleFacetOptions(otherEvents.map((event) => event.city), locale),
+      countries: getSingleFacetOptions(otherEvents.map((event) => event.countryCode), locale, (value) =>
+        countryName(value),
+      ),
+      eventNames: getSingleFacetOptions(otherEvents.map((event) => event.eventName), locale),
+      companions: getMultiFacetOptions(
+        otherEvents.map((event) => event.attendeesPeople),
+        locale,
+      ),
+    }),
+    [countryName, locale, otherEvents],
+  );
+
   const runningOptions = useMemo(
     () => ({
       years: getSingleFacetOptions(runningEvents.map((event) => getYear(event.eventDate)), locale),
@@ -1183,6 +1281,18 @@ export default function EventsPage() {
       countryCode: event.countryCode,
     }));
 
+    const others = otherEvents.map((event) => ({
+      id: `other-events-${event.id}`,
+      kind: "other-events" as const,
+      detailHref: getEventDetailHref("other-events", event.id),
+      date: event.startDate,
+      categoryLabel: locale === "fr" ? "Autre évènement" : "Other event",
+      categoryClassName: getCategoryBadgeClassName("other-events"),
+      title: event.eventName,
+      city: event.city,
+      countryCode: event.countryCode,
+    }));
+
     const running = runningEvents.map((event) => ({
       id: `running-${event.id}`,
       kind: "running" as const,
@@ -1207,10 +1317,10 @@ export default function EventsPage() {
       countryCode: event.countryCode,
     }));
 
-    return [...concerts, ...sportEvents, ...tech, ...running, ...weddingsOverview].toSorted(
+    return [...concerts, ...sportEvents, ...tech, ...others, ...running, ...weddingsOverview].toSorted(
       (left, right) => compareDates(left.date, right.date, "desc"),
     );
-  }, [concertsQuery.data, locale, runningEvents, sportEventsQuery.data, techEvents, weddings]);
+  }, [concertsQuery.data, locale, otherEvents, runningEvents, sportEventsQuery.data, techEvents, weddings]);
 
   const overviewOptions = useMemo(
     () => ({
@@ -1444,6 +1554,51 @@ export default function EventsPage() {
     });
   }, [countryName, techEventFilters, techEvents]);
 
+  const filteredOtherEvents = useMemo(() => {
+    const rows = otherEvents.filter((event) => {
+      if (!includesSelectedValue(getYear(event.startDate), otherEventFilters.year)) return false;
+      if (!includesSelectedValue(event.city, otherEventFilters.city)) return false;
+      if (!includesSelectedValue(getOtherEventCountry(event), otherEventFilters.country)) return false;
+      if (!includesSelectedValue(event.eventName, otherEventFilters.eventName)) return false;
+      if (!matchesSelectedPeople(event.attendeesPeople, otherEventFilters.companion)) return false;
+      if (
+        !matchesKeyword(
+          [
+            event.eventName,
+            event.city,
+            countryName(event.countryCode),
+            event.tripName,
+            ...event.attendeesPeople,
+          ],
+          otherEventFilters.keyword,
+        )
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    return rows.toSorted((left, right) => {
+      switch (otherEventFilters.sortBy) {
+        case "city":
+          return compareValues(left.city, right.city, otherEventFilters.sortDirection);
+        case "country":
+          return compareValues(
+            countryName(left.countryCode),
+            countryName(right.countryCode),
+            otherEventFilters.sortDirection,
+          );
+        case "eventName":
+          return compareValues(left.eventName, right.eventName, otherEventFilters.sortDirection);
+        case "endDate":
+          return compareDates(left.endDate, right.endDate, otherEventFilters.sortDirection);
+        case "startDate":
+        default:
+          return compareDates(left.startDate, right.startDate, otherEventFilters.sortDirection);
+      }
+    });
+  }, [countryName, otherEventFilters, otherEvents]);
+
   const filteredRunning = useMemo(() => {
     const rows = runningEvents.filter((event) => {
       if (!includesSelectedValue(getYear(event.eventDate), runningFilters.year)) return false;
@@ -1501,6 +1656,7 @@ export default function EventsPage() {
     concerts: locale === "fr" ? "Concerts" : "Concerts",
     "sport-events": locale === "fr" ? "Evènements sportifs" : "Sport events",
     "tech-events": locale === "fr" ? "Evènements tech" : "Tech events",
+    "other-events": locale === "fr" ? "Autres évènements" : "Other events",
     running: locale === "fr" ? "Running" : "Running",
     weddings: locale === "fr" ? "Mariages" : "Weddings",
     stats: locale === "fr" ? "Stats" : "Stats",
@@ -1538,6 +1694,13 @@ export default function EventsPage() {
       ...techEvents.map((event) => ({
         id: `tech-${event.id}`,
         kind: "tech-events" as const,
+        date: event.startDate,
+        countryCode: event.countryCode,
+        city: event.city,
+      })),
+      ...otherEvents.map((event) => ({
+        id: `other-${event.id}`,
+        kind: "other-events" as const,
         date: event.startDate,
         countryCode: event.countryCode,
         city: event.city,
@@ -1733,6 +1896,8 @@ export default function EventsPage() {
             ? (sportEventsQuery.data ?? []).map((item) => item.attendeesPeople)
             : category.key === "tech-events"
               ? techEvents.map((item) => item.attendeesPeople)
+              : category.key === "other-events"
+                ? otherEvents.map((item) => item.attendeesPeople)
               : category.key === "running"
                 ? runningEvents.map((item) => item.attendeesPeople)
                 : weddings.map((item) => item.attendeesPeople);
@@ -1837,6 +2002,7 @@ export default function EventsPage() {
     countryName,
     formatDate,
     locale,
+    otherEvents,
     runningEvents,
     sportEventsQuery.data,
     techEvents,
@@ -1870,6 +2036,7 @@ export default function EventsPage() {
 
   const isLoading =
     concertsQuery.isLoading ||
+    otherEventsQuery.isLoading ||
     runningQuery.isLoading ||
     sportEventsQuery.isLoading ||
     techEventsQuery.isLoading ||
@@ -1877,6 +2044,7 @@ export default function EventsPage() {
 
   const hasError =
     concertsQuery.error ||
+    otherEventsQuery.error ||
     runningQuery.error ||
     sportEventsQuery.error ||
     techEventsQuery.error ||
@@ -1892,8 +2060,8 @@ export default function EventsPage() {
             </h1>
             <p className="text-xl text-muted-foreground font-serif italic max-w-2xl mx-auto leading-relaxed">
               {locale === "fr"
-                ? "Concerts, évènements sportifs, conférences tech, courses et mariages réunis dans une même page pour parcourir les souvenirs au fil des dates, des villes et des pays."
-                : "Concerts, sport events, tech conferences, races, and weddings gathered in one place to browse memories through dates, cities, and countries."}
+                ? "Concerts, évènements sportifs, conférences tech, autres évènements, courses et mariages réunis dans une même page pour parcourir les souvenirs au fil des dates, des villes et des pays."
+                : "Concerts, sport events, tech conferences, other events, races, and weddings gathered in one place to browse memories through dates, cities, and countries."}
             </p>
           </div>
           <Tabs value={view} onValueChange={handleViewChange}>
@@ -3186,6 +3354,181 @@ export default function EventsPage() {
                         <TableCell>
                           <Link
                             href={getEventDetailHref("tech-events", event.id)}
+                            className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                          >
+                            {locale === "fr" ? "Voir la fiche" : "View details"}
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                        {t("noEntries")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {!isLoading && !hasError && view === "other-events" ? (
+          <Card>
+            <CardHeader className="space-y-6">
+              <SectionTitle
+                title={locale === "fr" ? "Autres évènements" : "Other events"}
+                count={filteredOtherEvents.length}
+                titleClassName="text-teal-700"
+              />
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <MultiSelectFilter
+                  label={locale === "fr" ? "Années" : "Years"}
+                  placeholder={locale === "fr" ? "Années" : "Years"}
+                  options={otherEventOptions.years.map((option) => ({
+                    value: option.value,
+                    label: buildFilterLabel(option.text, option.count),
+                    triggerLabel: option.text,
+                  }))}
+                  selectedValues={otherEventFilters.year}
+                  onChange={(year) => setOtherEventFilters((current) => ({ ...current, year }))}
+                  className="w-full"
+                />
+                <MultiSelectFilter
+                  label={locale === "fr" ? "Villes" : "Cities"}
+                  placeholder={locale === "fr" ? "Villes" : "Cities"}
+                  options={otherEventOptions.cities.map((option) => ({
+                    value: option.value,
+                    label: buildFilterLabel(option.text, option.count),
+                    triggerLabel: option.text,
+                  }))}
+                  selectedValues={otherEventFilters.city}
+                  onChange={(city) => setOtherEventFilters((current) => ({ ...current, city }))}
+                  className="w-full"
+                />
+                <MultiSelectFilter
+                  label={locale === "fr" ? "Pays" : "Countries"}
+                  placeholder={locale === "fr" ? "Tous les pays" : "All countries"}
+                  options={otherEventOptions.countries.map((option) => ({
+                    value: option.value,
+                    label: buildFilterLabel(option.text, option.count),
+                    triggerLabel: option.text,
+                  }))}
+                  selectedValues={otherEventFilters.country}
+                  onChange={(country) =>
+                    setOtherEventFilters((current) => ({ ...current, country }))
+                  }
+                  className="w-full"
+                />
+                <MultiSelectFilter
+                  label={locale === "fr" ? "Compagnons" : "Companions"}
+                  placeholder={locale === "fr" ? "Tous les compagnons" : "All companions"}
+                  options={otherEventOptions.companions.map((option) => ({
+                    value: option.value,
+                    label: buildFilterLabel(option.text, option.count),
+                    triggerLabel: option.text,
+                  }))}
+                  selectedValues={otherEventFilters.companion}
+                  onChange={(companion) =>
+                    setOtherEventFilters((current) => ({ ...current, companion }))
+                  }
+                  className="w-full"
+                />
+                <MultiSelectFilter
+                  label={locale === "fr" ? "Evènements" : "Events"}
+                  placeholder={locale === "fr" ? "Evènements" : "Events"}
+                  options={otherEventOptions.eventNames.map((option) => ({
+                    value: option.value,
+                    label: buildFilterLabel(option.text, option.count),
+                    triggerLabel: option.text,
+                  }))}
+                  selectedValues={otherEventFilters.eventName}
+                  onChange={(eventName) =>
+                    setOtherEventFilters((current) => ({ ...current, eventName }))
+                  }
+                  className="w-full"
+                />
+                <Input
+                  value={otherEventFilters.keyword}
+                  onChange={(event) =>
+                    setOtherEventFilters((current) => ({
+                      ...current,
+                      keyword: event.target.value,
+                    }))
+                  }
+                  className="h-10"
+                  placeholder={locale === "fr" ? "Recherche libre" : "Keyword search"}
+                />
+              </div>
+              <div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setOtherEventFilters(DEFAULT_OTHER_EVENT_FILTERS)}
+                >
+                  {t("clearFilters")}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Début" : "Start"}
+                        onClick={() => toggleOtherEventSort("startDate")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Fin" : "End"}
+                        onClick={() => toggleOtherEventSort("endDate")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Evènement" : "Event"}
+                        onClick={() => toggleOtherEventSort("eventName")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Ville" : "City"}
+                        onClick={() => toggleOtherEventSort("city")}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Pays" : "Country"}
+                        onClick={() => toggleOtherEventSort("country")}
+                      />
+                    </TableHead>
+                    <TableHead>{locale === "fr" ? "Détails" : "Details"}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredOtherEvents.length ? (
+                    filteredOtherEvents.map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell>{formatDate(event.startDate, "short")}</TableCell>
+                        <TableCell>{formatDate(event.endDate, "short")}</TableCell>
+                        <TableCell className="font-medium">
+                          <Link
+                            href={getEventDetailHref("other-events", event.id)}
+                            className="underline decoration-[rgba(20,70,90,0.22)] underline-offset-4 transition-colors hover:text-primary"
+                          >
+                            {event.eventName}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{event.city || EMPTY_LABEL}</TableCell>
+                        <TableCell>
+                          {event.countryCode ? countryName(event.countryCode) : EMPTY_LABEL}
+                        </TableCell>
+                        <TableCell>
+                          <Link
+                            href={getEventDetailHref("other-events", event.id)}
                             className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
                           >
                             {locale === "fr" ? "Voir la fiche" : "View details"}

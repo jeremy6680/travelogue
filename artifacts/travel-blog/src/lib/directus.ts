@@ -25,6 +25,7 @@ import type {
   Journey,
   MapPin,
   MediaAsset,
+  OtherEvent,
   Photo,
   Post,
   RunningEvent,
@@ -158,6 +159,7 @@ type DirectusPhoto = {
 type DirectusSchema = {
   concerts: DirectusConcert[];
   journeys: DirectusJourney[];
+  other_events: DirectusOtherEvent[];
   posts: DirectusPost[];
   running: DirectusRunningEvent[];
   sport_events: DirectusSportEvent[];
@@ -216,6 +218,22 @@ type DirectusSportEvent = {
 };
 
 type DirectusTechEvent = {
+  id: number;
+  event_name: string;
+  start_date: string;
+  end_date: string | null;
+  trip_id: number | DirectusWeddingRelation;
+  city: string | null;
+  country_code: string | null;
+  photos_link: string | null;
+  article_link: string | null;
+  notes: string | null;
+  attendees_people?:
+    | Array<{ people_id?: { display_name?: string | null } | null }>
+    | null;
+};
+
+type DirectusOtherEvent = {
   id: number;
   event_name: string;
   start_date: string;
@@ -489,6 +507,20 @@ const TECH_EVENT_FIELDS = [
   { attendees_people: [{ people_id: ["display_name"] }] },
 ] as const;
 
+const OTHER_EVENT_FIELDS = [
+  "id",
+  "event_name",
+  "start_date",
+  "end_date",
+  "city",
+  "country_code",
+  { trip_id: ["id", "name"] },
+  "photos_link",
+  "article_link",
+  "notes",
+  { attendees_people: [{ people_id: ["display_name"] }] },
+] as const;
+
 const RUNNING_FIELDS = [
   "id",
   "event_name",
@@ -524,6 +556,7 @@ const directus = createDirectus<DirectusSchema>(
 
 export const directusQueryKeys = {
   concerts: ["directus", "concerts"] as const,
+  otherEvents: ["directus", "other-events"] as const,
   posts: ["directus", "posts"] as const,
   postBySlug: (slug: string | undefined) => ["directus", "posts", slug] as const,
   running: ["directus", "running"] as const,
@@ -794,6 +827,23 @@ function mapWedding(wedding: DirectusWedding): Wedding {
 }
 
 function mapTechEvent(event: DirectusTechEvent): TechEvent {
+  return {
+    id: event.id,
+    eventName: event.event_name,
+    startDate: event.start_date,
+    endDate: event.end_date,
+    city: event.city,
+    countryCode: event.country_code,
+    tripId: getRelationId(event.trip_id),
+    tripName: getRelationName(event.trip_id, "name"),
+    photosLink: event.photos_link,
+    articleLink: event.article_link,
+    notes: event.notes,
+    attendeesPeople: extractPeopleDisplayNames(event.attendees_people),
+  };
+}
+
+function mapOtherEvent(event: DirectusOtherEvent): OtherEvent {
   return {
     id: event.id,
     eventName: event.event_name,
@@ -1220,6 +1270,26 @@ export async function fetchTechEvents(): Promise<TechEvent[]> {
   }
 }
 
+export async function fetchOtherEvents(): Promise<OtherEvent[]> {
+  try {
+    const otherEvents = (await directus.request(
+      readItems("other_events", {
+        sort: ["-start_date", "event_name"],
+        fields: [...OTHER_EVENT_FIELDS] as any,
+        limit: -1,
+      }),
+    )) as unknown as DirectusOtherEvent[];
+
+    return otherEvents.map(mapOtherEvent);
+  } catch (error) {
+    if (!isSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    return [];
+  }
+}
+
 export async function fetchRunning(): Promise<RunningEvent[]> {
   try {
     const runningEvents = (await directus.request(
@@ -1596,6 +1666,13 @@ export function useTechEventsQuery(): UseQueryResult<TechEvent[]> {
   return useQuery({
     queryKey: directusQueryKeys.techEvents,
     queryFn: fetchTechEvents,
+  });
+}
+
+export function useOtherEventsQuery(): UseQueryResult<OtherEvent[]> {
+  return useQuery({
+    queryKey: directusQueryKeys.otherEvents,
+    queryFn: fetchOtherEvents,
   });
 }
 

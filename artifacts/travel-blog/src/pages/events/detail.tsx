@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Calendar,
+  CalendarRange,
   ExternalLink,
   Film,
   Globe2,
@@ -20,6 +21,7 @@ import { Layout } from "@/components/layout";
 import {
   useConcertsQuery,
   useJourneysQuery,
+  useOtherEventsQuery,
   useRunningQuery,
   useSportEventsQuery,
   useTechEventsQuery,
@@ -43,7 +45,16 @@ import {
   formatTravelReasonLabels,
   formatTripContextLabels,
 } from "@/lib/trip-options";
-import type { Concert, Journey, RunningEvent, SportEvent, TechEvent, Trip, Wedding } from "@/lib/travel-types";
+import type {
+  Concert,
+  Journey,
+  OtherEvent,
+  RunningEvent,
+  SportEvent,
+  TechEvent,
+  Trip,
+  Wedding,
+} from "@/lib/travel-types";
 import NotFound from "@/pages/not-found";
 
 type EventDetailModel = {
@@ -232,6 +243,7 @@ function isEventKind(value: string | undefined): value is EventKind {
     value === "concerts" ||
     value === "sport-events" ||
     value === "tech-events" ||
+    value === "other-events" ||
     value === "running" ||
     value === "weddings"
   );
@@ -392,6 +404,10 @@ function getTechRelatedLabel(entry: TechEvent) {
 }
 
 function getRunningRelatedLabel(entry: RunningEvent) {
+  return entry.eventName;
+}
+
+function getOtherEventRelatedLabel(entry: OtherEvent) {
   return entry.eventName;
 }
 
@@ -661,11 +677,58 @@ function buildRunningDetail(
   };
 }
 
+function buildOtherEventDetail(
+  event: OtherEvent,
+  locale: "fr" | "en",
+  countryName: (code: string) => string,
+  formatDate: (value: string | Date, style: "short" | "long" | "monthYear") => string,
+): EventDetailModel {
+  const { videoEmbedUrl, galleryLink, storyLink } = splitMediaLinks(
+    event.articleLink,
+    event.photosLink,
+  );
+
+  return {
+    kind: "other-events",
+    kindLabel: locale === "fr" ? "Autre évènement" : "Other event",
+    icon: CalendarRange,
+    title: event.eventName,
+    subtitle: appendNoteToSubtitle(
+      buildLocation(event.city, event.countryCode, countryName) ||
+        (locale === "fr" ? "Evènement" : "Event"),
+      event.notes,
+    ),
+    date: event.startDate,
+    city: event.city,
+    countryCode: event.countryCode,
+    venue: null,
+    tripId: event.tripId,
+    tripName: event.tripName,
+    attendees: event.attendeesPeople,
+    galleryLink,
+    storyLink,
+    videoEmbedUrl,
+    meta: [
+      { label: locale === "fr" ? "Evènement" : "Event", value: event.eventName },
+      {
+        label: locale === "fr" ? "Dates" : "Dates",
+        value: getEventDateRangeLabel(event.startDate, event.endDate, locale, formatDate),
+      },
+      {
+        label: locale === "fr" ? "Lieu" : "Location",
+        value: buildLocation(event.city, event.countryCode, countryName) || "—",
+      },
+      { label: locale === "fr" ? "Voyage lié" : "Linked trip", value: event.tripName ?? "—" },
+    ],
+  };
+}
+
 export default function EventDetailPage() {
   const { kind, id } = useParams<{ kind?: string; id?: string }>();
   const { locale, formatDate, countryName } = useI18n();
   const concertsQuery = useConcertsQuery();
   const journeysQuery = useJourneysQuery();
+  const otherEventsQuery = useOtherEventsQuery();
   const runningQuery = useRunningQuery();
   const sportEventsQuery = useSportEventsQuery();
   const techEventsQuery = useTechEventsQuery();
@@ -677,6 +740,7 @@ export default function EventDetailPage() {
   const isLoading =
     concertsQuery.isLoading ||
     journeysQuery.isLoading ||
+    otherEventsQuery.isLoading ||
     runningQuery.isLoading ||
     sportEventsQuery.isLoading ||
     techEventsQuery.isLoading ||
@@ -699,6 +763,10 @@ export default function EventDetailPage() {
         const event = (techEventsQuery.data ?? []).find((entry) => entry.id === recordId);
         return event ? buildTechDetail(event, locale, countryName, formatDate) : null;
       }
+      case "other-events": {
+        const event = (otherEventsQuery.data ?? []).find((entry) => entry.id === recordId);
+        return event ? buildOtherEventDetail(event, locale, countryName, formatDate) : null;
+      }
       case "running": {
         const event = (runningQuery.data ?? []).find((entry) => entry.id === recordId);
         return event ? buildRunningDetail(event, locale, countryName) : null;
@@ -715,6 +783,7 @@ export default function EventDetailPage() {
     isValidKind,
     kind,
     locale,
+    otherEventsQuery.data,
     recordId,
     runningQuery.data,
     sportEventsQuery.data,
@@ -751,6 +820,8 @@ export default function EventDetailPage() {
           ? "Evènements sportifs"
           : detail?.kind === "tech-events"
             ? "Evènements tech"
+            : detail?.kind === "other-events"
+              ? "Autres évènements"
           : "Mariages"
       : detail?.kind === "concerts"
         ? "Concerts"
@@ -760,6 +831,8 @@ export default function EventDetailPage() {
           ? "Sport events"
           : detail?.kind === "tech-events"
             ? "Tech events"
+            : detail?.kind === "other-events"
+              ? "Other events"
           : "Weddings";
 
   const sameCategorySameTrip = useMemo<RelatedEventLink[]>(() => {
@@ -793,6 +866,15 @@ export default function EventDetailPage() {
             label: getTechRelatedLabel(entry),
             href: getEventDetailHref("tech-events", entry.id),
           }));
+      case "other-events":
+        return (otherEventsQuery.data ?? [])
+          .filter((entry) => entry.id !== recordId && entry.tripId === trip.id)
+          .slice(0, 6)
+          .map((entry) => ({
+            id: entry.id,
+            label: getOtherEventRelatedLabel(entry),
+            href: getEventDetailHref("other-events", entry.id),
+          }));
       case "running":
         return (runningQuery.data ?? [])
           .filter((entry) => entry.id !== recordId && entry.tripId === trip.id)
@@ -816,6 +898,7 @@ export default function EventDetailPage() {
     concertsQuery.data,
     detail,
     locale,
+    otherEventsQuery.data,
     recordId,
     runningQuery.data,
     sportEventsQuery.data,
@@ -906,6 +989,24 @@ export default function EventDetailPage() {
       }
     }
 
+    if (detail.kind !== "other-events") {
+      const items = (otherEventsQuery.data ?? [])
+        .filter((entry) => entry.tripId === trip.id)
+        .slice(0, 6)
+        .map((entry) => ({
+          id: entry.id,
+          label: getOtherEventRelatedLabel(entry),
+          href: getEventDetailHref("other-events", entry.id),
+        }));
+
+      if (items.length > 0) {
+        sections.push({
+          title: locale === "fr" ? "Autres évènements du même voyage" : "Other events from the same trip",
+          items,
+        });
+      }
+    }
+
     if (detail.kind !== "weddings") {
       const items = (weddingsQuery.data ?? [])
         .filter((entry) => entry.tripId === trip.id)
@@ -929,6 +1030,7 @@ export default function EventDetailPage() {
     concertsQuery.data,
     detail,
     locale,
+    otherEventsQuery.data,
     runningQuery.data,
     sportEventsQuery.data,
     techEventsQuery.data,
@@ -967,6 +1069,15 @@ export default function EventDetailPage() {
             label: getTechRelatedLabel(entry),
             href: getEventDetailHref("tech-events", entry.id),
           }));
+      case "other-events":
+        return (otherEventsQuery.data ?? [])
+          .filter((entry) => entry.id !== recordId && entry.tripId !== detail.tripId)
+          .slice(0, 6)
+          .map((entry) => ({
+            id: entry.id,
+            label: getOtherEventRelatedLabel(entry),
+            href: getEventDetailHref("other-events", entry.id),
+          }));
       case "running":
         return (runningQuery.data ?? [])
           .filter((entry) => entry.id !== recordId && entry.tripId !== detail.tripId)
@@ -990,6 +1101,7 @@ export default function EventDetailPage() {
     concertsQuery.data,
     detail,
     locale,
+    otherEventsQuery.data,
     recordId,
     runningQuery.data,
     sportEventsQuery.data,

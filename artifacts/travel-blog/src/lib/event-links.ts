@@ -2,6 +2,7 @@ export type EventKind =
   | "concerts"
   | "sport-events"
   | "tech-events"
+  | "other-events"
   | "running"
   | "weddings";
 

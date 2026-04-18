@@ -352,6 +352,21 @@ export interface TechEvent {
   attendeesPeople: string[];
 }
 
+export interface OtherEvent {
+  id: number;
+  eventName: string;
+  startDate: string;
+  endDate: string | null;
+  city: string | null;
+  countryCode: string | null;
+  tripId: number | null;
+  tripName: string | null;
+  photosLink: string | null;
+  articleLink: string | null;
+  notes: string | null;
+  attendeesPeople: string[];
+}
+
 export interface RunningEvent {
   id: number;
   eventName: string;
