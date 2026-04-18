@@ -342,6 +342,7 @@ export interface TechEvent {
   eventName: string;
   startDate: string;
   endDate: string | null;
+  venue: string | null;
   city: string | null;
   countryCode: string | null;
   tripId: number | null;
@@ -357,6 +358,7 @@ export interface OtherEvent {
   eventName: string;
   startDate: string;
   endDate: string | null;
+  venue: string | null;
   city: string | null;
   countryCode: string | null;
   tripId: number | null;

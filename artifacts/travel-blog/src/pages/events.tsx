@@ -180,6 +180,7 @@ type TechEventRow = {
   eventName: string;
   startDate: string;
   endDate: string;
+  venue: string;
   city: string;
   countryCode: string;
   tripName: string;
@@ -210,6 +211,7 @@ type OtherEventRow = {
   eventName: string;
   startDate: string;
   endDate: string;
+  venue: string;
   city: string;
   countryCode: string;
   tripName: string;
@@ -934,6 +936,7 @@ export default function EventsPage() {
       eventName: event.eventName,
       startDate: event.startDate,
       endDate: event.endDate ?? event.startDate,
+      venue: event.venue ?? "",
       city: event.city ?? "",
       countryCode: event.countryCode ?? "",
       tripName: event.tripName ?? EMPTY_LABEL,
@@ -968,6 +971,7 @@ export default function EventsPage() {
       eventName: event.eventName,
       startDate: event.startDate,
       endDate: event.endDate ?? event.startDate,
+      venue: event.venue ?? "",
       city: event.city ?? "",
       countryCode: event.countryCode ?? "",
       tripName: event.tripName ?? EMPTY_LABEL,
@@ -3320,6 +3324,7 @@ export default function EventsPage() {
                         onClick={() => toggleTechEventSort("eventName")}
                       />
                     </TableHead>
+                    <TableHead>{locale === "fr" ? "Lieu" : "Venue"}</TableHead>
                     <TableHead>
                       <SortHeaderButton
                         label={locale === "fr" ? "Ville" : "City"}
@@ -3349,6 +3354,7 @@ export default function EventsPage() {
                             {event.eventName}
                           </Link>
                         </TableCell>
+                        <TableCell>{event.venue || EMPTY_LABEL}</TableCell>
                         <TableCell>{event.city || EMPTY_LABEL}</TableCell>
                         <TableCell>{event.countryCode ? countryName(event.countryCode) : EMPTY_LABEL}</TableCell>
                         <TableCell>
@@ -3363,7 +3369,7 @@ export default function EventsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
                         {t("noEntries")}
                       </TableCell>
                     </TableRow>
@@ -3493,6 +3499,7 @@ export default function EventsPage() {
                         onClick={() => toggleOtherEventSort("eventName")}
                       />
                     </TableHead>
+                    <TableHead>{locale === "fr" ? "Lieu" : "Venue"}</TableHead>
                     <TableHead>
                       <SortHeaderButton
                         label={locale === "fr" ? "Ville" : "City"}
@@ -3522,6 +3529,7 @@ export default function EventsPage() {
                             {event.eventName}
                           </Link>
                         </TableCell>
+                        <TableCell>{event.venue || EMPTY_LABEL}</TableCell>
                         <TableCell>{event.city || EMPTY_LABEL}</TableCell>
                         <TableCell>
                           {event.countryCode ? countryName(event.countryCode) : EMPTY_LABEL}
@@ -3538,7 +3546,7 @@ export default function EventsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
                         {t("noEntries")}
                       </TableCell>
                     </TableRow>

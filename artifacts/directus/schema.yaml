@@ -2741,7 +2741,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 6
+      sort: 7
       special: null
       translations: null
       validation: null
@@ -2781,7 +2781,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 7
+      sort: 8
       special: null
       translations: null
       validation: null
@@ -2821,7 +2821,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 8
+      sort: 9
       special: null
       translations: null
       validation: null
@@ -2861,7 +2861,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 9
+      sort: 10
       special: null
       translations: null
       validation: null
@@ -2903,13 +2903,53 @@ fields:
       readonly: false
       required: false
       searchable: false
-      sort: 10
+      sort: 11
       special:
         - m2m
       translations: null
       validation: null
       validation_message: null
       width: full
+  - collection: other_events
+    field: venue
+    type: string
+    meta:
+      collection: other_events
+      conditions: null
+      display: null
+      display_options: null
+      field: venue
+      group: null
+      hidden: false
+      interface: input
+      note: Salle, lieu ou venue de l'évènement.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: venue
+      table: other_events
+      data_type: character varying
+      default_value: null
+      max_length: 200
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: other_events_attendees
     field: id
     type: integer
@@ -6620,7 +6660,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 6
+      sort: 7
       special: null
       translations: null
       validation: null
@@ -6660,7 +6700,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 7
+      sort: 8
       special: null
       translations: null
       validation: null
@@ -6700,7 +6740,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 8
+      sort: 9
       special: null
       translations: null
       validation: null
@@ -6740,7 +6780,7 @@ fields:
       readonly: false
       required: false
       searchable: true
-      sort: 9
+      sort: 10
       special: null
       translations: null
       validation: null
@@ -6782,13 +6822,53 @@ fields:
       readonly: false
       required: false
       searchable: false
-      sort: 10
+      sort: 11
       special:
         - m2m
       translations: null
       validation: null
       validation_message: null
       width: full
+  - collection: tech_events
+    field: venue
+    type: string
+    meta:
+      collection: tech_events
+      conditions: null
+      display: null
+      display_options: null
+      field: venue
+      group: null
+      hidden: false
+      interface: input
+      note: Salle, lieu ou venue de l'évènement.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: venue
+      table: tech_events
+      data_type: character varying
+      default_value: null
+      max_length: 200
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: tech_events_attendees
     field: id
     type: integer

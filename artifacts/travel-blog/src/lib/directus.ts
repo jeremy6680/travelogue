@@ -222,6 +222,7 @@ type DirectusTechEvent = {
   event_name: string;
   start_date: string;
   end_date: string | null;
+  venue: string | null;
   trip_id: number | DirectusWeddingRelation;
   city: string | null;
   country_code: string | null;
@@ -238,6 +239,7 @@ type DirectusOtherEvent = {
   event_name: string;
   start_date: string;
   end_date: string | null;
+  venue: string | null;
   trip_id: number | DirectusWeddingRelation;
   city: string | null;
   country_code: string | null;
@@ -498,6 +500,21 @@ const TECH_EVENT_FIELDS = [
   "event_name",
   "start_date",
   "end_date",
+  "venue",
+  "city",
+  "country_code",
+  { trip_id: ["id", "name"] },
+  "photos_link",
+  "article_link",
+  "notes",
+  { attendees_people: [{ people_id: ["display_name"] }] },
+] as const;
+
+const TECH_EVENT_FIELDS_LEGACY = [
+  "id",
+  "event_name",
+  "start_date",
+  "end_date",
   "city",
   "country_code",
   { trip_id: ["id", "name"] },
@@ -508,6 +525,21 @@ const TECH_EVENT_FIELDS = [
 ] as const;
 
 const OTHER_EVENT_FIELDS = [
+  "id",
+  "event_name",
+  "start_date",
+  "end_date",
+  "venue",
+  "city",
+  "country_code",
+  { trip_id: ["id", "name"] },
+  "photos_link",
+  "article_link",
+  "notes",
+  { attendees_people: [{ people_id: ["display_name"] }] },
+] as const;
+
+const OTHER_EVENT_FIELDS_LEGACY = [
   "id",
   "event_name",
   "start_date",
@@ -832,6 +864,7 @@ function mapTechEvent(event: DirectusTechEvent): TechEvent {
     eventName: event.event_name,
     startDate: event.start_date,
     endDate: event.end_date,
+    venue: event.venue,
     city: event.city,
     countryCode: event.country_code,
     tripId: getRelationId(event.trip_id),
@@ -849,6 +882,7 @@ function mapOtherEvent(event: DirectusOtherEvent): OtherEvent {
     eventName: event.event_name,
     startDate: event.start_date,
     endDate: event.end_date,
+    venue: event.venue,
     city: event.city,
     countryCode: event.country_code,
     tripId: getRelationId(event.trip_id),
@@ -1252,12 +1286,23 @@ export async function fetchSportEvents(): Promise<SportEvent[]> {
 
 export async function fetchTechEvents(): Promise<TechEvent[]> {
   try {
-    const techEvents = (await directus.request(
-      readItems("tech_events", {
-        sort: ["-start_date", "event_name"],
-        fields: [...TECH_EVENT_FIELDS] as any,
-        limit: -1,
-      }),
+    const techEvents = (await requestWithFallback(
+      () =>
+        directus.request(
+          readItems("tech_events", {
+            sort: ["-start_date", "event_name"],
+            fields: [...TECH_EVENT_FIELDS] as any,
+            limit: -1,
+          }),
+        ),
+      () =>
+        directus.request(
+          readItems("tech_events", {
+            sort: ["-start_date", "event_name"],
+            fields: [...TECH_EVENT_FIELDS_LEGACY] as any,
+            limit: -1,
+          }),
+        ),
     )) as unknown as DirectusTechEvent[];
 
     return techEvents.map(mapTechEvent);
@@ -1272,12 +1317,23 @@ export async function fetchTechEvents(): Promise<TechEvent[]> {
 
 export async function fetchOtherEvents(): Promise<OtherEvent[]> {
   try {
-    const otherEvents = (await directus.request(
-      readItems("other_events", {
-        sort: ["-start_date", "event_name"],
-        fields: [...OTHER_EVENT_FIELDS] as any,
-        limit: -1,
-      }),
+    const otherEvents = (await requestWithFallback(
+      () =>
+        directus.request(
+          readItems("other_events", {
+            sort: ["-start_date", "event_name"],
+            fields: [...OTHER_EVENT_FIELDS] as any,
+            limit: -1,
+          }),
+        ),
+      () =>
+        directus.request(
+          readItems("other_events", {
+            sort: ["-start_date", "event_name"],
+            fields: [...OTHER_EVENT_FIELDS_LEGACY] as any,
+            limit: -1,
+          }),
+        ),
     )) as unknown as DirectusOtherEvent[];
 
     return otherEvents.map(mapOtherEvent);
