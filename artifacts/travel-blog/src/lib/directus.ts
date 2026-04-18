@@ -199,6 +199,9 @@ type DirectusSportEvent = {
   race_name: string | null;
   home_team: string | null;
   away_team: string | null;
+  home_team_stars: string | null;
+  away_team_stars: string | null;
+  event_stars?: string | null;
   winner_name: string | null;
   second_place_name: string | null;
   third_place_name: string | null;
@@ -424,6 +427,32 @@ const CONCERT_FIELDS = [
 ] as const;
 
 const SPORT_EVENT_FIELDS = [
+  "id",
+  "sport",
+  "competition",
+  "trip_id",
+  "event_date",
+  "city",
+  "country_code",
+  "venue",
+  "race_name",
+  "home_team",
+  "away_team",
+  "home_team_stars",
+  "away_team_stars",
+  "event_stars",
+  "winner_name",
+  "second_place_name",
+  "third_place_name",
+  "home_score",
+  "away_score",
+  "photos_link",
+  "article_link",
+  "notes",
+  { attendees_people: [{ people_id: ["display_name"] }] },
+] as const;
+
+const SPORT_EVENT_FIELDS_LEGACY = [
   "id",
   "sport",
   "competition",
@@ -719,6 +748,9 @@ function mapSportEvent(event: DirectusSportEvent): SportEvent {
     raceName: event.race_name,
     homeTeam: event.home_team,
     awayTeam: event.away_team,
+    homeTeamStars: event.home_team_stars,
+    awayTeamStars: event.away_team_stars,
+    eventStars: event.event_stars ?? null,
     winnerName: event.winner_name,
     secondPlaceName: event.second_place_name,
     thirdPlaceName: event.third_place_name,
@@ -1139,12 +1171,23 @@ export async function fetchConcerts(): Promise<Concert[]> {
 
 export async function fetchSportEvents(): Promise<SportEvent[]> {
   try {
-    const sportEvents = (await directus.request(
-      readItems("sport_events", {
-        sort: ["-event_date", "sport", "competition"],
-        fields: [...SPORT_EVENT_FIELDS] as any,
-        limit: -1,
-      }),
+    const sportEvents = (await requestWithFallback(
+      () =>
+        directus.request(
+          readItems("sport_events", {
+            sort: ["-event_date", "sport", "competition"],
+            fields: [...SPORT_EVENT_FIELDS] as any,
+            limit: -1,
+          }),
+        ),
+      () =>
+        directus.request(
+          readItems("sport_events", {
+            sort: ["-event_date", "sport", "competition"],
+            fields: [...SPORT_EVENT_FIELDS_LEGACY] as any,
+            limit: -1,
+          }),
+        ),
     )) as unknown as DirectusSportEvent[];
 
     return sportEvents.map(mapSportEvent);

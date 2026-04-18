@@ -65,8 +65,47 @@ export function isRacePodiumSport(value: string | null | undefined) {
   return normalizedValue === "motorsport" || normalizedValue === "cycling";
 }
 
+export function parseCommaSeparatedValues(value: string | null | undefined) {
+  const uniqueValues = new Map<string, string>();
+
+  for (const item of value?.split(",") ?? []) {
+    const trimmed = item.trim();
+    if (!trimmed) continue;
+
+    const normalized = trimmed.toLocaleLowerCase();
+    if (!uniqueValues.has(normalized)) {
+      uniqueValues.set(normalized, trimmed);
+    }
+  }
+
+  return Array.from(uniqueValues.values());
+}
+
 export function getSportEventMatchup(event: SportEvent) {
   return [event.homeTeam, event.awayTeam].filter(Boolean).join(" vs ");
+}
+
+function dedupeValues(values: string[]) {
+  const uniqueValues = new Map<string, string>();
+
+  for (const value of values) {
+    const normalizedValue = value.trim().toLocaleLowerCase();
+    if (!normalizedValue || uniqueValues.has(normalizedValue)) continue;
+    uniqueValues.set(normalizedValue, value.trim());
+  }
+
+  return Array.from(uniqueValues.values());
+}
+
+export function getSportEventStars(event: SportEvent) {
+  if (isRacePodiumSport(event.sport)) {
+    return parseCommaSeparatedValues(event.eventStars);
+  }
+
+  return dedupeValues([
+    ...parseCommaSeparatedValues(event.homeTeamStars),
+    ...parseCommaSeparatedValues(event.awayTeamStars),
+  ]);
 }
 
 export function getSportEventName(event: SportEvent, locale: Locale) {
@@ -108,6 +147,10 @@ export function getSportEventResultSummary(event: SportEvent, locale: Locale) {
     return event.winnerName
       ? `${locale === "fr" ? "1er" : "1st"} : ${event.winnerName}`
       : "";
+  }
+
+  if (event.homeScore !== null && event.awayScore !== null) {
+    return `${event.homeScore} - ${event.awayScore}`;
   }
 
   const items = getSportEventResultItems(event, locale);

@@ -32,6 +32,7 @@ import {
   formatSportLabelLowercase,
   getSportEventName,
   getSportEventResultItems,
+  getSportEventStars,
   isRacePodiumSport,
 } from "@/lib/event-options";
 import { getEventDetailHref, type EventKind } from "@/lib/event-links";
@@ -488,6 +489,7 @@ function buildSportDetail(
           .filter(Boolean)
           .join(", ")
       : null;
+  const starsValue = getSportEventStars(event).join(", ");
 
   return {
     kind: "sport-events",
@@ -511,13 +513,12 @@ function buildSportDetail(
     meta: [
       { label: locale === "fr" ? "Sport" : "Sport", value: formatSportLabelLowercase(event.sport, locale) },
       { label: locale === "fr" ? "Compétition" : "Competition", value: competitionLabel },
+      ...(starsValue
+        ? [{ label: locale === "fr" ? "Stars" : "Stars", value: starsValue }]
+        : []),
       ...(podiumValue
         ? [{ label: locale === "fr" ? "Podium" : "Podium", value: podiumValue }]
         : resultItems.map((item) => ({ label: item.label, value: item.value ?? "—" }))),
-      {
-        label: locale === "fr" ? "Lieu" : "Location",
-        value: buildVenueLocation(event.venue, event.city, event.countryCode, countryName) || "—",
-      },
     ],
   };
 }

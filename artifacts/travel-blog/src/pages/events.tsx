@@ -17,6 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -42,7 +50,9 @@ import {
   getConcertGenreValue,
   getSportEventName,
   getSportEventResultSummary,
+  getSportEventStars,
   getSportEventTitle,
+  parseCommaSeparatedValues,
 } from "@/lib/event-options";
 import { getEventDetailHref } from "@/lib/event-links";
 import { useI18n } from "@/lib/i18n";
@@ -83,6 +93,14 @@ type SportFilters = {
   companion: string[];
   keyword: string;
   sortBy: "eventDate" | "venue" | "city" | "country" | "sport" | "competition";
+  sortDirection: SortDirection;
+};
+
+type SportPlayerStatsFilters = {
+  sport: string[];
+  team: string[];
+  keyword: string;
+  sortBy: "sport" | "player" | "count";
   sortDirection: SortDirection;
 };
 
@@ -179,6 +197,23 @@ type UnifiedEventRow = {
   countryCode: string;
 };
 
+type SportPlayerMatchRow = {
+  id: number;
+  href: string;
+  title: string;
+  eventDate: string;
+};
+
+type SportPlayerStatsRow = {
+  key: string;
+  sport: string;
+  sportLabel: string;
+  player: string;
+  teams: string[];
+  count: number;
+  matches: SportPlayerMatchRow[];
+};
+
 const EMPTY_LABEL = "—";
 const EVENT_STATS_MONTHS = Array.from({ length: 12 }, (_, index) => index);
 const EVENT_CHART_COLORS = {
@@ -221,6 +256,14 @@ const DEFAULT_SPORT_FILTERS: SportFilters = {
   companion: [],
   keyword: "",
   sortBy: "eventDate",
+  sortDirection: "desc",
+};
+
+const DEFAULT_SPORT_PLAYER_STATS_FILTERS: SportPlayerStatsFilters = {
+  sport: [],
+  team: [],
+  keyword: "",
+  sortBy: "count",
   sortDirection: "desc",
 };
 
@@ -583,6 +626,83 @@ function SortHeaderButton({
   );
 }
 
+function SportPlayerMatchesCell({
+  matches,
+  locale,
+  formatDate,
+}: {
+  matches: SportPlayerMatchRow[];
+  locale: "fr" | "en";
+  formatDate: (value: string | Date, style: "short" | "long" | "monthYear") => string;
+}) {
+  if (matches.length === 0) {
+    return <>{EMPTY_LABEL}</>;
+  }
+
+  if (matches.length === 1) {
+    const match = matches[0];
+
+    return (
+      <Link
+        href={match.href}
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+      >
+        {match.title}
+      </Link>
+    );
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-auto px-0 text-sm text-muted-foreground underline underline-offset-4"
+        >
+          {locale === "fr" ? `${matches.length} matches` : `${matches.length} matches`}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            {locale === "fr" ? "Matches où ce joueur a été vu" : "Matches where this player was seen"}
+          </DialogTitle>
+          <DialogDescription>
+            {locale === "fr"
+              ? "Choisis un match pour ouvrir sa fiche détaillée."
+              : "Choose a match to open its details page."}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          {matches.map((match) => (
+            <div
+              key={match.id}
+              className="flex flex-col gap-1 rounded-lg border border-border/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="space-y-1">
+                <Link
+                  href={match.href}
+                  className="font-medium text-foreground underline decoration-[rgba(20,70,90,0.22)] underline-offset-4 transition-colors hover:text-primary"
+                >
+                  {match.title}
+                </Link>
+                <p className="text-sm text-muted-foreground">{formatDate(match.eventDate, "short")}</p>
+              </div>
+              <Link
+                href={match.href}
+                className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                {locale === "fr" ? "Voir la fiche" : "View details"}
+              </Link>
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function TopListCard({
   title,
   rows,
@@ -643,6 +763,9 @@ export default function EventsPage() {
   const [concertFilters, setConcertFilters] = useState<ConcertFilters>(DEFAULT_CONCERT_FILTERS);
   const [runningFilters, setRunningFilters] = useState<RunningFilters>(DEFAULT_RUNNING_FILTERS);
   const [sportFilters, setSportFilters] = useState<SportFilters>(DEFAULT_SPORT_FILTERS);
+  const [sportPlayerStatsFilters, setSportPlayerStatsFilters] = useState<SportPlayerStatsFilters>(
+    DEFAULT_SPORT_PLAYER_STATS_FILTERS,
+  );
   const [techEventFilters, setTechEventFilters] = useState<TechEventFilters>(DEFAULT_TECH_EVENT_FILTERS);
   const [weddingFilters, setWeddingFilters] = useState<WeddingFilters>(DEFAULT_WEDDING_FILTERS);
 
@@ -680,6 +803,15 @@ export default function EventsPage() {
 
   const toggleSportSort = (sortBy: SportFilters["sortBy"]) => {
     setSportFilters((current) => ({
+      ...current,
+      sortBy,
+      sortDirection:
+        current.sortBy === sortBy && current.sortDirection === "desc" ? "asc" : "desc",
+    }));
+  };
+
+  const toggleSportPlayerStatsSort = (sortBy: SportPlayerStatsFilters["sortBy"]) => {
+    setSportPlayerStatsFilters((current) => ({
       ...current,
       sortBy,
       sortDirection:
@@ -763,6 +895,144 @@ export default function EventsPage() {
       attendeesPeople: event.attendeesPeople,
     }));
   }, [locale, runningQuery.data]);
+
+  const sportPlayerStatsRows = useMemo<SportPlayerStatsRow[]>(() => {
+    const rows = new Map<
+      string,
+      {
+        sport: string;
+        sportLabel: string;
+        player: string;
+        teams: Map<string, string>;
+        matches: Map<number, SportPlayerMatchRow>;
+      }
+    >();
+
+    for (const event of sportEventsQuery.data ?? []) {
+      const sportLabel = formatSportLabel(event.sport, locale) || event.sport;
+      const match = {
+        id: event.id,
+        href: getEventDetailHref("sport-events", event.id),
+        title: getSportEventTitle(event, locale) || getSportEventName(event, locale) || EMPTY_LABEL,
+        eventDate: event.eventDate,
+      };
+
+      const playerGroups = event.homeTeam || event.awayTeam
+        ? [
+            { team: event.homeTeam, players: parseCommaSeparatedValues(event.homeTeamStars) },
+            { team: event.awayTeam, players: parseCommaSeparatedValues(event.awayTeamStars) },
+          ]
+        : [{ team: null, players: getSportEventStars(event) }];
+
+      for (const side of playerGroups) {
+        const seenPlayers = new Set<string>();
+
+        for (const player of side.players) {
+          const normalizedPlayer = normalizeValue(player);
+          if (!normalizedPlayer || seenPlayers.has(normalizedPlayer)) continue;
+          seenPlayers.add(normalizedPlayer);
+
+          const key = `${normalizeValue(event.sport)}::${normalizedPlayer}`;
+          const row = rows.get(key) ?? {
+            sport: event.sport,
+            sportLabel,
+            player,
+            teams: new Map<string, string>(),
+            matches: new Map<number, SportPlayerMatchRow>(),
+          };
+
+          if (side.team?.trim()) {
+            row.teams.set(normalizeValue(side.team), side.team.trim());
+          }
+
+          row.matches.set(event.id, match);
+          rows.set(key, row);
+        }
+      }
+    }
+
+    return Array.from(rows.entries())
+      .map(([key, row]) => ({
+        key,
+        sport: row.sport,
+        sportLabel: row.sportLabel,
+        player: row.player,
+        teams: Array.from(row.teams.values()).toSorted((left, right) =>
+          left.localeCompare(right, locale, { sensitivity: "base" }),
+        ),
+        count: row.matches.size,
+        matches: Array.from(row.matches.values()).toSorted((left, right) =>
+          compareDates(left.eventDate, right.eventDate, "desc"),
+        ),
+      }))
+      .toSorted((left, right) => {
+        if (right.count !== left.count) return right.count - left.count;
+        return left.player.localeCompare(right.player, locale, { sensitivity: "base" });
+      });
+  }, [locale, sportEventsQuery.data]);
+
+  const sportPlayerStatsOptions = useMemo(
+    () => ({
+      sports: getSingleFacetOptions(
+        sportPlayerStatsRows.map((row) => row.sport),
+        locale,
+        (value) => formatSportLabel(value, locale) || value,
+      ),
+      teams: getSingleFacetOptions(sportPlayerStatsRows.flatMap((row) => row.teams), locale),
+    }),
+    [locale, sportPlayerStatsRows],
+  );
+
+  const filteredSportPlayerStats = useMemo(() => {
+    const rows = sportPlayerStatsRows.filter((row) => {
+      if (!includesSelectedValue(row.sport, sportPlayerStatsFilters.sport)) return false;
+
+      if (
+        sportPlayerStatsFilters.team.length > 0 &&
+        !row.teams.some((team) =>
+          sportPlayerStatsFilters.team.some(
+            (selectedTeam) => normalizeValue(team) === normalizeValue(selectedTeam),
+          ),
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        !matchesKeyword(
+          [
+            row.sportLabel,
+            row.player,
+            row.teams.join(", "),
+            ...row.matches.map((match) => match.title),
+          ],
+          sportPlayerStatsFilters.keyword,
+        )
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
+    const directionFactor = sportPlayerStatsFilters.sortDirection === "asc" ? 1 : -1;
+
+    return rows.toSorted((left, right) => {
+      switch (sportPlayerStatsFilters.sortBy) {
+        case "sport":
+          return compareValues(left.sportLabel, right.sportLabel, sportPlayerStatsFilters.sortDirection);
+        case "player":
+          return compareValues(left.player, right.player, sportPlayerStatsFilters.sortDirection);
+        case "count":
+        default:
+          if (left.count !== right.count) {
+            return (left.count - right.count) * directionFactor;
+          }
+
+          return compareValues(left.player, right.player, "asc");
+      }
+    });
+  }, [sportPlayerStatsFilters, sportPlayerStatsRows]);
 
   const concertOptions = useMemo(
     () => ({
@@ -2178,6 +2448,126 @@ export default function EventsPage() {
                   </Card>
                 ))}
               </div>
+            </section>
+
+            <section className="space-y-4">
+              <div>
+                <h2 className="font-serif text-2xl font-bold text-foreground">
+                  {locale === "fr" ? "Joueurs stars vus" : "Seen star players"}
+                </h2>
+              </div>
+              <Card className="border-border/60">
+                <CardHeader className="space-y-6">
+                  <SectionTitle
+                    title={locale === "fr" ? "Stats joueurs" : "Player stats"}
+                    count={filteredSportPlayerStats.length}
+                    titleClassName="text-blue-700"
+                  />
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <MultiSelectFilter
+                      label={locale === "fr" ? "Sports" : "Sports"}
+                      placeholder={locale === "fr" ? "Tous les sports" : "All sports"}
+                      options={sportPlayerStatsOptions.sports.map((option) => ({
+                        value: option.value,
+                        label: buildFilterLabel(option.text, option.count),
+                        triggerLabel: option.text,
+                      }))}
+                      selectedValues={sportPlayerStatsFilters.sport}
+                      onChange={(sport) =>
+                        setSportPlayerStatsFilters((current) => ({ ...current, sport }))
+                      }
+                      className="w-full"
+                    />
+                    <MultiSelectFilter
+                      label={locale === "fr" ? "Équipes" : "Teams"}
+                      placeholder={locale === "fr" ? "Toutes les équipes" : "All teams"}
+                      options={sportPlayerStatsOptions.teams.map((option) => ({
+                        value: option.value,
+                        label: buildFilterLabel(option.text, option.count),
+                        triggerLabel: option.text,
+                      }))}
+                      selectedValues={sportPlayerStatsFilters.team}
+                      onChange={(team) =>
+                        setSportPlayerStatsFilters((current) => ({ ...current, team }))
+                      }
+                      className="w-full"
+                    />
+                    <Input
+                      value={sportPlayerStatsFilters.keyword}
+                      onChange={(event) =>
+                        setSportPlayerStatsFilters((current) => ({
+                          ...current,
+                          keyword: event.target.value,
+                        }))
+                      }
+                      className="h-10"
+                      placeholder={locale === "fr" ? "Recherche libre" : "Keyword search"}
+                    />
+                  </div>
+                  <div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setSportPlayerStatsFilters(DEFAULT_SPORT_PLAYER_STATS_FILTERS)}
+                    >
+                      {t("clearFilters")}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>
+                          <SortHeaderButton
+                            label={locale === "fr" ? "Sport" : "Sport"}
+                            onClick={() => toggleSportPlayerStatsSort("sport")}
+                          />
+                        </TableHead>
+                        <TableHead>
+                          <SortHeaderButton
+                            label={locale === "fr" ? "Joueurs" : "Players"}
+                            onClick={() => toggleSportPlayerStatsSort("player")}
+                          />
+                        </TableHead>
+                        <TableHead>{locale === "fr" ? "Équipes" : "Teams"}</TableHead>
+                        <TableHead>
+                          <SortHeaderButton
+                            label={locale === "fr" ? "Nombre de fois" : "Count"}
+                            onClick={() => toggleSportPlayerStatsSort("count")}
+                          />
+                        </TableHead>
+                        <TableHead>{locale === "fr" ? "Matches" : "Matches"}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredSportPlayerStats.length ? (
+                        filteredSportPlayerStats.map((row) => (
+                          <TableRow key={row.key}>
+                            <TableCell>{row.sportLabel || EMPTY_LABEL}</TableCell>
+                            <TableCell className="font-medium">{row.player}</TableCell>
+                            <TableCell>{row.teams.join(", ") || EMPTY_LABEL}</TableCell>
+                            <TableCell>{row.count}</TableCell>
+                            <TableCell className="max-w-[320px]">
+                              <SportPlayerMatchesCell
+                                matches={row.matches}
+                                locale={locale}
+                                formatDate={formatDate}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                            {t("noEntries")}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             </section>
 
             <section className="space-y-4">

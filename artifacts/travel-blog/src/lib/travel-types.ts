@@ -308,6 +308,9 @@ export interface SportEvent {
   raceName: string | null;
   homeTeam: string | null;
   awayTeam: string | null;
+  homeTeamStars: string | null;
+  awayTeamStars: string | null;
+  eventStars: string | null;
   winnerName: string | null;
   secondPlaceName: string | null;
   thirdPlaceName: string | null;
