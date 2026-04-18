@@ -604,14 +604,13 @@ function buildTechDetail(
     icon: Laptop2,
     title: event.eventName,
     subtitle: appendNoteToSubtitle(
-      buildLocation(event.city, event.countryCode, countryName) ||
-        (locale === "fr" ? "Conférence" : "Conference"),
+      event.venue || (locale === "fr" ? "Conférence" : "Conference"),
       event.notes,
     ),
     date: event.startDate,
     city: event.city,
     countryCode: event.countryCode,
-    venue: null,
+    venue: event.venue,
     tripId: event.tripId,
     tripName: event.tripName,
     attendees: event.attendeesPeople,
@@ -626,7 +625,7 @@ function buildTechDetail(
       },
       {
         label: locale === "fr" ? "Lieu" : "Location",
-        value: buildLocation(event.city, event.countryCode, countryName) || "—",
+        value: event.venue || "—",
       },
       { label: locale === "fr" ? "Voyage lié" : "Linked trip", value: event.tripName ?? "—" },
     ],
@@ -694,14 +693,13 @@ function buildOtherEventDetail(
     icon: CalendarRange,
     title: event.eventName,
     subtitle: appendNoteToSubtitle(
-      buildLocation(event.city, event.countryCode, countryName) ||
-        (locale === "fr" ? "Evènement" : "Event"),
+      event.venue || (locale === "fr" ? "Evènement" : "Event"),
       event.notes,
     ),
     date: event.startDate,
     city: event.city,
     countryCode: event.countryCode,
-    venue: null,
+    venue: event.venue,
     tripId: event.tripId,
     tripName: event.tripName,
     attendees: event.attendeesPeople,
@@ -716,7 +714,7 @@ function buildOtherEventDetail(
       },
       {
         label: locale === "fr" ? "Lieu" : "Location",
-        value: buildLocation(event.city, event.countryCode, countryName) || "—",
+        value: event.venue || "—",
       },
       { label: locale === "fr" ? "Voyage lié" : "Linked trip", value: event.tripName ?? "—" },
     ],
