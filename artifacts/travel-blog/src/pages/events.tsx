@@ -95,7 +95,7 @@ type ConcertFilters = {
   genre: string[];
   companion: string[];
   keyword: string;
-  sortBy: "eventDate" | "venue" | "city" | "country" | "artist" | "eventName" | "genre";
+  sortBy: "eventDate" | "venue" | "city" | "country" | "artist" | "eventName" | "genre" | "score";
   sortDirection: SortDirection;
 };
 
@@ -108,7 +108,12 @@ type SportFilters = {
   venue: string[];
   companion: string[];
   keyword: string;
-  sortBy: "eventDate" | "venue" | "city" | "country" | "sport" | "competition";
+  sortBy: "eventDate" | "venue" | "city" | "country" | "sport" | "competition" | "score";
+  sortDirection: SortDirection;
+};
+
+type OverviewSort = {
+  sortBy: "date" | "score";
   sortDirection: SortDirection;
 };
 
@@ -366,6 +371,11 @@ const DEFAULT_OVERVIEW_FILTERS: OverviewFilters = {
   country: [],
 };
 
+const DEFAULT_OVERVIEW_SORT: OverviewSort = {
+  sortBy: "date",
+  sortDirection: "desc",
+};
+
 function getYear(value: string | null | undefined) {
   return value?.slice(0, 4) ?? "";
 }
@@ -615,6 +625,15 @@ function compareValues(left: string, right: string, direction: SortDirection) {
 
 function compareDates(left: string, right: string, direction: SortDirection) {
   return compareValues(left, right, direction);
+}
+
+function compareScores(left: number | null, right: number | null, direction: SortDirection) {
+  if (left == null && right == null) return 0;
+  if (left == null) return 1;
+  if (right == null) return -1;
+
+  const factor = direction === "asc" ? 1 : -1;
+  return (left - right) * factor;
 }
 
 function EventLink({
@@ -871,6 +890,7 @@ export default function EventsPage() {
   const weddingsQuery = useWeddingsQuery();
   const [view, setView] = useState<EventView>("all");
   const [overviewFilters, setOverviewFilters] = useState<OverviewFilters>(DEFAULT_OVERVIEW_FILTERS);
+  const [overviewSort, setOverviewSort] = useState<OverviewSort>(DEFAULT_OVERVIEW_SORT);
   const [concertFilters, setConcertFilters] = useState<ConcertFilters>(DEFAULT_CONCERT_FILTERS);
   const [runningFilters, setRunningFilters] = useState<RunningFilters>(DEFAULT_RUNNING_FILTERS);
   const [otherEventFilters, setOtherEventFilters] = useState<OtherEventFilters>(
@@ -909,6 +929,14 @@ export default function EventsPage() {
   const toggleConcertSort = (sortBy: ConcertFilters["sortBy"]) => {
     setConcertFilters((current) => ({
       ...current,
+      sortBy,
+      sortDirection:
+        current.sortBy === sortBy && current.sortDirection === "desc" ? "asc" : "desc",
+    }));
+  };
+
+  const toggleOverviewSort = (sortBy: OverviewSort["sortBy"]) => {
+    setOverviewSort((current) => ({
       sortBy,
       sortDirection:
         current.sortBy === sortBy && current.sortDirection === "desc" ? "asc" : "desc",
@@ -1414,7 +1442,7 @@ export default function EventsPage() {
   );
 
   const filteredOverviewRows = useMemo(() => {
-    return overviewRows.filter((event) => {
+    const rows = overviewRows.filter((event) => {
       if (!includesSelectedValue(getYear(event.date), overviewFilters.year)) return false;
       if (!includesSelectedValue(event.kind, overviewFilters.category)) return false;
       if (!includesSelectedValue(getScoreFilterValue(event.score), overviewFilters.score)) return false;
@@ -1422,7 +1450,20 @@ export default function EventsPage() {
       if (!includesSelectedValue(event.countryCode, overviewFilters.country)) return false;
       return true;
     });
-  }, [overviewFilters, overviewRows]);
+
+    return rows.toSorted((left, right) => {
+      switch (overviewSort.sortBy) {
+        case "score":
+          return (
+            compareScores(left.score, right.score, overviewSort.sortDirection) ||
+            compareDates(left.date, right.date, "desc")
+          );
+        case "date":
+        default:
+          return compareDates(left.date, right.date, overviewSort.sortDirection);
+      }
+    });
+  }, [overviewFilters, overviewRows, overviewSort]);
 
   const filteredConcerts = useMemo(() => {
     const rows = (concertsQuery.data ?? []).filter((concert) => {
@@ -1473,6 +1514,14 @@ export default function EventsPage() {
             formatConcertGenreLabel(left.genre, left.subgenre, locale),
             formatConcertGenreLabel(right.genre, right.subgenre, locale),
             concertFilters.sortDirection,
+          );
+        case "score":
+          return (
+            compareScores(
+              getRatableEventScore(left, CONCERT_RATING_KEYS),
+              getRatableEventScore(right, CONCERT_RATING_KEYS),
+              concertFilters.sortDirection,
+            ) || compareDates(left.eventDate, right.eventDate, "desc")
           );
         case "eventDate":
         default:
@@ -1534,6 +1583,14 @@ export default function EventsPage() {
           );
         case "competition":
           return compareValues(left.competition ?? "", right.competition ?? "", sportFilters.sortDirection);
+        case "score":
+          return (
+            compareScores(
+              getRatableEventScore(left),
+              getRatableEventScore(right),
+              sportFilters.sortDirection,
+            ) || compareDates(left.eventDate, right.eventDate, "desc")
+          );
         case "eventDate":
         default:
           return compareDates(left.eventDate, right.eventDate, sportFilters.sortDirection);
@@ -2262,12 +2319,22 @@ export default function EventsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{locale === "fr" ? "Date" : "Date"}</TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Date" : "Date"}
+                        onClick={() => toggleOverviewSort("date")}
+                      />
+                    </TableHead>
                     <TableHead>{locale === "fr" ? "Catégorie" : "Category"}</TableHead>
                     <TableHead>{locale === "fr" ? "Titre / nom" : "Title / name"}</TableHead>
                     <TableHead>{locale === "fr" ? "Ville" : "City"}</TableHead>
                     <TableHead>{locale === "fr" ? "Pays" : "Country"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Score" : "Score"}</TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Score" : "Score"}
+                        onClick={() => toggleOverviewSort("score")}
+                      />
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -3063,7 +3130,12 @@ export default function EventsPage() {
                         onClick={() => toggleConcertSort("country")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Score" : "Score"}</TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Score" : "Score"}
+                        onClick={() => toggleConcertSort("score")}
+                      />
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -3263,7 +3335,12 @@ export default function EventsPage() {
                         onClick={() => toggleSportSort("country")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Score" : "Score"}</TableHead>
+                    <TableHead>
+                      <SortHeaderButton
+                        label={locale === "fr" ? "Score" : "Score"}
+                        onClick={() => toggleSportSort("score")}
+                      />
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
