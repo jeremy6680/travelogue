@@ -184,6 +184,11 @@ type DirectusConcert = {
   photos_link: string | null;
   article_link: string | null;
   notes: string | null;
+  rating_event_appeal?: number | null;
+  rating_performance?: number | null;
+  rating_atmosphere?: number | null;
+  rating_venue?: number | null;
+  rating_stakes?: number | null;
   attendees_people?:
     | Array<{ people_id?: { display_name?: string | null } | null }>
     | null;
@@ -212,6 +217,11 @@ type DirectusSportEvent = {
   photos_link: string | null;
   article_link: string | null;
   notes: string | null;
+  rating_event_appeal?: number | null;
+  rating_performance?: number | null;
+  rating_atmosphere?: number | null;
+  rating_venue?: number | null;
+  rating_stakes?: number | null;
   attendees_people?:
     | Array<{ people_id?: { display_name?: string | null } | null }>
     | null;
@@ -443,6 +453,28 @@ const CONCERT_FIELDS = [
   "photos_link",
   "article_link",
   "notes",
+  "rating_event_appeal",
+  "rating_performance",
+  "rating_atmosphere",
+  "rating_venue",
+  "rating_stakes",
+  { attendees_people: [{ people_id: ["display_name"] }] },
+] as const;
+
+const CONCERT_FIELDS_LEGACY = [
+  "id",
+  "artist",
+  "genre",
+  "subgenre",
+  "event_name",
+  "trip_id",
+  "event_date",
+  "city",
+  "country_code",
+  "venue",
+  "photos_link",
+  "article_link",
+  "notes",
   { attendees_people: [{ people_id: ["display_name"] }] },
 ] as const;
 
@@ -469,6 +501,11 @@ const SPORT_EVENT_FIELDS = [
   "photos_link",
   "article_link",
   "notes",
+  "rating_event_appeal",
+  "rating_performance",
+  "rating_atmosphere",
+  "rating_venue",
+  "rating_stakes",
   { attendees_people: [{ people_id: ["display_name"] }] },
 ] as const;
 
@@ -796,6 +833,11 @@ function mapConcert(concert: DirectusConcert): Concert {
     photosLink: concert.photos_link,
     articleLink: concert.article_link,
     notes: concert.notes,
+    ratingEventAppeal: concert.rating_event_appeal ?? null,
+    ratingPerformance: concert.rating_performance ?? null,
+    ratingAtmosphere: concert.rating_atmosphere ?? null,
+    ratingVenue: concert.rating_venue ?? null,
+    ratingStakes: concert.rating_stakes ?? null,
     attendeesPeople: extractPeopleDisplayNames(concert.attendees_people),
   };
 }
@@ -824,6 +866,11 @@ function mapSportEvent(event: DirectusSportEvent): SportEvent {
     photosLink: event.photos_link,
     articleLink: event.article_link,
     notes: event.notes,
+    ratingEventAppeal: event.rating_event_appeal ?? null,
+    ratingPerformance: event.rating_performance ?? null,
+    ratingAtmosphere: event.rating_atmosphere ?? null,
+    ratingVenue: event.rating_venue ?? null,
+    ratingStakes: event.rating_stakes ?? null,
     attendeesPeople: extractPeopleDisplayNames(event.attendees_people),
   };
 }
@@ -1235,12 +1282,23 @@ export async function fetchMediaAssets(): Promise<MediaAsset[]> {
 
 export async function fetchConcerts(): Promise<Concert[]> {
   try {
-    const concerts = (await directus.request(
-      readItems("concerts", {
-        sort: ["-event_date", "artist"],
-        fields: [...CONCERT_FIELDS] as any,
-        limit: -1,
-      }),
+    const concerts = (await requestWithFallback(
+      () =>
+        directus.request(
+          readItems("concerts", {
+            sort: ["-event_date", "artist"],
+            fields: [...CONCERT_FIELDS] as any,
+            limit: -1,
+          }),
+        ),
+      () =>
+        directus.request(
+          readItems("concerts", {
+            sort: ["-event_date", "artist"],
+            fields: [...CONCERT_FIELDS_LEGACY] as any,
+            limit: -1,
+          }),
+        ),
     )) as unknown as DirectusConcert[];
 
     return concerts.map(mapConcert);

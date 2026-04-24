@@ -12,6 +12,7 @@ import {
   Laptop2,
   MapPin,
   Mic2,
+  Star,
   Timer,
   Trophy,
   Users,
@@ -37,6 +38,15 @@ import {
   getSportEventStars,
   isRacePodiumSport,
 } from "@/lib/event-options";
+import {
+  CONCERT_RATING_KEYS,
+  EVENT_RATING_KEYS,
+  getEventRatings,
+  getEventScore,
+  getRatingLabel,
+  type EventRatingKey,
+  type EventRatings,
+} from "@/lib/event-ratings";
 import { getEventDetailHref, type EventKind } from "@/lib/event-links";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -74,6 +84,10 @@ type EventDetailModel = {
   storyLink: string | null;
   videoEmbedUrl: string | null;
   meta: Array<{ label: string; value: string }>;
+  ratings: EventRatings | null;
+  ratingKeys: EventRatingKey[];
+  ratingContext: "default" | "concert";
+  score: number | null;
 };
 
 type RelatedEventLink = {
@@ -438,6 +452,86 @@ function SectionLinks({
   );
 }
 
+function RatingStars({ rating }: { rating: number | null }) {
+  const normalizedRating = rating ?? 0;
+
+  return (
+    <span className="inline-flex items-center gap-0.5" aria-label={`Note ${normalizedRating} sur 5`}>
+      {Array.from({ length: 5 }, (_, index) => {
+        const fillRatio = Math.max(0, Math.min(1, normalizedRating - index));
+
+        return (
+          <span key={index} className="relative h-4 w-4 text-primary">
+            <Star className="absolute inset-0 h-4 w-4 text-muted-foreground/35" />
+            {fillRatio > 0 ? (
+              <span
+                className="absolute inset-0 overflow-hidden text-primary"
+                style={{ width: `${fillRatio * 100}%` }}
+              >
+                <Star className="h-4 w-4 fill-current" />
+              </span>
+            ) : null}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+function EventRatingsBlock({
+  locale,
+  ratings,
+  ratingKeys,
+  ratingContext,
+  score,
+}: {
+  locale: "fr" | "en";
+  ratings: EventRatings;
+  ratingKeys: EventRatingKey[];
+  ratingContext: "default" | "concert";
+  score: number | null;
+}) {
+  return (
+    <div className="rounded-[1.75rem] border border-border/60 bg-card/70 p-6">
+      <div className="flex items-center gap-3">
+        <Star className="h-5 w-5 text-primary" />
+        <div>
+          <p className="text-xs font-mono uppercase tracking-[0.22em] text-muted-foreground">
+            {locale === "fr" ? "Notes" : "Ratings"}
+          </p>
+          <h2 className="text-2xl font-serif font-bold text-foreground">
+            {locale === "fr" ? "Score de l'évènement" : "Event score"}
+          </h2>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-[1.25rem] border border-border/60 bg-background/80 p-4">
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-sm font-semibold text-foreground">
+            {locale === "fr" ? "Score" : "Score"}
+          </span>
+          <div className="flex items-center">
+            <RatingStars rating={score} />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {ratingKeys.map((key) => (
+          <div key={key} className="flex items-center justify-between gap-4">
+            <span className="text-sm text-muted-foreground">
+              {getRatingLabel(key, locale, ratingContext)}
+            </span>
+            <div className="flex items-center">
+              <RatingStars rating={ratings[key]} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function buildConcertDetail(
   concert: Concert,
   locale: "fr" | "en",
@@ -471,6 +565,10 @@ function buildConcertDetail(
     galleryLink,
     storyLink,
     videoEmbedUrl,
+    ratings: getEventRatings(concert),
+    ratingKeys: CONCERT_RATING_KEYS,
+    ratingContext: "concert",
+    score: getEventScore(concert, CONCERT_RATING_KEYS),
     meta: [
       { label: locale === "fr" ? "Evènement" : "Event", value: concert.eventName ?? "—" },
       { label: locale === "fr" ? "Genre" : "Genre", value: genreLabel || "—" },
@@ -526,6 +624,10 @@ function buildSportDetail(
     galleryLink,
     storyLink,
     videoEmbedUrl,
+    ratings: getEventRatings(event),
+    ratingKeys: EVENT_RATING_KEYS,
+    ratingContext: "default",
+    score: getEventScore(event),
     meta: [
       { label: locale === "fr" ? "Sport" : "Sport", value: formatSportLabelLowercase(event.sport, locale) },
       { label: locale === "fr" ? "Compétition" : "Competition", value: competitionLabel },
@@ -572,6 +674,10 @@ function buildWeddingDetail(
     galleryLink,
     storyLink,
     videoEmbedUrl,
+    ratings: null,
+    ratingKeys: [],
+    ratingContext: "default",
+    score: null,
     meta: [
       { label: locale === "fr" ? "Couple" : "Couple", value: marriedPeople },
       {
@@ -617,6 +723,10 @@ function buildTechDetail(
     galleryLink,
     storyLink,
     videoEmbedUrl,
+    ratings: null,
+    ratingKeys: [],
+    ratingContext: "default",
+    score: null,
     meta: [
       { label: locale === "fr" ? "Evènement" : "Event", value: event.eventName },
       {
@@ -663,6 +773,10 @@ function buildRunningDetail(
     galleryLink,
     storyLink,
     videoEmbedUrl,
+    ratings: null,
+    ratingKeys: [],
+    ratingContext: "default",
+    score: null,
     meta: [
       { label: locale === "fr" ? "Epreuve" : "Race", value: event.eventName },
       { label: locale === "fr" ? "Distance" : "Distance", value: distanceLabel },
@@ -706,6 +820,10 @@ function buildOtherEventDetail(
     galleryLink,
     storyLink,
     videoEmbedUrl,
+    ratings: null,
+    ratingKeys: [],
+    ratingContext: "default",
+    score: null,
     meta: [
       { label: locale === "fr" ? "Evènement" : "Event", value: event.eventName },
       {
@@ -1285,6 +1403,16 @@ export default function EventDetailPage() {
           </div>
 
           <div className="space-y-6">
+            {detail.ratings ? (
+              <EventRatingsBlock
+                locale={locale}
+                ratings={detail.ratings}
+                ratingKeys={detail.ratingKeys}
+                ratingContext={detail.ratingContext}
+                score={detail.score}
+              />
+            ) : null}
+
             {hasVideo ? (
               <section className="rounded-[1.75rem] border border-border/60 bg-card/70 p-6">
                 <div className="flex items-center gap-3">

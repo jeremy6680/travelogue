@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowUpDown, ExternalLink } from "lucide-react";
+import { ArrowUpDown, ExternalLink, Star } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -50,11 +50,18 @@ import {
   formatSportLabelLowercase,
   getConcertGenreValue,
   getSportEventName,
-  getSportEventResultSummary,
   getSportEventStars,
   getSportEventTitle,
   parseCommaSeparatedValues,
 } from "@/lib/event-options";
+import {
+  CONCERT_RATING_KEYS,
+  formatEventScore,
+  getEventScore,
+  getScoreFilterValue,
+  type EventRatingKey,
+  type RatableEvent,
+} from "@/lib/event-ratings";
 import { getEventDetailHref } from "@/lib/event-links";
 import { useI18n } from "@/lib/i18n";
 import type {
@@ -158,6 +165,8 @@ type OtherEventFilters = {
 
 type OverviewFilters = {
   year: string[];
+  category: string[];
+  score: string[];
   city: string[];
   country: string[];
 };
@@ -231,6 +240,7 @@ type UnifiedEventRow = {
   title: string;
   city: string;
   countryCode: string;
+  score: number | null;
 };
 
 type SportPlayerMatchRow = {
@@ -350,6 +360,8 @@ const DEFAULT_OTHER_EVENT_FILTERS: OtherEventFilters = {
 
 const DEFAULT_OVERVIEW_FILTERS: OverviewFilters = {
   year: [],
+  category: [],
+  score: [],
   city: [],
   country: [],
 };
@@ -679,6 +691,49 @@ function SortHeaderButton({
       <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
     </Button>
   );
+}
+
+function RatingStars({ rating }: { rating: number | null }) {
+  const normalizedRating = rating ?? 0;
+
+  return (
+    <span className="inline-flex items-center gap-0.5" aria-label={`Note ${normalizedRating} sur 5`}>
+      {Array.from({ length: 5 }, (_, index) => {
+        const fillRatio = Math.max(0, Math.min(1, normalizedRating - index));
+
+        return (
+          <span key={index} className="relative h-3.5 w-3.5 text-primary">
+            <Star className="absolute inset-0 h-3.5 w-3.5 text-muted-foreground/35" />
+            {fillRatio > 0 ? (
+              <span
+                className="absolute inset-0 overflow-hidden text-primary"
+                style={{ width: `${fillRatio * 100}%` }}
+              >
+                <Star className="h-3.5 w-3.5 fill-current" />
+              </span>
+            ) : null}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+function EventScoreCell({ score }: { score: number | null }) {
+  if (score == null) return <>{EMPTY_LABEL}</>;
+
+  return (
+    <div className="flex items-center whitespace-nowrap">
+      <RatingStars rating={score} />
+    </div>
+  );
+}
+
+function getRatableEventScore(
+  event: RatableEvent | null | undefined,
+  ratingKeys?: EventRatingKey[],
+) {
+  return event ? getEventScore(event, ratingKeys) : null;
 }
 
 function SportPlayerMatchesCell({
@@ -1259,6 +1314,7 @@ export default function EventsPage() {
       title: [concert.artist, concert.eventName].filter(Boolean).join(" — ") || concert.artist,
       city: concert.city ?? "",
       countryCode: concert.countryCode ?? "",
+      score: getRatableEventScore(concert, CONCERT_RATING_KEYS),
     }));
 
     const sportEvents = (sportEventsQuery.data ?? []).map((event) => ({
@@ -1271,6 +1327,7 @@ export default function EventsPage() {
       title: getSportEventTitle(event, locale),
       city: event.city ?? "",
       countryCode: event.countryCode ?? "",
+      score: getRatableEventScore(event),
     }));
 
     const tech = techEvents.map((event) => ({
@@ -1283,6 +1340,7 @@ export default function EventsPage() {
       title: event.eventName,
       city: event.city,
       countryCode: event.countryCode,
+      score: null,
     }));
 
     const others = otherEvents.map((event) => ({
@@ -1295,6 +1353,7 @@ export default function EventsPage() {
       title: event.eventName,
       city: event.city,
       countryCode: event.countryCode,
+      score: null,
     }));
 
     const running = runningEvents.map((event) => ({
@@ -1307,6 +1366,7 @@ export default function EventsPage() {
       title: event.eventName,
       city: event.city,
       countryCode: event.countryCode,
+      score: null,
     }));
 
     const weddingsOverview = weddings.map((event) => ({
@@ -1319,6 +1379,7 @@ export default function EventsPage() {
       title: event.marriedPeople,
       city: event.city,
       countryCode: event.countryCode,
+      score: null,
     }));
 
     return [...concerts, ...sportEvents, ...tech, ...others, ...running, ...weddingsOverview].toSorted(
@@ -1331,6 +1392,17 @@ export default function EventsPage() {
       years: getSingleFacetOptions(overviewRows.map((event) => getYear(event.date)), locale).toSorted(
         (left, right) => Number.parseInt(right.value, 10) - Number.parseInt(left.value, 10),
       ),
+      categories: getSingleFacetOptions(
+        overviewRows.map((event) => event.kind),
+        locale,
+        (value) =>
+          overviewRows.find((event) => event.kind === value)?.categoryLabel ?? value,
+      ),
+      scores: getSingleFacetOptions(
+        overviewRows.map((event) => getScoreFilterValue(event.score)),
+        locale,
+        (value) => formatEventScore(Number.parseFloat(value), EMPTY_LABEL),
+      ).toSorted((left, right) => Number.parseFloat(right.value) - Number.parseFloat(left.value)),
       cities: getSingleFacetOptions(overviewRows.map((event) => event.city), locale),
       countries: getSingleFacetOptions(
         overviewRows.map((event) => event.countryCode),
@@ -1344,6 +1416,8 @@ export default function EventsPage() {
   const filteredOverviewRows = useMemo(() => {
     return overviewRows.filter((event) => {
       if (!includesSelectedValue(getYear(event.date), overviewFilters.year)) return false;
+      if (!includesSelectedValue(event.kind, overviewFilters.category)) return false;
+      if (!includesSelectedValue(getScoreFilterValue(event.score), overviewFilters.score)) return false;
       if (!includesSelectedValue(event.city, overviewFilters.city)) return false;
       if (!includesSelectedValue(event.countryCode, overviewFilters.country)) return false;
       return true;
@@ -2122,6 +2196,32 @@ export default function EventsPage() {
                   className="w-full"
                 />
                 <MultiSelectFilter
+                  label={locale === "fr" ? "Catégories" : "Categories"}
+                  placeholder={locale === "fr" ? "Catégories" : "Categories"}
+                  options={overviewOptions.categories.map((option) => ({
+                    value: option.value,
+                    label: buildFilterLabel(option.text, option.count),
+                    triggerLabel: option.text,
+                  }))}
+                  selectedValues={overviewFilters.category}
+                  onChange={(category) =>
+                    setOverviewFilters((current) => ({ ...current, category }))
+                  }
+                  className="w-full"
+                />
+                <MultiSelectFilter
+                  label={locale === "fr" ? "Scores" : "Scores"}
+                  placeholder={locale === "fr" ? "Scores" : "Scores"}
+                  options={overviewOptions.scores.map((option) => ({
+                    value: option.value,
+                    label: buildFilterLabel(option.text, option.count),
+                    triggerLabel: option.text,
+                  }))}
+                  selectedValues={overviewFilters.score}
+                  onChange={(score) => setOverviewFilters((current) => ({ ...current, score }))}
+                  className="w-full"
+                />
+                <MultiSelectFilter
                   label={locale === "fr" ? "Villes" : "Cities"}
                   placeholder={locale === "fr" ? "Villes" : "Cities"}
                   options={overviewOptions.cities.map((option) => ({
@@ -2167,6 +2267,7 @@ export default function EventsPage() {
                     <TableHead>{locale === "fr" ? "Titre / nom" : "Title / name"}</TableHead>
                     <TableHead>{locale === "fr" ? "Ville" : "City"}</TableHead>
                     <TableHead>{locale === "fr" ? "Pays" : "Country"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Score" : "Score"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -2191,11 +2292,14 @@ export default function EventsPage() {
                         <TableCell>
                           {event.countryCode ? countryName(event.countryCode) : EMPTY_LABEL}
                         </TableCell>
+                        <TableCell>
+                          <EventScoreCell score={event.score} />
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                         {t("noEntries")}
                       </TableCell>
                     </TableRow>
@@ -2959,7 +3063,7 @@ export default function EventsPage() {
                         onClick={() => toggleConcertSort("country")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Détails" : "Details"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Score" : "Score"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -2987,12 +3091,7 @@ export default function EventsPage() {
                           {concert.countryCode ? countryName(concert.countryCode) : EMPTY_LABEL}
                         </TableCell>
                         <TableCell>
-                          <Link
-                            href={getEventDetailHref("concerts", concert.id)}
-                            className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                          >
-                            {locale === "fr" ? "Voir la fiche" : "View details"}
-                          </Link>
+                          <EventScoreCell score={getRatableEventScore(concert, CONCERT_RATING_KEYS)} />
                         </TableCell>
                       </TableRow>
                     ))
@@ -3146,7 +3245,6 @@ export default function EventsPage() {
                       />
                     </TableHead>
                     <TableHead>{locale === "fr" ? "Course / affiche" : "Race / matchup"}</TableHead>
-                    <TableHead>{locale === "fr" ? "Résultat" : "Result"}</TableHead>
                     <TableHead>
                       <SortHeaderButton
                         label={locale === "fr" ? "Stade" : "Venue"}
@@ -3165,7 +3263,7 @@ export default function EventsPage() {
                         onClick={() => toggleSportSort("country")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Détails" : "Details"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Score" : "Score"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -3174,17 +3272,16 @@ export default function EventsPage() {
                       <TableRow key={event.id}>
                         <TableCell>{formatDate(event.eventDate, "short")}</TableCell>
                         <TableCell className="font-medium">
+                          {formatSportLabelLowercase(event.sport, locale)}
+                        </TableCell>
+                        <TableCell>{event.competition || EMPTY_LABEL}</TableCell>
+                        <TableCell className="font-medium">
                           <Link
                             href={getEventDetailHref("sport-events", event.id)}
                             className="underline decoration-[rgba(20,70,90,0.22)] underline-offset-4 transition-colors hover:text-primary"
                           >
-                            {formatSportLabelLowercase(event.sport, locale)}
+                            {getSportEventName(event, locale) || EMPTY_LABEL}
                           </Link>
-                        </TableCell>
-                        <TableCell>{event.competition || EMPTY_LABEL}</TableCell>
-                        <TableCell>{getSportEventName(event, locale) || EMPTY_LABEL}</TableCell>
-                        <TableCell className="max-w-[240px]">
-                          {getSportEventResultSummary(event, locale) || EMPTY_LABEL}
                         </TableCell>
                         <TableCell>{event.venue || EMPTY_LABEL}</TableCell>
                         <TableCell>{event.city || EMPTY_LABEL}</TableCell>
@@ -3192,18 +3289,13 @@ export default function EventsPage() {
                           {event.countryCode ? countryName(event.countryCode) : EMPTY_LABEL}
                         </TableCell>
                         <TableCell>
-                          <Link
-                            href={getEventDetailHref("sport-events", event.id)}
-                            className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                          >
-                            {locale === "fr" ? "Voir la fiche" : "View details"}
-                          </Link>
+                          <EventScoreCell score={getRatableEventScore(event)} />
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
                         {t("noEntries")}
                       </TableCell>
                     </TableRow>
@@ -3337,7 +3429,7 @@ export default function EventsPage() {
                         onClick={() => toggleTechEventSort("country")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Détails" : "Details"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Score" : "Score"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -3358,12 +3450,7 @@ export default function EventsPage() {
                         <TableCell>{event.city || EMPTY_LABEL}</TableCell>
                         <TableCell>{event.countryCode ? countryName(event.countryCode) : EMPTY_LABEL}</TableCell>
                         <TableCell>
-                          <Link
-                            href={getEventDetailHref("tech-events", event.id)}
-                            className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                          >
-                            {locale === "fr" ? "Voir la fiche" : "View details"}
-                          </Link>
+                          <EventScoreCell score={null} />
                         </TableCell>
                       </TableRow>
                     ))
@@ -3512,7 +3599,7 @@ export default function EventsPage() {
                         onClick={() => toggleOtherEventSort("country")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Détails" : "Details"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Score" : "Score"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -3535,12 +3622,7 @@ export default function EventsPage() {
                           {event.countryCode ? countryName(event.countryCode) : EMPTY_LABEL}
                         </TableCell>
                         <TableCell>
-                          <Link
-                            href={getEventDetailHref("other-events", event.id)}
-                            className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                          >
-                            {locale === "fr" ? "Voir la fiche" : "View details"}
-                          </Link>
+                          <EventScoreCell score={null} />
                         </TableCell>
                       </TableRow>
                     ))
@@ -3686,7 +3768,7 @@ export default function EventsPage() {
                         onClick={() => toggleRunningSort("country")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Détails" : "Details"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Score" : "Score"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -3710,12 +3792,7 @@ export default function EventsPage() {
                         <TableCell>{event.city || EMPTY_LABEL}</TableCell>
                         <TableCell>{event.countryCode ? countryName(event.countryCode) : EMPTY_LABEL}</TableCell>
                         <TableCell>
-                          <Link
-                            href={getEventDetailHref("running", event.id)}
-                            className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                          >
-                            {locale === "fr" ? "Voir la fiche" : "View details"}
-                          </Link>
+                          <EventScoreCell score={null} />
                         </TableCell>
                       </TableRow>
                     ))
@@ -3836,7 +3913,7 @@ export default function EventsPage() {
                         onClick={() => toggleWeddingSort("country")}
                       />
                     </TableHead>
-                    <TableHead>{locale === "fr" ? "Détails" : "Details"}</TableHead>
+                    <TableHead>{locale === "fr" ? "Score" : "Score"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -3855,12 +3932,7 @@ export default function EventsPage() {
                         <TableCell>{event.city || EMPTY_LABEL}</TableCell>
                         <TableCell>{countryName(event.countryCode)}</TableCell>
                         <TableCell>
-                          <Link
-                            href={getEventDetailHref("weddings", event.id)}
-                            className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                          >
-                            {locale === "fr" ? "Voir la fiche" : "View details"}
-                          </Link>
+                          <EventScoreCell score={null} />
                         </TableCell>
                       </TableRow>
                     ))

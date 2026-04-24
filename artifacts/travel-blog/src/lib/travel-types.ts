@@ -293,6 +293,11 @@ export interface Concert {
   photosLink: string | null;
   articleLink: string | null;
   notes: string | null;
+  ratingEventAppeal: number | null;
+  ratingPerformance: number | null;
+  ratingAtmosphere: number | null;
+  ratingVenue: number | null;
+  ratingStakes: number | null;
   attendeesPeople: string[];
 }
 
@@ -319,6 +324,11 @@ export interface SportEvent {
   photosLink: string | null;
   articleLink: string | null;
   notes: string | null;
+  ratingEventAppeal: number | null;
+  ratingPerformance: number | null;
+  ratingAtmosphere: number | null;
+  ratingVenue: number | null;
+  ratingStakes: number | null;
   attendeesPeople: string[];
 }
 

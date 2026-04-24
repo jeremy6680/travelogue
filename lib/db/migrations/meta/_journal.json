@@ -71,6 +71,20 @@
       "when": 1775057119169,
       "tag": "0009_trip_context",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1775058119169,
+      "tag": "0010_event_ratings",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1775059119169,
+      "tag": "0011_rename_event_appeal_rating",
+      "breakpoints": true
     }
   ]
 }
