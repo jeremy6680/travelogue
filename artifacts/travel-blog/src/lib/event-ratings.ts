@@ -52,14 +52,18 @@ export function getEventScore(
   event: RatableEvent,
   ratingKeys: EventRatingKey[] = EVENT_RATING_KEYS,
 ) {
-  const ratings = getEventRatings(event);
-  const selectedRatings = ratingKeys.map(
-    (ratingKey) => ratings[ratingKey] ?? 0,
-  );
+  const total = getEventScoreTotal(event, ratingKeys);
 
-  return roundEventScore(
-    selectedRatings.reduce((total, rating) => total + rating, 0) / selectedRatings.length,
-  );
+  return roundEventScore(total / ratingKeys.length);
+}
+
+export function getEventScoreTotal(
+  event: RatableEvent,
+  ratingKeys: EventRatingKey[] = EVENT_RATING_KEYS,
+) {
+  const ratings = getEventRatings(event);
+
+  return ratingKeys.reduce((total, ratingKey) => total + (ratings[ratingKey] ?? 0), 0);
 }
 
 export function formatEventScore(score: number | null, emptyLabel = "-") {

@@ -58,6 +58,7 @@ import {
   CONCERT_RATING_KEYS,
   formatEventScore,
   getEventScore,
+  getEventScoreTotal,
   getScoreFilterValue,
   type EventRatingKey,
   type RatableEvent,
@@ -246,6 +247,7 @@ type UnifiedEventRow = {
   city: string;
   countryCode: string;
   score: number | null;
+  scoreTotal: number | null;
 };
 
 type SportPlayerMatchRow = {
@@ -627,13 +629,23 @@ function compareDates(left: string, right: string, direction: SortDirection) {
   return compareValues(left, right, direction);
 }
 
-function compareScores(left: number | null, right: number | null, direction: SortDirection) {
-  if (left == null && right == null) return 0;
-  if (left == null) return 1;
-  if (right == null) return -1;
+function compareScores(
+  left: { score: number | null; scoreTotal: number | null },
+  right: { score: number | null; scoreTotal: number | null },
+  direction: SortDirection,
+) {
+  if (left.score == null && right.score == null) return 0;
+  if (left.score == null) return 1;
+  if (right.score == null) return -1;
 
   const factor = direction === "asc" ? 1 : -1;
-  return (left - right) * factor;
+  const roundedScoreComparison = (left.score - right.score) * factor;
+
+  if (roundedScoreComparison !== 0) {
+    return roundedScoreComparison;
+  }
+
+  return ((left.scoreTotal ?? 0) - (right.scoreTotal ?? 0)) * factor;
 }
 
 function EventLink({
@@ -753,6 +765,13 @@ function getRatableEventScore(
   ratingKeys?: EventRatingKey[],
 ) {
   return event ? getEventScore(event, ratingKeys) : null;
+}
+
+function getRatableEventScoreTotal(
+  event: RatableEvent | null | undefined,
+  ratingKeys?: EventRatingKey[],
+) {
+  return event ? getEventScoreTotal(event, ratingKeys) : null;
 }
 
 function SportPlayerMatchesCell({
@@ -1343,6 +1362,7 @@ export default function EventsPage() {
       city: concert.city ?? "",
       countryCode: concert.countryCode ?? "",
       score: getRatableEventScore(concert, CONCERT_RATING_KEYS),
+      scoreTotal: getRatableEventScoreTotal(concert, CONCERT_RATING_KEYS),
     }));
 
     const sportEvents = (sportEventsQuery.data ?? []).map((event) => ({
@@ -1356,6 +1376,7 @@ export default function EventsPage() {
       city: event.city ?? "",
       countryCode: event.countryCode ?? "",
       score: getRatableEventScore(event),
+      scoreTotal: getRatableEventScoreTotal(event),
     }));
 
     const tech = techEvents.map((event) => ({
@@ -1369,6 +1390,7 @@ export default function EventsPage() {
       city: event.city,
       countryCode: event.countryCode,
       score: null,
+      scoreTotal: null,
     }));
 
     const others = otherEvents.map((event) => ({
@@ -1382,6 +1404,7 @@ export default function EventsPage() {
       city: event.city,
       countryCode: event.countryCode,
       score: null,
+      scoreTotal: null,
     }));
 
     const running = runningEvents.map((event) => ({
@@ -1395,6 +1418,7 @@ export default function EventsPage() {
       city: event.city,
       countryCode: event.countryCode,
       score: null,
+      scoreTotal: null,
     }));
 
     const weddingsOverview = weddings.map((event) => ({
@@ -1408,6 +1432,7 @@ export default function EventsPage() {
       city: event.city,
       countryCode: event.countryCode,
       score: null,
+      scoreTotal: null,
     }));
 
     return [...concerts, ...sportEvents, ...tech, ...others, ...running, ...weddingsOverview].toSorted(
@@ -1455,7 +1480,7 @@ export default function EventsPage() {
       switch (overviewSort.sortBy) {
         case "score":
           return (
-            compareScores(left.score, right.score, overviewSort.sortDirection) ||
+            compareScores(left, right, overviewSort.sortDirection) ||
             compareDates(left.date, right.date, "desc")
           );
         case "date":
@@ -1518,8 +1543,14 @@ export default function EventsPage() {
         case "score":
           return (
             compareScores(
-              getRatableEventScore(left, CONCERT_RATING_KEYS),
-              getRatableEventScore(right, CONCERT_RATING_KEYS),
+              {
+                score: getRatableEventScore(left, CONCERT_RATING_KEYS),
+                scoreTotal: getRatableEventScoreTotal(left, CONCERT_RATING_KEYS),
+              },
+              {
+                score: getRatableEventScore(right, CONCERT_RATING_KEYS),
+                scoreTotal: getRatableEventScoreTotal(right, CONCERT_RATING_KEYS),
+              },
               concertFilters.sortDirection,
             ) || compareDates(left.eventDate, right.eventDate, "desc")
           );
@@ -1586,8 +1617,14 @@ export default function EventsPage() {
         case "score":
           return (
             compareScores(
-              getRatableEventScore(left),
-              getRatableEventScore(right),
+              {
+                score: getRatableEventScore(left),
+                scoreTotal: getRatableEventScoreTotal(left),
+              },
+              {
+                score: getRatableEventScore(right),
+                scoreTotal: getRatableEventScoreTotal(right),
+              },
               sportFilters.sortDirection,
             ) || compareDates(left.eventDate, right.eventDate, "desc")
           );
