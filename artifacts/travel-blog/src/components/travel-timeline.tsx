@@ -5,8 +5,10 @@ import { getMediaAssetImageUrl } from "@/lib/cloudinary";
 import {
   useConcertsQuery,
   useJourneysQuery,
+  useOtherEventsQuery,
   usePostsQuery,
   useSportEventsQuery,
+  useTechEventsQuery,
   useTripsQuery,
   useWeddingsQuery,
 } from "@/lib/directus";
@@ -874,7 +876,9 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
   const { data: trips = [], isLoading } = useTripsQuery();
   const { data: posts = [] } = usePostsQuery();
   const { data: concerts = [] } = useConcertsQuery();
+  const { data: otherEvents = [] } = useOtherEventsQuery();
   const { data: sportEvents = [] } = useSportEventsQuery();
+  const { data: techEvents = [] } = useTechEventsQuery();
   const { data: weddings = [] } = useWeddingsQuery();
   const [filterTrip, setFilterTrip] = useState<string[]>([]);
   const [filterRegion, setFilterRegion] = useState<string[]>([]);
@@ -994,6 +998,32 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
       grouped.set(event.tripId, current);
     }
 
+    for (const event of techEvents) {
+      if (!event.tripId) continue;
+      const current = grouped.get(event.tripId) ?? [];
+      current.push({
+        id: event.id,
+        title: locale === "fr" ? "Evènement tech" : "Tech event",
+        subtitle: event.eventName,
+        href: getEventDetailHref("tech-events", event.id),
+        photosLink: event.photosLink,
+      });
+      grouped.set(event.tripId, current);
+    }
+
+    for (const event of otherEvents) {
+      if (!event.tripId) continue;
+      const current = grouped.get(event.tripId) ?? [];
+      current.push({
+        id: event.id,
+        title: locale === "fr" ? "Autre évènement" : "Other event",
+        subtitle: event.eventName,
+        href: getEventDetailHref("other-events", event.id),
+        photosLink: event.photosLink,
+      });
+      grouped.set(event.tripId, current);
+    }
+
     for (const wedding of weddings) {
       if (!wedding.tripId) continue;
       const current = grouped.get(wedding.tripId) ?? [];
@@ -1010,7 +1040,7 @@ export function TravelTimeline({ showFilters = true }: TravelTimelineProps) {
     }
 
     return grouped;
-  }, [concerts, locale, sportEvents, weddings]);
+  }, [concerts, locale, otherEvents, sportEvents, techEvents, weddings]);
 
   const filteredSorted = useMemo<TimelineItem[]>(() => {
     let list = [...trips];
